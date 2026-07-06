@@ -1,6 +1,6 @@
 # Open Source Baby Monitoring System — Master Plan
 
-**Working name:** Nightlight (placeholder)
+**Working name:** eeper
 **Status:** Draft v1.0 — July 2026
 **License target:** AGPL-3.0 (server) / MIT (client libraries) — TBD
 
@@ -127,13 +127,13 @@ Audio is consumed by the insight-engine for cry/distress detection and sound-lev
 
 ### 4.3 Motion & presence (Phase 3)
 
-**Contract:** MQTT messages on `nightlight/{node}/motion` (and related topics) in a small JSON schema: `{ts, type, value, unit, quality}`.
+**Contract:** MQTT messages on `eeper/{node}/motion` (and related topics) in a small JSON schema: `{ts, type, value, unit, quality}`.
 
 Sources: 60 GHz mmWave radar nodes (presence + respiration-rate estimation, contactless — the recommended motion sensor), PIR nodes, under-mattress accelerometer/load-cell nodes, all via ESPHome or MicroPython on ESP32. Additionally, the insight-engine derives **camera-based motion** (frame differencing / optical flow) from the video pipeline, so "motion" as an insight input exists even with zero dedicated motion hardware — an instance of the graceful-degradation principle.
 
 ### 4.4 Pulse oximetry (Phase 4, optional, insights-only)
 
-**Contract:** MQTT on `nightlight/{node}/pulseox`: `{ts, hr, spo2, perfusion, quality}`. The `quality` field is mandatory — the insight-engine discards low-confidence samples rather than storing misleading data.
+**Contract:** MQTT on `eeper/{node}/pulseox`: `{ts, hr, spo2, perfusion, quality}`. The `quality` field is mandatory — the insight-engine discards low-confidence samples rather than storing misleading data.
 
 Reference node: ESP32 + MAX30102/MAX30101 publishing at 1 Hz aggregated readings. Per Section 2, this data feeds trends and fusion features only; it never drives alarms, and the UI presents it as historical context with an accuracy caveat.
 
@@ -296,4 +296,3 @@ Remote-access roadmap: v1 ships WireGuard/Tailscale docs (household-only, near-z
 - **Pi availability/pricing volatility** (2026 RAM-driven price spikes): mitigated by the run-anywhere posture — the Pi is a reference target, not a requirement.
 - **Community scope creep toward medical claims:** mitigated by contribution guidelines and PR templates encoding Section 2.
 - **Open:** project name/trademark check; AGPL vs Apache-2.0 final call; whether ONVIF PTZ control makes v1; minimum supported browser set for WebRTC.
-
