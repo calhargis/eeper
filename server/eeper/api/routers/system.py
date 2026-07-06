@@ -7,11 +7,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from eeper import __version__
-from eeper.api.cookies import set_session_cookie
-from eeper.api.dependencies import SessionDep, SettingsDep, admin_exists
+from eeper.api.auth_service import start_session
+from eeper.api.dependencies import NowDep, SessionDep, SettingsDep, admin_exists
 from eeper.api.models import User
 from eeper.api.schemas import FirstBootRequest, SystemStatus, UserOut
-from eeper.api.security import hash_password, issue_session
+from eeper.api.security import hash_password
 
 router = APIRouter(prefix="/system", tags=["system"])
 
@@ -33,11 +33,11 @@ async def first_boot(
     response: Response,
     session: SessionDep,
     settings: SettingsDep,
+    now: NowDep,
 ) -> UserOut:
-    """Create the first admin. Refuses once any user exists (no re-init)."""
+    """Create the first admin (and log them in). Refuses once any user exists."""
     # Serialize concurrent first-boot attempts (held until this transaction ends)
-    # so the check-then-insert below can't race two admins into existence during
-    # the unauthenticated setup window.
+    # so the check-then-insert below can't race two admins into existence.
     await session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": _FIRST_BOOT_LOCK})
     if await admin_exists(session):
         raise HTTPException(status.HTTP_409_CONFLICT, "Already initialized")
@@ -54,11 +54,11 @@ async def first_boot(
     )
     session.add(user)
     try:
-        await session.commit()
-    except IntegrityError as exc:  # concurrent first-boot or duplicate username
+        await session.commit()  # persist the admin + release the advisory lock
+    except IntegrityError as exc:
         await session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, "Already initialized") from exc
     await session.refresh(user)
 
-    set_session_cookie(response, settings, issue_session(settings.secret_key, user.id))
+    await start_session(session, response, settings, user, now)
     return UserOut(id=user.id, username=user.username, role=user.role)

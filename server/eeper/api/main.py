@@ -14,7 +14,7 @@ from fastapi import APIRouter, FastAPI
 
 from eeper import __version__
 from eeper.api.db import create_schema
-from eeper.api.routers import account, auth, system
+from eeper.api.routers import account, auth, system, tokens, users
 
 
 @asynccontextmanager
@@ -46,5 +46,7 @@ async def health() -> dict[str, str]:
 v1.include_router(system.router)
 v1.include_router(auth.router)
 v1.include_router(account.router)
+v1.include_router(users.router)
+v1.include_router(tokens.router)
 
 app.include_router(v1)

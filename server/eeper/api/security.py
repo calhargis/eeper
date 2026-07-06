@@ -1,22 +1,19 @@
-"""Password hashing (Argon2) and signed session tokens.
+"""Password hashing (Argon2) and opaque-token hashing.
 
-Deliberately small for M0.2. The session is an HMAC-signed, time-limited token
-(via itsdangerous) carried in an httpOnly, Secure cookie — enough to gate
-endpoints with 401. M0.3 replaces this with JWT access/refresh + TOTP.
+Refresh tokens and API tokens are high-entropy random strings; we store only
+their SHA-256 (no salt needed for uniformly-random secrets) and look them up by
+that hash. JWTs are handled in ``tokens.py``.
 """
 
 from __future__ import annotations
 
+import hashlib
 from functools import lru_cache
-from typing import Any
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 _hasher = PasswordHasher()
-
-_SESSION_SALT = "eeper.session.v1"
 
 
 def hash_password(password: str) -> str:
@@ -42,22 +39,6 @@ def verify_dummy(password: str) -> None:
     verify_password(_dummy_hash(), password)
 
 
-def _serializer(secret_key: str) -> URLSafeTimedSerializer:
-    return URLSafeTimedSerializer(secret_key, salt=_SESSION_SALT)
-
-
-def issue_session(secret_key: str, user_id: int) -> str:
-    """Return a signed session token for ``user_id``."""
-    return _serializer(secret_key).dumps({"uid": user_id})
-
-
-def read_session(secret_key: str, token: str, max_age_seconds: int) -> int | None:
-    """Return the user id from a valid, unexpired token, else ``None``."""
-    try:
-        data: Any = _serializer(secret_key).loads(token, max_age=max_age_seconds)
-    except (BadSignature, SignatureExpired):
-        return None
-    if not isinstance(data, dict):
-        return None
-    uid = data.get("uid")
-    return uid if isinstance(uid, int) else None
+def hash_token(token: str) -> str:
+    """SHA-256 of a high-entropy opaque token, for at-rest storage and lookup."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()

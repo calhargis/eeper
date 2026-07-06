@@ -1,16 +1,17 @@
 """SQLAlchemy models.
 
-M0.2 needs only ``users``. A ``household_id`` is carried from day one so the
-future hosted/multi-tenant deployment is a policy layer, not a migration
-(Master Plan §12). ``role`` exists now but only ``admin`` is issued until M0.3
-adds the viewer role and the full auth matrix.
+A ``household_id`` is carried from day one so the future hosted/multi-tenant
+deployment is a policy layer, not a migration (Master Plan §12).
+
+Note: schema is created with ``create_all`` (M0.x); there is no data to migrate
+yet. Alembic migrations arrive when the schema needs to evolve in place.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -26,4 +27,45 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(150), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(20), default="admin")
+
+    # TOTP 2FA (optional). Secret is set at enrollment; enabled after activation.
+    totp_secret: Mapped[str | None] = mapped_column(String(64), default=None)
+    totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Brute-force lockout state.
+    failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RefreshToken(Base):
+    """A rotating refresh token. Stored hashed; grouped into a family per login
+    session so a detected reuse can revoke the whole family."""
+
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    family_id: Mapped[str] = mapped_column(String(64), index=True)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    rotated: Mapped[bool] = mapped_column(Boolean, default=False)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ApiToken(Base):
+    """A scoped, long-lived token for integrations (e.g. Home Assistant).
+    Stored hashed; presented as ``Authorization: Bearer <token>``."""
+
+    __tablename__ = "api_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    scopes: Mapped[str] = mapped_column(String(255), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)

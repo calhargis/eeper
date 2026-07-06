@@ -23,7 +23,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M0.2 implemented & verified against a live local stack; next up M0.3
+**Currently working on:** M0.3 — auth system (part 1: JWT/refresh, TOTP, roles, api_tokens, lockout); test harnesses follow as part 2
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -53,7 +53,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > M0.1 precisely because an older pin failed the CRITICAL gate). The image build matrix
 > auto-discovers services by Dockerfile, so it covers new services as they land.
 
-### M0.2 — Compose scaffold, TLS, first-boot security — 🔨 implemented (CI: `stack` workflow)
+### M0.2 — Compose scaffold, TLS, first-boot security — ✅ (merged PR #2, CI green)
 - [x] [A] Clean-host install produces running stack with zero default credentials
 - [x] [A] HTTP→HTTPS redirect, local-CA chain, HSTS + security headers
 - [x] [A] Only Caddy reachable from outside the Docker network
@@ -82,10 +82,29 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > physical devices. CSP allows `script/style 'unsafe-inline'` for the SvelteKit
 > bootstrap; M1.2 tightens it with hashed CSP.
 
-### M0.3 — Auth, users, test harnesses — ⬜
-- [ ] [A] Full auth matrix: login, refresh rotation, revocation, TOTP, role denials
-- [ ] [A] Brute-force lockout with backoff
-- [ ] [A] Harness self-test job (synthetic camera + sensor fleet) green and marked required
+### M0.3 — Auth, users, test harnesses — 🔨 auth implemented (part 1); harnesses next (part 2)
+- [x] [A] Full auth matrix: login, refresh rotation, revocation, TOTP, role denials
+- [x] [A] Brute-force lockout with backoff
+- [ ] [A] Harness self-test job (synthetic camera + sensor fleet) green and marked required (part 2)
+
+> **Auth (part 1).** JWT access (httpOnly cookie) + opaque refresh tokens stored
+> hashed, grouped into per-login families with **rotation + reuse detection**
+> (a replayed token revokes the family; logout revokes the family). TOTP 2FA
+> (enroll → activate → login challenge → verify), admin/viewer roles with an
+> admin guard, scoped **API tokens** (Bearer auth: create/list/revoke; a token
+> needs an `admin` scope to reach admin endpoints), and brute-force **lockout**
+> (auto-clears — tested with an injectable clock). Verified by an in-process
+> auth-matrix suite (testcontainers Postgres + ASGI) plus token/password unit
+> tests — `pytest` 26/26, mypy-strict clean; the stack integration (9/9) and api
+> Trivy gate still pass. The M0.2 session cookie is replaced; the wizard handles
+> the TOTP step.
+>
+> An adversarial security review hardened this before merge: refresh rotation is
+> now **single-winner** (`SELECT … FOR UPDATE`, closing a concurrent-fork race);
+> the **TOTP second factor is rate-limited** (shared lockout, counter not reset by
+> re-login); **API-token scopes are enforced** (no silent full-admin); locked
+> accounts fail with a **generic 401** (no enumeration oracle); and two false-pass
+> tests were replaced with ones that prove server-side behavior.
 
 **Phase 0 exit:** ⬜ stranger can `install.sh` on any Linux box → secure, empty, login-gated app
 

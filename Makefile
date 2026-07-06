@@ -51,7 +51,7 @@ typecheck-web: ## svelte-check / tsc on web/
 
 # ─── Tests ─────────────────────────────────────────────────────────────────
 .PHONY: test
-test: ## Run server unit tests
+test: ## Run server tests (auth-matrix tests use a throwaway Postgres — needs Docker)
 	cd server && pytest
 
 # ─── Format (write) ────────────────────────────────────────────────────────

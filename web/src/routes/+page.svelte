@@ -5,7 +5,8 @@
   import { onMount } from 'svelte';
 
   type User = { id: number; username: string; role: string };
-  type View = 'loading' | 'first-boot' | 'login' | 'authed';
+  type LoginResult = { totp_required: boolean; challenge: string | null; user: User | null };
+  type View = 'loading' | 'first-boot' | 'login' | 'totp' | 'authed';
 
   const MIN_PASSWORD = 12;
 
@@ -15,6 +16,8 @@
   let username = $state('');
   let password = $state('');
   let confirm = $state('');
+  let challenge = $state('');
+  let totpCode = $state('');
   let error = $state('');
   let busy = $state(false);
 
@@ -104,12 +107,47 @@
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
-      if (res.ok) {
-        user = (await res.json()) as User;
+      if (res.status === 429) {
+        error = 'Too many failed attempts — try again later.';
+        return;
+      }
+      if (!res.ok) {
+        error = 'Invalid username or password.';
+        return;
+      }
+      const body = (await res.json()) as LoginResult;
+      if (body.totp_required && body.challenge) {
+        challenge = body.challenge;
+        totpCode = '';
+        view = 'totp';
+      } else if (body.user) {
+        user = body.user;
         reset();
         view = 'authed';
+      }
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function submitTotp(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    error = '';
+    busy = true;
+    try {
+      const res = await api('/auth/totp/verify', {
+        method: 'POST',
+        body: JSON.stringify({ challenge, code: totpCode }),
+      });
+      if (res.ok) {
+        const body = (await res.json()) as LoginResult;
+        user = body.user;
+        reset();
+        challenge = '';
+        totpCode = '';
+        view = 'authed';
       } else {
-        error = 'Invalid username or password.';
+        error = 'Invalid code.';
       }
     } finally {
       busy = false;
@@ -177,6 +215,20 @@
         /></label
       >
       <button type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+    </form>
+  {:else if view === 'totp'}
+    <h2>Two-factor code</h2>
+    <p class="muted">Enter the 6-digit code from your authenticator app.</p>
+    <form onsubmit={submitTotp}>
+      <label
+        >Code<input
+          bind:value={totpCode}
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          required
+        /></label
+      >
+      <button type="submit" disabled={busy}>{busy ? 'Verifying…' : 'Verify'}</button>
     </form>
   {:else if view === 'authed' && user}
     <h2>Signed in</h2>
