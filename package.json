@@ -1,0 +1,27 @@
+{
+  "name": "eeper-repo-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Repo-wide developer tooling for eeper (commit linting, formatting, git hooks). The web app lives in ./web.",
+  "license": "SEE LICENSE IN README.md",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prepare": "husky || true",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "commitlint": "commitlint"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2",
+    "prettier-plugin-svelte": "^3.3.2"
+  },
+  "lint-staged": {
+    "*.{js,ts,json,md,yml,yaml,css,html,svelte}": "prettier --write"
+  }
+}

@@ -1,0 +1,20 @@
+# Normalize line endings to LF on checkin; check out as-is.
+* text=auto eol=lf
+
+# Shell scripts and hooks must always be LF (they run in Linux containers).
+*.sh    text eol=lf
+*.bash  text eol=lf
+.husky/* text eol=lf
+
+# Windows batch files stay CRLF.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Binary assets — never touch.
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.onnx  binary
+*.tflite binary

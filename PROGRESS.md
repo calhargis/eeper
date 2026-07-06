@@ -16,14 +16,14 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase | Milestones | Status |
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
-| Phase 0 — Skeleton | M0.1–M0.3 | ⬜ not started |
+| Phase 0 — Skeleton | M0.1–M0.3 | 🔨 in progress (M0.1 implemented) |
 | Phase 1 — Video | M1.1–M1.4 | ⬜ not started |
 | Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** Phase 0 kickoff
+**Currently working on:** M0.1 implemented & locally verified — awaiting first push so CI runs; next up M0.2
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -31,11 +31,27 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 
 ## Phase 0 — Skeleton
 
-### M0.1 — Repository & CI foundation — ⬜
-- [ ] [A] Lint + mypy + TS type-check on every PR, failing on violations
-- [ ] [A] Multi-arch (amd64/arm64) images built and pushed on merge
-- [ ] [A] Image scan fails build on critical CVEs
-- [ ] [A] Malformed commit messages rejected
+### M0.1 — Repository & CI foundation — 🔨 implemented (CI confirms on first push)
+- [x] [A] Lint + mypy + TS type-check on every PR, failing on violations
+- [x] [A] Multi-arch (amd64/arm64) images built and pushed on merge
+- [x] [A] Image scan fails build on critical CVEs
+- [x] [A] Malformed commit messages rejected
+
+> **Verification note.** M0.1 uniquely bootstraps CI itself, so "green in CI" can
+> only be observed after the first push. Every check was run locally with the same
+> tools/versions the workflows use and all pass:
+> - `ruff check` (incl. `S`/bandit) + `ruff format --check` + `mypy --strict` + `pytest` — green
+> - `eslint` + `svelte-check` (0 errors) + web static build — green
+> - `prettier --check` across the repo — green
+> - `commitlint` rejects a malformed message and accepts a Conventional one
+> - `actionlint` (with shellcheck) — clean on both workflows
+> - `web` image builds multi-arch (amd64 native + arm64 emulated), **passes the Trivy
+>   CRITICAL gate (0 fixed-CRITICAL)**, and serves (`/` 200, SPA fallback 200)
+>
+> Base image digests are pinned (`node:22-bookworm-slim`, `caddy:2-alpine`); Renovate
+> keeps them fresh (stale bases accrue fixed CVEs — the Caddy base was bumped during
+> M0.1 precisely because an older pin failed the CRITICAL gate). The image build matrix
+> auto-discovers services by Dockerfile, so it covers new services as they land.
 
 ### M0.2 — Compose scaffold, TLS, first-boot security — ⬜
 - [ ] [A] Clean-host install produces running stack with zero default credentials
@@ -190,3 +206,4 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Date | Change |
 |---|---|
 | 2026-07-06 | Tracker created. Planning phase complete (master plan, implementation plan, README). Project renamed Nightlight → eeper. |
+| 2026-07-06 | M0.1 implemented: monorepo layout (`server`/`web`/`adapters`/`firmware`/`deploy`/`docs`/`models`), Python (ruff/mypy-strict/pytest) + web (eslint/svelte-check/prettier) tooling, Conventional-Commits enforcement (commitlint + Husky hooks), two CI workflows (PR checks + multi-arch build/scan/push), pinned base image digests, Renovate. All checks verified locally (see M0.1 note). CI confirmation pending first push. |

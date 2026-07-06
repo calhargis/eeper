@@ -1,0 +1,131 @@
+name: images
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege at the workflow level; the build job opts into packages:write.
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }} # ghcr.io/calhargis/eeper
+
+jobs:
+  # Discover every service by its Dockerfile so new services are built
+  # automatically as they land — no per-service workflow edits needed.
+  discover:
+    name: Discover service images
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.find.outputs.images }}
+      has_images: ${{ steps.find.outputs.has_images }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: find
+        name: Build matrix from Dockerfiles
+        run: |
+          images=$(find . -name Dockerfile -not -path '*/node_modules/*' -printf '%h\n' \
+            | sed 's#^\./##' | sort -u \
+            | jq -R -s -c 'split("\n") | map(select(length>0)) | map({name: (split("/") | last), context: .})')
+          echo "images=$images" >> "$GITHUB_OUTPUT"
+          if [ "$images" = "[]" ]; then
+            echo "has_images=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_images=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Discovered: $images"
+
+  build:
+    name: Build, scan & push
+    needs: discover
+    if: needs.discover.outputs.has_images == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # only this job pushes to GHCR, and only on main
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.discover.outputs.images) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Gate: build each release architecture into the local daemon and scan it
+      # with Trivy BEFORE anything is pushed, so a CRITICAL CVE in either arch
+      # fails the build and blocks the release. PRs scan amd64 for fast
+      # feedback; main additionally scans arm64 so every pushed arch is covered.
+      - name: Build amd64 (for scanning)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64
+          load: true
+          tags: eeper-scan/${{ matrix.name }}:amd64
+          cache-from: type=gha,scope=${{ matrix.name }}-amd64
+          cache-to: type=gha,scope=${{ matrix.name }}-amd64,mode=max
+      - name: Scan amd64 (Trivy — fail on CRITICAL)
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: eeper-scan/${{ matrix.name }}:amd64
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL
+          vuln-type: os,library
+
+      - name: Build arm64 (for scanning)
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/arm64
+          load: true
+          tags: eeper-scan/${{ matrix.name }}:arm64
+          cache-from: type=gha,scope=${{ matrix.name }}-arm64
+          cache-to: type=gha,scope=${{ matrix.name }}-arm64,mode=max
+      - name: Scan arm64 (Trivy — fail on CRITICAL)
+        if: github.event_name == 'push'
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: eeper-scan/${{ matrix.name }}:arm64
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL
+          vuln-type: os,library
+
+      # Only on main, and only after both arches passed the scan: build the full
+      # multi-arch manifest and push it to GHCR (reusing the cached arch layers).
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (amd64 + arm64) and push
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:${{ github.sha }}
+          cache-from: |
+            type=gha,scope=${{ matrix.name }}-amd64
+            type=gha,scope=${{ matrix.name }}-arm64
