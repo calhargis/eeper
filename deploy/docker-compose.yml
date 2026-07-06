@@ -1,0 +1,98 @@
+name: eeper
+
+# Shared hardening applied to every container: no privilege escalation, all
+# Linux capabilities dropped, and a read-only root filesystem. Writable paths
+# are explicit (named volumes for data, tmpfs for scratch).
+x-hardening: &hardening
+  restart: unless-stopped
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  db:
+    <<: *hardening
+    image: timescale/timescaledb:latest-pg16@sha256:ba149561ad4ddff5940d6eb0a0df60aefd1355cee1a450928f271267038fc888
+    profiles: [core]
+    # Run as the image's postgres user (uid 70). A fresh named volume inherits
+    # the image's postgres-owned PGDATA, so initdb works on a read-only rootfs.
+    user: '70:70'
+    environment:
+      POSTGRES_USER: eeper
+      POSTGRES_DB: eeper
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — run deploy/install.sh}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    tmpfs:
+      - /tmp
+      - /run/postgresql
+    networks: [internal]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U eeper -d eeper -h 127.0.0.1']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  api:
+    <<: *hardening
+    build:
+      context: ../server
+    image: eeper-api:dev
+    profiles: [core]
+    environment:
+      EEPER_DATABASE_URL: postgresql+asyncpg://eeper:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — run deploy/install.sh}@db:5432/eeper
+      EEPER_SECRET_KEY: ${EEPER_SECRET_KEY:?EEPER_SECRET_KEY is required — run deploy/install.sh}
+    tmpfs:
+      - /tmp
+    networks: [edge, internal]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *hardening
+    build:
+      context: ../web
+    image: eeper-web:dev
+    profiles: [core]
+    tmpfs:
+      - /tmp:mode=1777
+    networks: [edge]
+
+  caddy:
+    <<: *hardening
+    build:
+      context: ./caddy
+    image: eeper-caddy:dev
+    profiles: [core]
+    # The only service that publishes ports. Host 80/443 map onto Caddy's
+    # unprivileged 8080/8443 so it needs no capabilities at all.
+    ports:
+      - '${EEPER_BIND_ADDR:-0.0.0.0}:${EEPER_HTTP_PORT:-80}:8080'
+      - '${EEPER_BIND_ADDR:-0.0.0.0}:${EEPER_HTTPS_PORT:-443}:8443'
+    environment:
+      EEPER_DOMAIN: ${EEPER_DOMAIN:-localhost}
+      # The externally published HTTPS port, so the HTTP→HTTPS redirect targets it.
+      EEPER_HTTPS_PORT: ${EEPER_HTTPS_PORT:-443}
+    volumes:
+      - caddy-data:/data # persists the local CA + issued certs across restarts
+    tmpfs:
+      - /tmp:mode=1777
+    networks: [edge]
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  caddy-data:
+
+networks:
+  edge:
+  internal:
+    internal: true # no route to the host or the internet; db lives here

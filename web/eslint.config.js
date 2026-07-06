@@ -19,6 +19,13 @@ export default ts.config(
     },
   },
   {
+    rules: {
+      // TypeScript (svelte-check / tsc) already reports undefined identifiers,
+      // and no-undef false-positives on type-only references (e.g. RequestInit).
+      'no-undef': 'off',
+    },
+  },
+  {
     ignores: ['build/', '.svelte-kit/', 'node_modules/'],
   },
 );

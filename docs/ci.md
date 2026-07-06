@@ -13,6 +13,14 @@ Runs on `pull_request` and on `push` to `main`. Fails the build on any violation
 | `web`        | `eslint` + `svelte-check` (TypeScript) on `web/`                               |
 | `format`     | `prettier --check` across the repo                                             |
 
+## `stack.yml` — core stack integration
+
+Brings up the `core` stack with `deploy/install.sh` on a clean runner and runs
+the integration suite (`deploy/tests/`), asserting the M0.2 criteria end to end:
+no default credentials, HTTP→HTTPS + local-CA TLS + security headers, only Caddy
+publishes ports, 401 before the first-boot wizard, and every container non-root
+on a read-only rootfs. Tears the stack down afterwards.
+
 ## `images.yml` — build, scan, push
 
 Runs on `push` to `main` (build + scan + **push** to GHCR) and on

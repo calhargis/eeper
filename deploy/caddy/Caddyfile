@@ -1,0 +1,48 @@
+# eeper edge proxy. TLS is terminated here with Caddy's internal (local) CA;
+# nothing is exposed to the internet by default (see deploy/README.md).
+{
+	# No admin API surface, no ACME/public certs — LAN-only, locally signed.
+	admin off
+	auto_https disable_redirects
+	# Bind unprivileged ports inside the container (compose maps host 80/443
+	# onto these) so Caddy can run non-root with zero capabilities.
+	http_port 8080
+	https_port 8443
+}
+
+# The site address defaults to localhost (dev/CI). Self-hosters set EEPER_DOMAIN
+# to their LAN hostname/IP in .env. `tls internal` issues a cert from the local CA.
+{$EEPER_DOMAIN:localhost} {
+	tls internal
+
+	# Baseline security headers on every response.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# NOTE: script/style 'unsafe-inline' is a temporary allowance for the
+		# SvelteKit bootstrap; M1.2 tightens this with hashed CSP.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'"
+		-Server
+	}
+
+	# API traffic to the FastAPI service.
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:8000
+	}
+
+	# Everything else is the static PWA.
+	handle {
+		reverse_proxy web:8080
+	}
+}
+
+# Redirect all plaintext HTTP to HTTPS. `{host}` omits the port, so we append the
+# externally published HTTPS port explicitly — otherwise a non-default
+# EEPER_HTTPS_PORT would redirect to a dead :443.
+http://{$EEPER_DOMAIN:localhost} {
+	redir https://{host}:{$EEPER_HTTPS_PORT:443}{uri} permanent
+}
