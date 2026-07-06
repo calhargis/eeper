@@ -1,6 +1,6 @@
 # Open Source Baby Monitoring System — Master Plan
 
-**Working name:** eeper
+**Project name:** eeper
 **Status:** Draft v1.0 — July 2026
 **License target:** AGPL-3.0 (server) / MIT (client libraries) — TBD
 
@@ -296,3 +296,4 @@ Remote-access roadmap: v1 ships WireGuard/Tailscale docs (household-only, near-z
 - **Pi availability/pricing volatility** (2026 RAM-driven price spikes): mitigated by the run-anywhere posture — the Pi is a reference target, not a requirement.
 - **Community scope creep toward medical claims:** mitigated by contribution guidelines and PR templates encoding Section 2.
 - **Open:** project name/trademark check; AGPL vs Apache-2.0 final call; whether ONVIF PTZ control makes v1; minimum supported browser set for WebRTC.
+

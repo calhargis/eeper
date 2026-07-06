@@ -1,6 +1,6 @@
 # eeper
 
-*(working name)*
+
 
 An open source, self-hosted baby monitoring system that runs on hardware you already own. eeper turns any combination of a camera, a microphone, and inexpensive DIY sensors into live monitoring plus sleep insights — sleep/wake state, movement level, calm/distressed detection, and long-term sleep history and trends — all processed locally, on your own network.
 
