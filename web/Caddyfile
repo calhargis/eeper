@@ -1,0 +1,17 @@
+# Static file server for the eeper PWA. In the full stack the outer Caddy
+# reverse proxy (deploy/) terminates TLS and forwards to this on the internal
+# network; this inner server just serves the built assets on a plain port.
+:8080 {
+	root * /srv
+	encode gzip zstd
+
+	# SPA fallback: unknown paths return the app shell for client-side routing.
+	try_files {path} /index.html
+	file_server
+
+	header {
+		# Conservative defaults; the edge proxy adds the full security header set.
+		X-Content-Type-Options nosniff
+		-Server
+	}
+}

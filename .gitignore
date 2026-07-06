@@ -1,0 +1,53 @@
+# ─── Python ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+build/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ─── Node / web ───────────────────────────────────────────────────────────
+node_modules/
+.svelte-kit/
+web/build/
+.vite/
+*.tsbuildinfo
+
+# ─── Secrets & runtime data (never commit) ────────────────────────────────
+# Real secrets are generated at install time; only *.example files are tracked.
+.env
+.env.*
+!.env.example
+!*.env.example
+*.pem
+*.key
+*.crt
+!**/testdata/**/*.pem
+secrets/
+/data/
+deploy/data/
+deploy/secrets/
+
+# ─── ML model artifacts (fetched at first run, never committed) ────────────
+models/cache/
+models/*.onnx
+models/*.tflite
+models/*.pt
+
+# ─── OS / editor cruft ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json

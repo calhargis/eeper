@@ -1,0 +1,3 @@
+# eeper is a LAN-only, private application. Discourage all crawling.
+User-agent: *
+Disallow: /

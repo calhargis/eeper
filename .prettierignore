@@ -1,0 +1,19 @@
+# Generated / vendored — not ours to format.
+node_modules/
+**/node_modules/
+.venv/
+**/.venv/
+web/build/
+web/.svelte-kit/
+**/package-lock.json
+**/*.min.*
+models/manifest.json
+
+# Python is formatted by ruff, not prettier.
+*.py
+
+# Narrative docs use hand-tuned tables and wrapping; leave them alone.
+README.md
+MASTER_PLAN.md
+IMPLEMENTATION_PLAN.md
+PROGRESS.md

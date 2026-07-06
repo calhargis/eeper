@@ -1,0 +1,26 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Pin all Docker base images to immutable digests (Section 8 of the master plan).",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    },
+    {
+      "description": "Group minor/patch dev-tooling bumps to keep PR noise low.",
+      "matchManagers": ["npm", "pep621", "pip_requirements"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev tooling (non-major)"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"]
+  }
+}

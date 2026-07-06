@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eeper"
+version = "0.0.0"
+description = "eeper server-side services (api, insight-engine, recorder)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "TBD — see repository README" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6,<1.0",
+  "mypy>=1.11,<2.0",
+  "pytest>=8.0,<9.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["eeper*"]
+
+# ─── Ruff (lint + format) ──────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["."]
+
+[tool.ruff.lint]
+# A pragmatic-but-strict default set: pyflakes, pycodestyle, isort, bugbear,
+# comprehensions, pyupgrade, simplify, and flake8-bandit (security). Expanded
+# per-package as code lands.
+select = ["E", "F", "W", "I", "B", "C4", "UP", "SIM", "S"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"] # asserts are expected in tests
+
+# ─── mypy (strict) ─────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+files = ["eeper", "tests"]
+
+# ─── pytest ────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
