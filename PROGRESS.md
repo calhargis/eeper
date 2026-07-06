@@ -1,0 +1,192 @@
+# eeper — Progress Tracker
+
+Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Update this file in the same PR that completes work.
+
+**How to use this file**
+- A milestone is ✅ only when *every* criterion below it is checked.
+- `[A]` = automated criterion (must be green in CI). `[M]` = manual procedure (record date + tester initials when performed, e.g. `✔ 2026-08-14 JD`).
+- Statuses: ⬜ not started · 🔨 in progress · ✅ done · 🚧 blocked (add a note)
+
+**Last updated:** 2026-07-06
+
+---
+
+## Overall status
+
+| Phase | Milestones | Status |
+|---|---|---|
+| Planning (master plan, implementation plan, README) | — | ✅ done |
+| Phase 0 — Skeleton | M0.1–M0.3 | ⬜ not started |
+| Phase 1 — Video | M1.1–M1.4 | ⬜ not started |
+| Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
+| Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
+| Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
+| Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
+
+**Currently working on:** Phase 0 kickoff
+**Blockers:** none
+**Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
+
+---
+
+## Phase 0 — Skeleton
+
+### M0.1 — Repository & CI foundation — ⬜
+- [ ] [A] Lint + mypy + TS type-check on every PR, failing on violations
+- [ ] [A] Multi-arch (amd64/arm64) images built and pushed on merge
+- [ ] [A] Image scan fails build on critical CVEs
+- [ ] [A] Malformed commit messages rejected
+
+### M0.2 — Compose scaffold, TLS, first-boot security — ⬜
+- [ ] [A] Clean-host install produces running stack with zero default credentials
+- [ ] [A] HTTP→HTTPS redirect, local-CA chain, HSTS + security headers
+- [ ] [A] Only Caddy reachable from outside the Docker network
+- [ ] [A] 401 on all non-auth endpoints pre-wizard and post-logout
+- [ ] [A] Containers non-root with read-only root filesystems
+- [ ] [M] Local CA trusted on physical iOS + Android from docs alone — ______
+
+### M0.3 — Auth, users, test harnesses — ⬜
+- [ ] [A] Full auth matrix: login, refresh rotation, revocation, TOTP, role denials
+- [ ] [A] Brute-force lockout with backoff
+- [ ] [A] Harness self-test job (synthetic camera + sensor fleet) green and marked required
+
+**Phase 0 exit:** ⬜ stranger can `install.sh` on any Linux box → secure, empty, login-gated app
+
+---
+
+## Phase 1 — Video
+
+### M1.1 — Media gateway & RTSP contract — ⬜
+- [ ] [A] Registered synthetic camera live via WebRTC + internal RTSP within 5 s
+- [ ] [A] Non-conformant codec (H.265 test source) rejected with actionable error
+- [ ] [A] Stream auto-recovery within 15 s; health transitions offline→online
+- [ ] [A] Signaling only via api relay; direct go2rtc access blocked
+
+### M1.2 — Live view in the PWA — ⬜
+- [ ] [A] Playwright: WebRTC frames flowing within 3 s of page load
+- [ ] [A] Playwright: auth redirect; viewer role can view
+- [ ] [A] Bench: glass-to-glass < 500 ms (burned-in timestamp comparison)
+- [ ] [A] Lighthouse: installability + mobile performance budget
+- [ ] [M] Physical iOS + Android: install, live view, lock/unlock, camera switching — ______
+- [ ] [M] NoIR + IR illuminator usable image in dark room — ______
+
+### M1.3 — Adapters (USB & Pi CSI) — ⬜
+- [ ] [A] USB adapter (V4L2 loopback in CI) → contract-conformant stream end-to-end
+- [ ] [A] Adapter images multi-arch + pass contract validation suite
+- [ ] [M] Physical USB webcam + CSI Camera Module 3 stream via adapters on bench — ______
+- [ ] [M] Android phone RTSP-app onboarding using only the doc — ______
+
+### M1.4 — Recorder — ⬜
+- [ ] [A] Ring buffer: segments written, quota eviction, promoted clips survive
+- [ ] [A] Promoted clip playable, duration/timestamps match (ffprobe)
+- [ ] [A] Playback endpoint auth-enforced, playable in browser harness
+- [ ] [A] Crash mid-segment loses at most active segment; index consistent
+
+**Phase 1 exit:** ⬜ bench sustains 24 h recording + live view < 60 % CPU [A]
+
+---
+
+## Phase 2 — Audio & First Insights
+
+### M2.1 — Audio pipeline — ⬜
+- [ ] [A] Known audio track arrives as 16 kHz mono PCM (fixture checksum)
+- [ ] [A] Live view audio packets flowing (getStats)
+- [ ] [M] Real mic intelligible, no gross A/V drift over 10 min — ______
+
+### M2.2 — Insight engine core + motion — ⬜
+- [ ] [A] Motion score ordering: still < rolling < sitting-up
+- [ ] [A] Hysteresis: threshold-oscillating trace → ≤ 1 state change
+- [ ] [A] Rolling fixture → movement state event on MQTT + DB row within 2 s
+- [ ] [A] Backpressure: frames dropped, memory bounded, freshness < 3 s
+- [ ] [A] Video-only degradation: registry matches available inputs
+
+### M2.3 — Cry detection — ⬜
+- [ ] [A] Model fetch: checksum verification, tampered file refused
+- [ ] [A] Quality gate: recall ≥ 0.9 on cries, FPR ≤ 0.1 on confusers
+- [ ] [A] Cry fixture → `cry_detected` event end-to-end within 2 s
+- [ ] [A] ONNX CPU inference smoke test on amd64 + arm64
+- [ ] [M] Speaker-played cry triggers; 30 min of TV does not — ______
+
+### M2.4 — Events, clips, nudges — ⬜
+- [ ] [A] Cry event auto-promotes pre/post-roll clip, linked and playable
+- [ ] [A] Playwright: event appears in Tonight v0 via WebSocket; clip plays
+- [ ] [A] Web Push matrix: subscribed receives; opted-out/quiet-hours do not
+- [ ] [A] Copy lint: notification templates pass clinical-terms denylist
+- [ ] [M] Push arrives on physical iOS + Android, backgrounded + locked — ______
+
+**Phase 2 exit:** ⬜ [M] speaker cry → phone nudge → playable clip on bench — ______
+
+---
+
+## Phase 3 — Sensors & Sleep States
+
+### M3.1 — MQTT bus & device onboarding — ⬜
+- [ ] [A] ACL matrix: cross-device publish/subscribe denied for every class
+- [ ] [A] Fuzzing: malformed/oversized messages rejected without crash/slowdown
+- [ ] [A] Synthetic mmWave pairs, publishes, lands in `sensor_readings` with quality
+- [ ] [A] Offline detection within heartbeat window, reflected in UI
+- [ ] [A] Plaintext MQTT refused
+
+### M3.2 — Reference sensor firmware — ⬜
+- [ ] [A] ESPHome configs compile in CI; payloads validate against contract schema
+- [ ] [M] Physical mmWave + PIR detect person-analog at crib distance; 24 h uptime — ______
+- [ ] [M] Non-author flashes and pairs a node from docs alone — ______
+
+### M3.3 — Fusion state machine — ⬜
+- [ ] [A] Replay gate: ≥ 90 % sleep/wake epoch agreement; all wakes ≥ 3 min detected
+- [ ] [A] Combinatorial degradation: valid states under every input subset
+- [ ] [A] Corroboration: no distress from single signal when ≥ 2 inputs live
+- [ ] [A] Session integrity: count + boundaries ±2 min; survives engine restart
+- [ ] [A] Playwright: Tonight timeline renders replayed night; scrub-to-clip works
+- [ ] [M] Live overnight bench run reviewed against reality notes — ______
+
+**Phase 3 exit:** ⬜ full replayed night → accurate timeline, zero intervention [A]; job runs nightly
+
+---
+
+## Phase 4 — Trends & Pulse-Ox
+
+### M4.1 — Trends — ⬜
+- [ ] [A] Rollups match independently computed values on seeded month
+- [ ] [A] Every Trends query < 200 ms over seeded year (bench)
+- [ ] [A] Compressed/uncompressed query results identical
+- [ ] [A] Playwright: charts render; CSV export matches; viewer denied export
+
+### M4.2 — Pulse-ox (optional, gated) — ⬜
+- [ ] [A] Gating matrix: inert without profile + acknowledged disclaimer
+- [ ] [A] Low-quality samples discarded, not stored/fused; discard rate observable
+- [ ] [A] Copy lint on pulse-ox strings; accuracy caveat asserted on every view
+- [ ] [A] Fusion consumes HR features only from quality-gated samples
+- [ ] [M] Adult-wearer bench readings plausible; motion artifacts down-weighted — ______
+
+### M4.3 — Operations polish — ⬜
+- [ ] [A] Backup → fresh stack → restore round-trip, checksummed identical
+- [ ] [A] Retention matrix evicts exactly the expected artifacts
+- [ ] [A] Playwright role sweep: viewer scope correct on every route
+
+**Phase 4 exit:** ⬜ v1.0 feature-complete; full [A] suite green; [M] checklist current
+
+---
+
+## Phase 5 — Hardening & Release
+
+### M5.1 — Security review — ⬜
+- [ ] [A] Zero critical CVEs; secrets scan clean; all prior security suites green
+- [ ] [A] Auth fuzz corpus: tampering/replay/downgrade all rejected
+- [ ] [M] Pen test of default install: no unresolved critical/high findings — ______
+
+### M5.2 — Performance gate & docs — ⬜
+- [ ] [A] Reference bench: < 60 % CPU, latency budgets met, 72 h clean run
+- [ ] [A] Docs link checker + install-doc smoke test on clean VM
+- [ ] [M] Two external testers cold-start on non-Pi hardware from docs — ______
+- [ ] [M] Clinician/child-health review of all safety copy — ______
+
+**v1.0 release:** ⬜ all [A] green on both architectures · ⬜ all [M] recorded for the RC · ⬜ signed images published · ⬜ release notes include safety stance verbatim
+
+---
+
+## Change log
+
+| Date | Change |
+|---|---|
+| 2026-07-06 | Tracker created. Planning phase complete (master plan, implementation plan, README). Project renamed Nightlight → eeper. |
