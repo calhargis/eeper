@@ -16,14 +16,14 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase | Milestones | Status |
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
-| Phase 0 — Skeleton | M0.1–M0.3 | 🔨 in progress (M0.1 implemented) |
+| Phase 0 — Skeleton | M0.1–M0.3 | 🔨 in progress (M0.1–M0.2 implemented) |
 | Phase 1 — Video | M1.1–M1.4 | ⬜ not started |
 | Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M0.1 implemented & locally verified — awaiting first push so CI runs; next up M0.2
+**Currently working on:** M0.2 implemented & verified against a live local stack; next up M0.3
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -53,13 +53,34 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > M0.1 precisely because an older pin failed the CRITICAL gate). The image build matrix
 > auto-discovers services by Dockerfile, so it covers new services as they land.
 
-### M0.2 — Compose scaffold, TLS, first-boot security — ⬜
-- [ ] [A] Clean-host install produces running stack with zero default credentials
-- [ ] [A] HTTP→HTTPS redirect, local-CA chain, HSTS + security headers
-- [ ] [A] Only Caddy reachable from outside the Docker network
-- [ ] [A] 401 on all non-auth endpoints pre-wizard and post-logout
-- [ ] [A] Containers non-root with read-only root filesystems
-- [ ] [M] Local CA trusted on physical iOS + Android from docs alone — ______
+### M0.2 — Compose scaffold, TLS, first-boot security — 🔨 implemented (CI: `stack` workflow)
+- [x] [A] Clean-host install produces running stack with zero default credentials
+- [x] [A] HTTP→HTTPS redirect, local-CA chain, HSTS + security headers
+- [x] [A] Only Caddy reachable from outside the Docker network
+- [x] [A] 401 on all non-auth endpoints pre-wizard and post-logout
+- [x] [A] Containers non-root with read-only root filesystems
+- [ ] [M] Local CA trusted on physical iOS + Android from docs alone — ______ (procedure: [docs/testing/m0.2-ca-trust.md](./docs/testing/m0.2-ca-trust.md))
+
+> **Verification.** The full `core` stack (Caddy + FastAPI api + TimescaleDB +
+> static web) was brought up locally with `deploy/install.sh` and all five [A]
+> criteria pass via the `deploy/tests/` integration suite (9/9), now wired into
+> the CI `stack` workflow that runs install.sh on a clean runner and asserts them:
+> - install.sh generates random secrets (no defaults); DB has zero user rows on a fresh install
+> - `http→https` 301; TLS verified against the extracted local CA (no `-k`); HSTS + CSP + X-Frame-Options + nosniff + Referrer-Policy present
+> - `api`/`db` publish no host ports; `db` on an `internal:` network; only Caddy is reachable
+> - `/api/v1/me` returns 401 before first-boot and after logout; full flow (create admin → 200 → re-init 409 → logout → 401 → login) verified
+> - every container non-root (`db` 70:70, `api`/`web`/`caddy` 10001/app) with a read-only rootfs, `cap_drop: ALL`, `no-new-privileges`
+>
+> A browser first-boot **wizard UI** (create-admin → sign-in → signed-in) is
+> served by the web app and talks to the same-origin API. An adversarial review
+> hardened: concurrency-safe first-boot (Postgres advisory lock, covered by a
+> race test), a port-aware HTTP→HTTPS redirect, atomic secret generation in
+> install.sh, and a password length cap.
+>
+> Notes: full auth (JWT access/refresh, TOTP, roles, brute-force lockout) is M0.3
+> — M0.2 uses a signed session cookie. The `[M]` iOS/Android CA-trust check needs
+> physical devices. CSP allows `script/style 'unsafe-inline'` for the SvelteKit
+> bootstrap; M1.2 tightens it with hashed CSP.
 
 ### M0.3 — Auth, users, test harnesses — ⬜
 - [ ] [A] Full auth matrix: login, refresh rotation, revocation, TOTP, role denials
@@ -206,4 +227,5 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Date | Change |
 |---|---|
 | 2026-07-06 | Tracker created. Planning phase complete (master plan, implementation plan, README). Project renamed Nightlight → eeper. |
-| 2026-07-06 | M0.1 implemented: monorepo layout (`server`/`web`/`adapters`/`firmware`/`deploy`/`docs`/`models`), Python (ruff/mypy-strict/pytest) + web (eslint/svelte-check/prettier) tooling, Conventional-Commits enforcement (commitlint + Husky hooks), two CI workflows (PR checks + multi-arch build/scan/push), pinned base image digests, Renovate. All checks verified locally (see M0.1 note). CI confirmation pending first push. |
+| 2026-07-06 | M0.1 implemented: monorepo layout (`server`/`web`/`adapters`/`firmware`/`deploy`/`docs`/`models`), Python (ruff/mypy-strict/pytest) + web (eslint/svelte-check/prettier) tooling, Conventional-Commits enforcement (commitlint + Husky hooks), two CI workflows (PR checks + multi-arch build/scan/push), pinned base image digests, Renovate. Merged in PR #1; CI green. |
+| 2026-07-06 | M0.2 implemented: hardened Compose `core` stack (Caddy edge proxy w/ local-CA TLS + security headers, FastAPI api, TimescaleDB, static web); `install.sh` (prereq check, secret generation, CA extraction); first-boot wizard + session auth gate; LAN-only/port isolation; every container non-root + read-only rootfs. New `stack` CI workflow boots the stack and runs the `deploy/tests` integration suite (9/9 local). Base images pinned; api/web/caddy pass the Trivy CRITICAL gate. |
