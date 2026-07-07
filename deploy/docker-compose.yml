@@ -65,9 +65,14 @@ services:
     networks: [edge]
 
   # Media gateway (video profile). Third-party image, pinned by digest and tracked
-  # by Renovate (like the db image); internal-only — no ports are published, and
-  # the api relays WebRTC signaling. It lives on `edge` (not the isolated internal
+  # by Renovate (like the db image). It lives on `edge` (not the isolated internal
   # net) because it must reach camera sources (LAN cameras in production).
+  #
+  # Only the WebRTC MEDIA port 8555 is published (M1.2) — browser media transport
+  # can't traverse an HTTP proxy, so the client must reach it directly. It's bound
+  # to EEPER_GO2RTC_CANDIDATE (127.0.0.1 for local/CI; the host LAN IP in prod), not
+  # 0.0.0.0. Signaling (:1984) and RTSP (:8554) stay UNPUBLISHED — the api relays
+  # WebRTC signaling behind auth, and nothing reaches go2rtc's control planes.
   go2rtc:
     <<: *hardening
     image: alexxit/go2rtc:latest@sha256:675c318b23c06fd862a61d262240c9a63436b4050d177ffc68a32710d9e05bae
@@ -81,6 +86,13 @@ services:
         '-c',
         'cp /seed/go2rtc.yaml /config/go2rtc.yaml && exec go2rtc -config /config/go2rtc.yaml',
       ]
+    environment:
+      # The host address the browser reaches go2rtc's media port on. Expanded into
+      # webrtc.candidates in go2rtc.yaml.
+      EEPER_GO2RTC_CANDIDATE: ${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}
+    ports:
+      - '${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}:8555:8555/udp'
+      - '${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}:8555:8555/tcp'
     volumes:
       - ./go2rtc/go2rtc.yaml:/seed/go2rtc.yaml:ro
     tmpfs:

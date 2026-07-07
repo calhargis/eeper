@@ -1,10 +1,8 @@
 <script lang="ts">
-  // Phase 0 (M0.2) shell: the first-boot wizard + sign-in. It talks to the
-  // same-origin API (/api/v1) behind the edge proxy; the session cookie is
-  // httpOnly and sent automatically. Live/Tonight/Trends/etc. arrive later.
+  // First-boot wizard + sign-in. Once authed, the Live view is one tap away.
   import { onMount } from 'svelte';
+  import { api, detail, fetchSession, fetchStatus, type User } from '$lib/api';
 
-  type User = { id: number; username: string; role: string };
   type LoginResult = { totp_required: boolean; challenge: string | null; user: User | null };
   type View = 'loading' | 'first-boot' | 'login' | 'totp' | 'authed';
 
@@ -21,22 +19,6 @@
   let error = $state('');
   let busy = $state(false);
 
-  function api(path: string, init?: RequestInit): Promise<Response> {
-    return fetch(`/api/v1${path}`, {
-      ...init,
-      headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
-    });
-  }
-
-  async function detail(res: Response, fallback: string): Promise<string> {
-    try {
-      const body = (await res.json()) as { detail?: string };
-      return body.detail ?? fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
   function reset(): void {
     username = '';
     password = '';
@@ -45,16 +27,15 @@
   }
 
   async function refresh(): Promise<void> {
-    const status = await api('/system/status');
-    const body = (await status.json()) as { first_boot_required: boolean; version: string };
-    version = body.version;
-    if (body.first_boot_required) {
+    const status = await fetchStatus();
+    version = status.version;
+    if (status.first_boot_required) {
       view = 'first-boot';
       return;
     }
-    const session = await api('/auth/session');
-    if (session.ok) {
-      user = (await session.json()) as User;
+    const session = await fetchSession();
+    if (session) {
+      user = session;
       view = 'authed';
     } else {
       view = 'login';
@@ -233,7 +214,7 @@
   {:else if view === 'authed' && user}
     <h2>Signed in</h2>
     <p>You are signed in as <strong>{user.username}</strong> ({user.role}).</p>
-    <p class="muted">Monitoring features arrive in the next phases.</p>
+    <a class="cta" href="/live">Open live view</a>
     <button type="button" onclick={logout}>Sign out</button>
   {/if}
 
@@ -241,20 +222,13 @@
     <p class="error" role="alert">{error}</p>
   {/if}
 
-  <footer>
-    <p class="note">Not a medical device — a sleep-insight and awareness tool only.</p>
-    {#if version}<p class="muted">v{version}</p>{/if}
-  </footer>
+  {#if version}<p class="version">v{version}</p>{/if}
 </main>
 
 <style>
   main {
-    font-family:
-      system-ui,
-      -apple-system,
-      sans-serif;
     max-width: 24rem;
-    margin: 3rem auto;
+    margin: 3rem auto 1rem;
     padding: 0 1rem;
     line-height: 1.5;
   }
@@ -276,27 +250,46 @@
   input {
     padding: 0.5rem;
     font-size: 1rem;
+    background: #131c2e;
+    color: inherit;
+    border: 1px solid #26314a;
+    border-radius: 0.4rem;
   }
   button {
     padding: 0.6rem;
     font-size: 1rem;
     cursor: pointer;
+    background: #2b6cb0;
+    color: #fff;
+    border: none;
+    border-radius: 0.4rem;
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .cta {
+    display: block;
+    text-align: center;
+    padding: 0.6rem;
+    margin: 1rem 0 0.75rem;
+    background: #2b6cb0;
+    color: #fff;
+    border-radius: 0.4rem;
+    text-decoration: none;
+    font-weight: 600;
   }
   .muted {
-    color: #666;
+    color: #8a93a6;
     font-size: 0.85rem;
   }
   .error {
-    color: #a00;
+    color: #ff8f8f;
     font-size: 0.9rem;
   }
-  .note {
-    color: #a00;
+  .version {
+    color: #8a93a6;
     font-size: 0.8rem;
-  }
-  footer {
     margin-top: 2rem;
-    border-top: 1px solid #ddd;
-    padding-top: 1rem;
   }
 </style>

@@ -28,8 +28,17 @@ drives the first-boot wizard with Playwright (create admin → sign out → sign
 Its `video` job (M1.1) brings up the core + `video` profile (go2rtc) plus a
 synthetic camera, then asserts the media-gateway criteria: registration makes the
 stream available via internal RTSP + a WebRTC signaling answer, an H.265 source is
-rejected, killing/restarting the camera flips health offline→online, and go2rtc is
-unreachable except through the authed api relay.
+rejected, killing/restarting the camera flips health offline→online, and only the
+go2rtc media port is published (its signaling + RTSP control planes stay dark).
+
+Its `e2e-live` job (M1.2) brings up the core + `video` stack, provisions an admin,
+a viewer, and a registered camera, then drives the PWA **Live view** with
+Playwright: WebRTC playback decodes frames within 3 s (`getStats().framesDecoded`),
+steady-state playout latency stays in the LAN budget, an unauthenticated `/live`
+redirects to sign-in, and a viewer-role user can watch. Its `lighthouse` job runs
+Lighthouse CI against the sign-in shell (with the local CA trusted in the NSS DB,
+so it's a genuine secure context) and asserts PWA installability, on a throttled
+mobile profile.
 
 ## `harness.yml` — test-harness self-test
 
