@@ -20,12 +20,26 @@ class Settings(BaseSettings):
     database_url: str = Field(min_length=1)
     secret_key: str = Field(min_length=16)
 
-    # Session cookie behaviour.
-    session_cookie_name: str = "eeper_session"
-    session_max_age_seconds: int = 60 * 60 * 12  # 12 hours
+    # Auth cookies (httpOnly, Secure, SameSite=Lax). The refresh cookie is
+    # path-scoped so it is only sent to the auth endpoints.
+    access_cookie_name: str = "eeper_access"
+    refresh_cookie_name: str = "eeper_refresh"
+    refresh_cookie_path: str = "/api/v1/auth"
 
-    # Minimum admin password length enforced by the first-boot wizard.
+    # Token lifetimes.
+    access_ttl_seconds: int = 15 * 60  # 15 minutes
+    refresh_ttl_seconds: int = 30 * 24 * 60 * 60  # 30 days
+    totp_challenge_ttl_seconds: int = 5 * 60  # 5 minutes
+
+    # First-boot admin password policy.
     min_password_length: int = 12
+
+    # TOTP.
+    totp_issuer: str = "eeper"
+
+    # Brute-force lockout: after N failed logins, lock the account for a window.
+    max_failed_logins: int = 5
+    lockout_seconds: int = 60
 
 
 @lru_cache(maxsize=1)

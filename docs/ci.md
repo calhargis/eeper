@@ -1,17 +1,17 @@
 # Continuous Integration
 
-Two workflows live in `.github/workflows/`.
+Three workflows live in `.github/workflows/`.
 
 ## `ci.yml` — checks on every PR
 
 Runs on `pull_request` and on `push` to `main`. Fails the build on any violation.
 
-| Job          | What it checks                                                                 |
-| ------------ | ------------------------------------------------------------------------------ |
-| `commitlint` | Every commit message follows Conventional Commits                              |
-| `python`     | `ruff check` + `ruff format --check` + `mypy --strict` + `pytest` on `server/` |
-| `web`        | `eslint` + `svelte-check` (TypeScript) on `web/`                               |
-| `format`     | `prettier --check` across the repo                                             |
+| Job          | What it checks                                                                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `commitlint` | Every commit message follows Conventional Commits                                                                                                                    |
+| `python`     | `ruff check` + `ruff format --check` + `mypy --strict` + `pytest` on `server/` (the auth-matrix tests spin up Postgres via testcontainers, so this job needs Docker) |
+| `web`        | `eslint` + `svelte-check` (TypeScript) on `web/`                                                                                                                     |
+| `format`     | `prettier --check` across the repo                                                                                                                                   |
 
 ## `stack.yml` — core stack integration
 
