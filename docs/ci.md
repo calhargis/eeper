@@ -16,13 +16,20 @@ Runs on `pull_request` and on `push` to `main`. Fails the build on any violation
 ## `stack.yml` — core stack integration
 
 Brings up the `core` stack with `deploy/install.sh` on a clean runner and runs
-the integration suite (`deploy/tests/`), asserting the M0.2 criteria end to end:
-no default credentials, HTTP→HTTPS + local-CA TLS + security headers, only Caddy
-publishes ports, 401 before the first-boot wizard, and every container non-root
-on a read-only rootfs. Tears the stack down afterwards.
+the core integration suite (`deploy/tests/test_stack.py`), asserting the M0.2
+criteria end to end: no default credentials, HTTP→HTTPS + local-CA TLS + security
+headers, only Caddy publishes ports, 401 before the first-boot wizard, and every
+container non-root on a read-only rootfs. Tears the stack down afterwards. (The
+media-gateway suite `deploy/tests/video/` runs in the separate `video` job below,
+which brings up the extra `video` profile it needs.)
 
 Its `e2e` job is the **browser harness**: it brings up a fresh core stack and
 drives the first-boot wizard with Playwright (create admin → sign out → sign in).
+Its `video` job (M1.1) brings up the core + `video` profile (go2rtc) plus a
+synthetic camera, then asserts the media-gateway criteria: registration makes the
+stream available via internal RTSP + a WebRTC signaling answer, an H.265 source is
+rejected, killing/restarting the camera flips health offline→online, and go2rtc is
+unreachable except through the authed api relay.
 
 ## `harness.yml` — test-harness self-test
 

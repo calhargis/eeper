@@ -13,8 +13,14 @@ runs with one `./install.sh` on any amd64/arm64 Linux box. See the full guide:
 | `web`   | `web` (built)            | Static PWA (served internally, proxied by Caddy) |
 | `db`    | `timescale/timescaledb`  | PostgreSQL + TimescaleDB (internal-only network) |
 
-Later phases add optional Compose profiles (`video`, `audio`, `sensors`,
-`pulseox`, `accel-*`).
+The `video` profile (M1.1) adds **go2rtc** (media gateway): cameras are registered
+via `/api/v1/cameras` (source validated against the H.264/≤1080p contract with
+ffprobe), go2rtc re-serves them over internal RTSP, and the api relays WebRTC
+signaling. go2rtc is internal-only (no published ports, digest-pinned like the db)
+and hardened (non-root, read-only, cap_drop ALL). `video-test.yml` is a test-only
+overlay adding a synthetic camera on the gateway's network.
+
+Later phases add more optional profiles (`audio`, `sensors`, `pulseox`, `accel-*`).
 
 ## Security defaults
 

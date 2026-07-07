@@ -16,14 +16,14 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase | Milestones | Status |
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
-| Phase 0 — Skeleton | M0.1–M0.3 | 🔨 in progress (M0.1–M0.2 done; M0.3 in review) |
-| Phase 1 — Video | M1.1–M1.4 | ⬜ not started |
+| Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
+| Phase 1 — Video | M1.1–M1.4 | 🔨 in progress (M1.1 in review) |
 | Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M0.3 part 2 (test harnesses) in review — completes Phase 0; Phase 1 (Video) next
+**Currently working on:** M1.1 (media gateway) in review; next up M1.2 (live view in the PWA)
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -123,11 +123,25 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 
 ## Phase 1 — Video
 
-### M1.1 — Media gateway & RTSP contract — ⬜
-- [ ] [A] Registered synthetic camera live via WebRTC + internal RTSP within 5 s
-- [ ] [A] Non-conformant codec (H.265 test source) rejected with actionable error
-- [ ] [A] Stream auto-recovery within 15 s; health transitions offline→online
-- [ ] [A] Signaling only via api relay; direct go2rtc access blocked
+### M1.1 — Media gateway & RTSP contract — 🔨 implemented (in review; CI: `stack`/`video` job)
+- [x] [A] Registered synthetic camera live via WebRTC + internal RTSP within 5 s
+- [x] [A] Non-conformant codec (H.265 test source) rejected with actionable error
+- [x] [A] Stream auto-recovery within 15 s; health transitions offline→online
+- [x] [A] Signaling only via api relay; direct go2rtc access blocked
+
+> go2rtc (media gateway) wired into Compose under the `video` profile: internal-only,
+> digest-pinned (third-party, like the db), hardened (non-root, read-only rootfs,
+> cap_drop ALL) with a tmpfs-seeded config. Admin-only camera registration
+> (`/api/v1/cameras`) validates the source with **ffprobe** (H.264 + orientation-aware
+> ≤1080p; rejects H.265/HEVC with an actionable 422); go2rtc re-serves internal RTSP
+> and the api **relays WebRTC signaling** (viewers can watch; go2rtc is never exposed).
+> A background monitor probes each source for offline↔online health + re-registers
+> streams after a gateway restart. Verified against a live stack + synthetic camera
+> (H.264 + H.265 paths): 6-test `video` integration suite (incl. an aiortc WebRTC
+> round-trip and kill/restart resilience) green; api image gains ffprobe and still
+> passes the Trivy CRITICAL gate. Design was pressure-tested by a critique panel
+> that caught the WebRTC-media transport limit — real browser playback is **M1.2**;
+> M1.1 delivers the plumbing (stream available, signaling answer, RTSP re-serve).
 
 ### M1.2 — Live view in the PWA — ⬜
 - [ ] [A] Playwright: WebRTC frames flowing within 3 s of page load
@@ -261,3 +275,4 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | 2026-07-06 | M0.2 implemented: hardened Compose `core` stack (Caddy edge proxy w/ local-CA TLS + security headers, FastAPI api, TimescaleDB, static web); `install.sh` (prereq check, secret generation, CA extraction); first-boot wizard + session auth gate; LAN-only/port isolation; every container non-root + read-only rootfs. New `stack` CI workflow boots the stack and runs the `deploy/tests` integration suite (9/9 local). Base images pinned; api/web/caddy pass the Trivy CRITICAL gate. |
 | 2026-07-07 | M0.3 part 1 (auth) merged in PR #3, CI green. |
 | 2026-07-07 | M0.3 part 2 (test harnesses): synthetic RTSP camera + MQTT sensor fleet + `harness` self-test workflow; Playwright browser harness (`e2e` job) driving the first-boot wizard. Phase 0 complete pending merge. |
+| 2026-07-07 | M1.1 (media gateway): go2rtc `video` profile (internal, hardened, digest-pinned); admin camera registration + ffprobe contract validation (H.264/≤1080p, H.265 rejected); internal RTSP re-serve; WebRTC signaling relay; background health/recovery monitor. New `video` CI job + synthetic H.265 source; 6-test suite green. Phase 0 fully merged. |

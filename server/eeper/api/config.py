@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     max_failed_logins: int = 5
     lockout_seconds: int = 60
 
+    # Media gateway (go2rtc). RTSP is derived from the same host for internal probes.
+    go2rtc_url: str = "http://go2rtc:1984"
+    go2rtc_rtsp_url: str = "rtsp://go2rtc:8554"
+    # Contract: H.264, <=1080p (orientation-agnostic short/long-edge budget).
+    max_video_short_edge: int = 1080
+    max_video_long_edge: int = 1920
+    probe_timeout_seconds: float = 6.0
+    # Background camera health/keep-warm probe cadence.
+    health_interval_seconds: float = 3.0
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

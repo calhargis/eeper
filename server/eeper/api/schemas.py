@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 Role = Literal["admin", "viewer"]
 
@@ -93,3 +94,37 @@ class ApiTokenOut(BaseModel):
 class ApiTokenCreated(ApiTokenOut):
     # The plaintext token — returned once, at creation, and never again.
     token: str
+
+
+# ── cameras ──────────────────────────────────────────────────────────────────
+
+
+class CameraCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    source_url: str = Field(min_length=1, max_length=500)
+
+    @field_validator("source_url")
+    @classmethod
+    def _require_rtsp(cls, value: str) -> str:
+        # The source is handed to ffprobe and go2rtc verbatim. Restrict it to
+        # rtsp(s):// so a value can't select another ffprobe protocol (file:,
+        # http:, data:, …) or be parsed as an option — closing off local-file
+        # reads / SSRF and keeping the "RTSP contract" honest.
+        scheme = urlsplit(value).scheme.lower()
+        if scheme not in ("rtsp", "rtsps"):
+            raise ValueError("source_url must be an rtsp:// or rtsps:// URL")
+        return value
+
+
+class CameraOut(BaseModel):
+    id: int
+    name: str
+    # source_url is deliberately omitted: RTSP URLs embed camera credentials and
+    # the internal camera IP. It is admin-only input and is never echoed back —
+    # clients watch only via the api-relayed stream, never the raw source.
+    codec: str
+    width: int
+    height: int
+    enabled: bool
+    online: bool | None = None
+    last_checked: datetime | None = None
