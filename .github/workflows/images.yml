@@ -33,7 +33,12 @@ jobs:
         run: |
           images=$(find . -name Dockerfile -not -path '*/node_modules/*' -not -path '*/harness/*' -printf '%h\n' \
             | sed 's#^\./##' | sort -u \
-            | jq -R -s -c 'split("\n") | map(select(length>0)) | map({name: (split("/") | last), context: .})')
+            | jq -R -s -c '
+                split("\n") | map(select(length>0)) | map({
+                  name: (split("/") | last),
+                  context: .,
+                  platforms: (if . == "adapters/csi" then "linux/arm64" else "linux/amd64,linux/arm64" end)
+                })')
           echo "images=$images" >> "$GITHUB_OUTPUT"
           if [ "$images" = "[]" ]; then
             echo "has_images=false" >> "$GITHUB_OUTPUT"
@@ -62,11 +67,14 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Gate: build each release architecture into the local daemon and scan it
-      # with Trivy BEFORE anything is pushed, so a CRITICAL CVE in either arch
-      # fails the build and blocks the release. PRs scan amd64 for fast
-      # feedback; main additionally scans arm64 so every pushed arch is covered.
+      # Gate: build each release architecture the image targets into the local
+      # daemon and scan it with Trivy BEFORE anything is pushed, so a CRITICAL CVE
+      # in any pushed arch fails the build. PRs scan amd64 for fast feedback; main
+      # additionally scans arm64. An arm64-only image (e.g. the Pi CSI adapter) has
+      # no amd64 to scan, so its arm64 leg runs on PRs too — otherwise a PR would
+      # build/scan nothing for it (a coverage hole).
       - name: Build amd64 (for scanning)
+        if: ${{ contains(matrix.platforms, 'amd64') }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
@@ -76,6 +84,7 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}-amd64
           cache-to: type=gha,scope=${{ matrix.name }}-amd64,mode=max
       - name: Scan amd64 (Trivy — fail on CRITICAL)
+        if: ${{ contains(matrix.platforms, 'amd64') }}
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           image-ref: eeper-scan/${{ matrix.name }}:amd64
@@ -86,7 +95,7 @@ jobs:
           vuln-type: os,library
 
       - name: Build arm64 (for scanning)
-        if: github.event_name == 'push'
+        if: ${{ (github.event_name == 'push' || !contains(matrix.platforms, 'amd64')) && contains(matrix.platforms, 'arm64') }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
@@ -96,7 +105,7 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}-arm64
           cache-to: type=gha,scope=${{ matrix.name }}-arm64,mode=max
       - name: Scan arm64 (Trivy — fail on CRITICAL)
-        if: github.event_name == 'push'
+        if: ${{ (github.event_name == 'push' || !contains(matrix.platforms, 'amd64')) && contains(matrix.platforms, 'arm64') }}
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           image-ref: eeper-scan/${{ matrix.name }}:arm64
@@ -116,12 +125,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build (amd64 + arm64) and push
+      - name: Build and push (each targeted arch)
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platforms }}
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest

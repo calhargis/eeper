@@ -1,0 +1,25 @@
+# Test-only overlay (M1.3): the USB adapter as a camera source on the go2rtc
+# `edge` network. With no V4L2_DEVICE it uses a synthetic lavfi input through the
+# SAME encode + RTSP serve path a real webcam takes, so CI exercises the adapter
+# end-to-end without kernel-module/device access (see docs/ci.md — v4l2loopback
+# can't be loaded on hosted runners). Layer AFTER docker-compose.yml + video-test.yml:
+#   docker compose -f docker-compose.yml -f video-test.yml -f adapter-test.yml \
+#     --profile core --profile video up -d
+#
+# Hardening is inlined (a YAML anchor from docker-compose.yml can't cross files).
+services:
+  usb-adapter:
+    build:
+      context: ../adapters/usb
+    image: eeper-usb-adapter:dev
+    profiles: [video]
+    user: '10001:10001'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    networks: [edge]
+    restart: unless-stopped

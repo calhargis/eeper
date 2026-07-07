@@ -17,13 +17,13 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
 | Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
-| Phase 1 — Video | M1.1–M1.4 | 🔨 in progress (M1.1 merged; M1.2 in review) |
+| Phase 1 — Video | M1.1–M1.4 | 🔨 in progress (M1.1–M1.2 merged; M1.3 in review) |
 | Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M1.2 (live view in the PWA) in review; next up M1.3 (camera adapters)
+**Currently working on:** M1.3 (camera adapters) in review; next up M1.4 (recorder)
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -168,11 +168,28 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > decodes frames in ~2 s. CSP hashing stays deferred (adapter-static SPA can't emit
 > SvelteKit hashes; WebRTC bypasses CSP anyway).
 
-### M1.3 — Adapters (USB & Pi CSI) — ⬜
-- [ ] [A] USB adapter (V4L2 loopback in CI) → contract-conformant stream end-to-end
-- [ ] [A] Adapter images multi-arch + pass contract validation suite
+### M1.3 — Adapters (USB & Pi CSI) — 🔨 implemented (in review; CI: `stack`/`adapters-usb` + `images` jobs)
+- [~] [A] USB adapter → contract-conformant stream end-to-end (gateway → browser).
+  Hosted CI can't `modprobe v4l2loopback` (kernel lockdown — verified), so the
+  required gate runs the SAME adapter image with a synthetic input through the
+  identical encode→RTSP→gateway→browser path; a best-effort non-blocking leg tries
+  a real loopback if a runner permits. Real V4L2 device-open is the [M] bench.
+- [x] [A] Adapter images multi-arch (USB amd64+arm64; CSI arm64-only) + pass the
+  same contract-validation suite as native cameras; both Trivy-CRITICAL-clean.
 - [ ] [M] Physical USB webcam + CSI Camera Module 3 stream via adapters on bench — ______
 - [ ] [M] Android phone RTSP-app onboarding using only the doc — ______
+
+> Two first-party adapter images (mediamtx-binary + encoder, the proven
+> synthetic-camera pattern rebuilt to pass the CRITICAL gate): **USB** (ffmpeg
+> V4L2, amd64+arm64) reads a UVC webcam — or a synthetic lavfi source in CI —
+> through the same H.264-baseline/≤1080p encode; **CSI** (mediamtx native
+> `rpiCamera`/libcamera, arm64-only) for the Pi Camera Module (capture is [M]
+> bench). `images.yml` gained a per-image `platforms` field (CSI arm64-only) with
+> the PR-scan hole fixed. Verified locally: USB stream is H.264 baseline 720p and
+> plays end-to-end through the gateway; both images build their target arches and
+> pass Trivy CRITICAL. Plus a phone-RTSP doc mapping the app config to the real API
+> contract/errors. The v4l2loopback-in-CI limit was a design-workflow finding the
+> user signed off on (hosted fallback).
 
 ### M1.4 — Recorder — ⬜
 - [ ] [A] Ring buffer: segments written, quota eviction, promoted clips survive
@@ -293,4 +310,5 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | 2026-07-07 | M0.3 part 1 (auth) merged in PR #3, CI green. |
 | 2026-07-07 | M0.3 part 2 (test harnesses): synthetic RTSP camera + MQTT sensor fleet + `harness` self-test workflow; Playwright browser harness (`e2e` job) driving the first-boot wizard. Phase 0 complete pending merge. |
 | 2026-07-07 | M1.1 (media gateway): go2rtc `video` profile (internal, hardened, digest-pinned); admin camera registration + ffprobe contract validation (H.264/≤1080p, H.265 rejected); internal RTSP re-serve; WebRTC signaling relay; background health/recovery monitor. New `video` CI job + synthetic H.265 source; 6-test suite green. Phase 0 fully merged. Merged in PR #5. |
-| 2026-07-07 | M1.2 (live view in the PWA): real browser WebRTC media (go2rtc media port 8555 published + explicit ICE candidate via `EEPER_GO2RTC_CANDIDATE`; control planes stay dark); installable PWA (`@vite-pwa/sveltekit` manifest + Workbox SW, icons); Live view with recv-only WebRTC playback, per-camera health, multi-camera switching, client auth guard (viewer role included). New `e2e-live` (getStats frames <3s, latency, auth redirect, viewer access) + `lighthouse` (installability) CI jobs; `test_gateway_...` rewritten to a media-only-port allowlist. Architecture locked by a design workflow + a headless-Chromium spike. |
+| 2026-07-07 | M1.2 (live view in the PWA): real browser WebRTC media (go2rtc media port 8555 published + explicit ICE candidate via `EEPER_GO2RTC_CANDIDATE`; control planes stay dark); installable PWA (`@vite-pwa/sveltekit` manifest + Workbox SW, icons); Live view with recv-only WebRTC playback, per-camera health, multi-camera switching, client auth guard (viewer role included). New `e2e-live` (getStats frames <3s, latency, auth redirect, viewer access) + `lighthouse` (installability) CI jobs; `test_gateway_...` rewritten to a media-only-port allowlist. Architecture locked by a design workflow + a headless-Chromium spike. Merged in PR #6. |
+| 2026-07-07 | M1.3 (camera adapters): two first-party adapter images (mediamtx + encoder) — USB (ffmpeg/V4L2, amd64+arm64) and CSI (mediamtx native `rpiCamera`/libcamera, arm64-only, Pi capture = [M] bench); both H.264-baseline/≤1080p contract-conformant + Trivy-CRITICAL-clean. `images.yml` per-image `platforms` (CSI arm64-only, PR-scan fix); new `adapters-usb` CI job (contract + browser end-to-end via the shared suite); phone-RTSP doc. v4l2loopback can't load on hosted runners (verified) → hosted fallback with the synthetic input through the identical path (user-approved). Design-workflow-driven. |

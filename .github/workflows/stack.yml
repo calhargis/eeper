@@ -186,6 +186,93 @@ jobs:
         working-directory: deploy
         run: docker compose -f docker-compose.yml -f video-test.yml --profile core --profile video down -v
 
+  adapters-usb:
+    name: USB adapter (V4L2) contract + browser
+    runs-on: ubuntu-latest
+    env:
+      EEPER_GO2RTC_CANDIDATE: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install "httpx>=0.27,<1.0" "pytest>=8.0,<9.0" "aiortc>=1.9,<2.0"
+          (cd web && npm ci)
+          (cd web && npx playwright install --with-deps chromium)
+
+      # Core + go2rtc + the USB adapter (synthetic lavfi input — the SAME encode +
+      # serve path a real webcam takes; hosted runners can't load v4l2loopback, so
+      # the real device open is the [MANUAL] bench — see docs/ci.md).
+      - name: Bring up the core + video + adapter stack
+        working-directory: deploy
+        run: |
+          ./install.sh
+          docker compose -f docker-compose.yml -f video-test.yml -f adapter-test.yml \
+            --profile core --profile video up -d --build --wait
+
+      # Contract: the adapter stream registers (H.264/<=1080p), re-serves H.264,
+      # answers WebRTC, and the container is hardened.
+      - name: Adapter contract suite
+        run: pytest deploy/tests/video/test_usb_adapter.py -v
+
+      # End-to-end: the adapter's stream plays in the browser harness (same suite
+      # native cameras pass). EEPER_TEST_ADMIN=admin reuses the admin the contract
+      # suite created, avoiding a first-boot clash.
+      - name: Adapter browser harness
+        working-directory: web
+        env:
+          EEPER_TEST_SOURCE: rtsp://usb-adapter:8554/cam
+          EEPER_TEST_ADMIN: admin
+        run: npx playwright test --project=live
+
+      # Best-effort ONLY: exercise a real V4L2 capture if this runner happens to
+      # permit loading v4l2loopback (hosted runners don't — kernel lockdown). Never
+      # red-gates: every risky step is guarded, and the whole step is non-blocking.
+      - name: (best-effort) real V4L2 loopback capture
+        continue-on-error: true
+        run: |
+          sudo apt-get update || exit 0
+          sudo apt-get install -y v4l2loopback-dkms "linux-headers-$(uname -r)" ffmpeg || exit 0
+          sudo modprobe v4l2loopback video_nr=10 exclusive_caps=1 card_label=eeper || exit 0
+          ffmpeg -re -stream_loop -1 -f lavfi -i testsrc2=size=1280x720:rate=15 \
+            -c:v mjpeg -f v4l2 /dev/video10 & sleep 4
+          gid=$(stat -c %g /dev/video10)
+          docker run -d --name usb-real --device /dev/video10 --group-add "$gid" \
+            -e V4L2_DEVICE=/dev/video10 -p 127.0.0.1:8560:8554 \
+            --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
+            eeper-usb-adapter:dev || exit 0
+          sleep 6
+          docker run --rm --network host --entrypoint ffprobe eeper-usb-adapter:dev \
+            -v error -rtsp_transport tcp -select_streams v:0 \
+            -show_entries stream=codec_name -of csv=p=0 rtsp://127.0.0.1:8560/cam \
+            | grep -q h264 && echo "real V4L2 capture -> H.264 OK"
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-adapter
+          path: web/playwright-report/
+          retention-days: 7
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose -f docker-compose.yml -f video-test.yml -f adapter-test.yml --profile core --profile video logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose -f docker-compose.yml -f video-test.yml -f adapter-test.yml --profile core --profile video down -v
+
   lighthouse:
     name: PWA (Lighthouse installability + budget)
     runs-on: ubuntu-latest
