@@ -69,8 +69,10 @@ jobs:
           docker compose -f docker-compose.yml -f video-test.yml \
             --profile core --profile video up -d --build --wait
 
+      # Only the M1.1 gateway tests here; the adapter suite (test_usb_adapter.py)
+      # needs the adapter overlay and runs in the `adapters-usb` job.
       - name: Run media-gateway tests
-        run: pytest deploy/tests/video -v
+        run: pytest deploy/tests/video/test_cameras.py -v
 
       - name: Dump logs on failure
         if: failure()
