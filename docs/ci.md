@@ -1,6 +1,6 @@
 # Continuous Integration
 
-Three workflows live in `.github/workflows/`.
+Four workflows live in `.github/workflows/`.
 
 ## `ci.yml` — checks on every PR
 
@@ -20,6 +20,16 @@ the integration suite (`deploy/tests/`), asserting the M0.2 criteria end to end:
 no default credentials, HTTP→HTTPS + local-CA TLS + security headers, only Caddy
 publishes ports, 401 before the first-boot wizard, and every container non-root
 on a read-only rootfs. Tears the stack down afterwards.
+
+Its `e2e` job is the **browser harness**: it brings up a fresh core stack and
+drives the first-boot wizard with Playwright (create admin → sign out → sign in).
+
+## `harness.yml` — test-harness self-test
+
+Brings up the synthetic inputs (`deploy/harness/`) — an RTSP synthetic camera and
+an MQTT synthetic sensor fleet — and asserts both are reachable/publishing
+(ffprobe the stream; subscribe and validate the sensor contract). Intended as a
+required check for later milestones, which build on these inputs.
 
 ## `images.yml` — build, scan, push
 

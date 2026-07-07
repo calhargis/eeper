@@ -31,7 +31,7 @@ jobs:
       - id: find
         name: Build matrix from Dockerfiles
         run: |
-          images=$(find . -name Dockerfile -not -path '*/node_modules/*' -printf '%h\n' \
+          images=$(find . -name Dockerfile -not -path '*/node_modules/*' -not -path '*/harness/*' -printf '%h\n' \
             | sed 's#^\./##' | sort -u \
             | jq -R -s -c 'split("\n") | map(select(length>0)) | map({name: (split("/") | last), context: .})')
           echo "images=$images" >> "$GITHUB_OUTPUT"

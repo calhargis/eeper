@@ -1,0 +1,27 @@
+# Synthetic RTSP camera for CI/dev: mediamtx serves an H.264 test pattern
+# (testsrc2, which carries a moving timecode) plus a known 1 kHz sine audio track
+# on rtsp://<host>:8554/cam. Contract-conformant: H.264 baseline, 720p, 15 fps.
+logLevel: info
+rtspAddress: :8554
+# Nothing else is needed for the harness.
+rtmp: no
+hls: no
+webrtc: no
+srt: no
+api: no
+metrics: no
+pprof: no
+playback: no
+
+paths:
+  cam:
+    # Publish the test source into this path when the server starts, and restart
+    # ffmpeg if it ever exits (keeps the stream continuously available).
+    runOnInit: >
+      ffmpeg -re
+      -f lavfi -i testsrc2=size=1280x720:rate=15
+      -f lavfi -i sine=frequency=1000:sample_rate=16000
+      -c:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 -tune zerolatency
+      -c:a aac -ar 16000 -ac 1
+      -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam
+    runOnInitRestart: yes
