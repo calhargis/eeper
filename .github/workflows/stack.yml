@@ -48,6 +48,10 @@ jobs:
   video:
     name: Media gateway integration (M1.1)
     runs-on: ubuntu-latest
+    # Pin the go2rtc media bind + advertised ICE candidate to loopback (install.sh
+    # would otherwise auto-detect the runner's routable LAN IP).
+    env:
+      EEPER_GO2RTC_CANDIDATE: 127.0.0.1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -101,15 +105,15 @@ jobs:
         working-directory: deploy
         run: ./install.sh
 
-      - name: Run browser harness
+      - name: Run browser harness (first-boot wizard)
         working-directory: web
-        run: npx playwright test
+        run: npx playwright test --project=wizard
 
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-wizard
           path: web/playwright-report/
           retention-days: 7
 
@@ -117,6 +121,112 @@ jobs:
         if: failure()
         working-directory: deploy
         run: docker compose --profile core logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose --profile core down -v
+
+  e2e-live:
+    name: Live view (Playwright WebRTC)
+    runs-on: ubuntu-latest
+    # Pin the go2rtc media bind + advertised ICE candidate to loopback, which the
+    # runner's headless Chromium can always reach. Without this install.sh would
+    # auto-detect the runner's routable LAN IP (its `ip route` src), which happens
+    # to work but isn't what we want to depend on.
+    env:
+      EEPER_GO2RTC_CANDIDATE: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Install Playwright browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      # Core + go2rtc (video profile) + synthetic camera. EEPER_GO2RTC_CANDIDATE
+      # is pinned to 127.0.0.1 (job env), so the published media port + advertised
+      # ICE candidate both land on loopback the runner's browser can reach.
+      - name: Bring up the core + video stack
+        working-directory: deploy
+        run: |
+          ./install.sh
+          docker compose -f docker-compose.yml -f video-test.yml \
+            --profile core --profile video up -d --build --wait
+
+      # Provisions admin + viewer + a registered camera, then asserts the M1.2
+      # criteria: frames flow within 3s, playout latency in budget, unauth
+      # redirect, and viewer-role access.
+      - name: Run Live view harness
+        working-directory: web
+        run: npx playwright test --project=live
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-live
+          path: web/playwright-report/
+          retention-days: 7
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose -f docker-compose.yml -f video-test.yml --profile core --profile video logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose -f docker-compose.yml -f video-test.yml --profile core --profile video down -v
+
+  lighthouse:
+    name: PWA (Lighthouse installability + budget)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Pinned to the 0.13 line (Lighthouse 11): it still ships the PWA
+      # installability audits that Lighthouse 12 removed.
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.13.x
+
+      # Core stack is enough for the installable app shell (the sign-in landing).
+      - name: Bring up the core stack (install.sh)
+        working-directory: deploy
+        run: ./install.sh
+
+      # Trust the local CA in the NSS DB Chrome uses, so the origin is a genuine
+      # secure context (installability depends on it) — not --ignore-certificate-errors.
+      - name: Trust the local CA
+        run: |
+          sudo apt-get update && sudo apt-get install -y libnss3-tools
+          mkdir -p "$HOME/.pki/nssdb"
+          certutil -d sql:"$HOME/.pki/nssdb" -A -n eeper-local-ca -t "C,," \
+            -i deploy/eeper-local-ca.crt
+
+      - name: Run Lighthouse CI
+        working-directory: web
+        run: lhci autorun --config=lighthouserc.json
+
+      - name: Upload Lighthouse report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: web/.lighthouseci/
+          retention-days: 7
 
       - name: Tear down
         if: always()

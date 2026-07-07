@@ -187,15 +187,33 @@ def test_webrtc_relay_requires_auth(camera_id: int) -> None:
     assert response.status_code == 401
 
 
-def test_gateway_is_not_directly_reachable(camera_id: int) -> None:
-    # Criterion 4: go2rtc publishes no ports and is unreachable off its network.
+def test_gateway_control_planes_are_not_reachable(camera_id: int) -> None:
+    # M1.2 scoped isolation invariant: the ONLY published go2rtc port is the WebRTC
+    # media transport (8555, tcp+udp) — a deliberate, minimal regression of M1.1's
+    # zero-ports stance so the browser can reach media. The signaling REST (:1984)
+    # and RTSP re-serve (:8554) — the ffprobe/credential/stream-management surface
+    # that actually embodies the isolation stance — stay UNPUBLISHED and dark off
+    # the network. Signaling still flows only through the authenticated api relay.
     cid = _compose("ps", "-q", "go2rtc").stdout.strip()
     assert cid, "go2rtc not running"
-    published = subprocess.run(
-        ["docker", "port", cid], capture_output=True, text=True
-    ).stdout.strip()
-    assert published == "", f"go2rtc must not publish ports, got: {published}"
+    # `docker port` lists one line per published container port, e.g.
+    # "8555/tcp -> 127.0.0.1:8555".
+    published = subprocess.run(["docker", "port", cid], capture_output=True, text=True).stdout
+    lines = [line for line in published.splitlines() if "->" in line]
+    exposed = {line.split(" ->", 1)[0].strip() for line in lines}
+    assert exposed == {"8555/tcp", "8555/udp"}, (
+        f"go2rtc must publish ONLY the media port; got {sorted(exposed)} "
+        "(the :1984 signaling and :8554 RTSP control planes must stay unpublished)"
+    )
+    # And it must bind to a specific interface, never a wildcard — binding 8555 to
+    # 0.0.0.0/:: would expose media on every interface (incl. any public one),
+    # defeating the point of EEPER_GO2RTC_CANDIDATE.
+    host_ips = {line.split("->", 1)[1].strip().rsplit(":", 1)[0].strip("[]") for line in lines}
+    assert host_ips.isdisjoint({"0.0.0.0", "::"}), (
+        f"go2rtc media port must bind a specific interface, not a wildcard; got {sorted(host_ips)}"
+    )
 
+    # And the control planes stay unreachable from a foreign docker network.
     network = f"eeper-foreign-{os.getpid()}"
     subprocess.run(
         ["docker", "network", "create", network], capture_output=True, check=False

@@ -22,8 +22,13 @@
 		X-Frame-Options "DENY"
 		Referrer-Policy "no-referrer"
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		# NOTE: script/style 'unsafe-inline' is a temporary allowance for the
-		# SvelteKit bootstrap; M1.2 tightens this with hashed CSP.
+		# NOTE: script/style 'unsafe-inline' allows the SvelteKit bootstrap + the
+		# inline service-worker registration. Hashed/nonce CSP is deferred — the
+		# adapter-static SPA (ssr/prerender off) can't emit SvelteKit CSP hashes,
+		# and WebRTC media bypasses CSP by spec, so tightening is all shell risk
+		# for zero video benefit. connect-src 'self' covers the same-origin SDP
+		# relay; WebRTC media (to go2rtc's published 8555) isn't gated by any fetch
+		# directive. Tracked as its own hardening milestone.
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'"
 		-Server
 	}

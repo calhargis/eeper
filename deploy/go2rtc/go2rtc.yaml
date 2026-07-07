@@ -12,6 +12,13 @@ rtsp:
   listen: ':8554' # internal RTSP re-serve for downstream consumers (recorder, insight-engine)
 
 webrtc:
-  listen: ':8555' # internal; browser-reachable media transport is wired in M1.2
+  listen: ':8555' # fixed TCP+UDP media transport; port 8555 is published on the host
+  # Advertise a browser-reachable ICE candidate. go2rtc hardcode-excludes its own
+  # Docker-bridge (172.16/12) address, so auto-discovery alone yields no candidate a
+  # client can route to. EEPER_GO2RTC_CANDIDATE is the host address the browser
+  # reaches (127.0.0.1 for local/CI; the host LAN IP for a real install — set by
+  # install.sh). Signaling still flows only through the authenticated api relay.
+  candidates:
+    - ${EEPER_GO2RTC_CANDIDATE:127.0.0.1}:8555
   # No public STUN: self-hosted, no internet egress, and it would leak the host IP.
   ice_servers: []

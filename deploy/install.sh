@@ -18,6 +18,22 @@ cd "$SCRIPT_DIR"
 log() { printf '\033[36m==>\033[0m %s\n' "$*"; }
 err() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; }
 
+# Best-effort host LAN IP for the WebRTC ICE candidate. Prefers an explicit
+# EEPER_DOMAIN when it is already an IP; else asks the routing table (Linux);
+# else falls back to loopback (host-only). Never fails under `set -e`.
+detect_lan_ip() {
+  local domain="${EEPER_DOMAIN:-localhost}"
+  if printf '%s' "$domain" | grep -Eq '^[0-9]+(\.[0-9]+){3}$'; then
+    printf '%s' "$domain"
+    return 0
+  fi
+  local ip=""
+  if command -v ip >/dev/null 2>&1; then
+    ip="$(ip route get 1 2>/dev/null | awk '{for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit }}')"
+  fi
+  printf '%s' "${ip:-127.0.0.1}"
+}
+
 # ─── prerequisites ─────────────────────────────────────────────────────────
 command -v docker >/dev/null 2>&1 || { err "docker is not installed"; exit 1; }
 docker compose version >/dev/null 2>&1 || { err "docker compose v2 is required"; exit 1; }
@@ -32,6 +48,19 @@ if [ ! -f "$ENV_FILE" ]; then
   secret_key="$(openssl rand -hex 32)"
   [ "${#postgres_password}" -eq 48 ] || { err "failed to generate POSTGRES_PASSWORD"; exit 1; }
   [ "${#secret_key}" -eq 64 ] || { err "failed to generate EEPER_SECRET_KEY"; exit 1; }
+  # The host address a browser reaches go2rtc's WebRTC media port (8555) on. It is
+  # published there and advertised as the ICE candidate (go2rtc excludes its own
+  # Docker-bridge address, so this must be explicit). 127.0.0.1 works only on the
+  # host itself; a real LAN install needs the host's LAN IP so phones can connect.
+  go2rtc_candidate="${EEPER_GO2RTC_CANDIDATE:-$(detect_lan_ip)}"
+  cand_domain="${EEPER_DOMAIN:-localhost}"
+  # Docker binds the media port to this address, so it must be a literal IP — a
+  # hostname makes `docker compose up` hard-fail with "invalid IP address".
+  if ! printf '%s' "$go2rtc_candidate" | grep -Eq '^[0-9]+(\.[0-9]+){3}$'; then
+    err "EEPER_GO2RTC_CANDIDATE must be an IPv4 address, got: '$go2rtc_candidate'"
+    echo "    Set it to the host's LAN IP (not a hostname) in deploy/.env." >&2
+    exit 1
+  fi
   # Write atomically (temp file + mv, same dir) so an interruption can't leave a
   # partial .env that the re-run guard below would then preserve.
   tmp_env="$(mktemp "${ENV_FILE}.XXXXXX")"
@@ -41,10 +70,15 @@ EEPER_DOMAIN=${EEPER_DOMAIN:-localhost}
 EEPER_BIND_ADDR=${EEPER_BIND_ADDR:-0.0.0.0}
 EEPER_HTTP_PORT=${EEPER_HTTP_PORT:-80}
 EEPER_HTTPS_PORT=${EEPER_HTTPS_PORT:-443}
+EEPER_GO2RTC_CANDIDATE=$go2rtc_candidate
 POSTGRES_PASSWORD=$postgres_password
 EEPER_SECRET_KEY=$secret_key
 EOF
   mv "$tmp_env" "$ENV_FILE"
+  if [ "$go2rtc_candidate" = "127.0.0.1" ] && [ "$cand_domain" != "localhost" ]; then
+    err "could not detect a LAN IP for WebRTC — live view will work only on this host."
+    echo "    Set EEPER_GO2RTC_CANDIDATE to the host's LAN IP in deploy/.env and re-run." >&2
+  fi
 else
   log "deploy/.env already exists — keeping existing secrets"
 fi
