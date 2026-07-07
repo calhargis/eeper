@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -36,6 +36,26 @@ class User(Base):
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Camera(Base):
+    """A registered camera. ``source_url`` is validated against the RTSP contract
+    (H.264, <=1080p) at registration; the go2rtc stream is named ``cam{id}``."""
+
+    __tablename__ = "cameras"
+    # One registration per source within a household — a duplicate would spin up a
+    # second go2rtc stream + health probe for the same physical camera.
+    __table_args__ = (UniqueConstraint("household_id", "source_url", name="uq_camera_source"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    name: Mapped[str] = mapped_column(String(150))
+    source_url: Mapped[str] = mapped_column(String(500))
+    codec: Mapped[str] = mapped_column(String(20))
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

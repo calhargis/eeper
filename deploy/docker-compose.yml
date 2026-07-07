@@ -45,6 +45,8 @@ services:
     environment:
       EEPER_DATABASE_URL: postgresql+asyncpg://eeper:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — run deploy/install.sh}@db:5432/eeper
       EEPER_SECRET_KEY: ${EEPER_SECRET_KEY:?EEPER_SECRET_KEY is required — run deploy/install.sh}
+      # Internal media gateway (only present with the `video` profile).
+      EEPER_GO2RTC_URL: http://go2rtc:1984
     tmpfs:
       - /tmp
     networks: [edge, internal]
@@ -61,6 +63,38 @@ services:
     tmpfs:
       - /tmp:mode=1777
     networks: [edge]
+
+  # Media gateway (video profile). Third-party image, pinned by digest and tracked
+  # by Renovate (like the db image); internal-only — no ports are published, and
+  # the api relays WebRTC signaling. It lives on `edge` (not the isolated internal
+  # net) because it must reach camera sources (LAN cameras in production).
+  go2rtc:
+    <<: *hardening
+    image: alexxit/go2rtc:latest@sha256:675c318b23c06fd862a61d262240c9a63436b4050d177ffc68a32710d9e05bae
+    profiles: [video]
+    user: '10001:10001'
+    # Seed the config onto a writable tmpfs so go2rtc runs non-root + read-only and
+    # can cleanly persist streams the api registers at runtime.
+    command:
+      [
+        'sh',
+        '-c',
+        'cp /seed/go2rtc.yaml /config/go2rtc.yaml && exec go2rtc -config /config/go2rtc.yaml',
+      ]
+    volumes:
+      - ./go2rtc/go2rtc.yaml:/seed/go2rtc.yaml:ro
+    tmpfs:
+      - /config:mode=1777
+      - /tmp:mode=1777
+    networks: [edge]
+    healthcheck:
+      # Gate readiness on the REST API the api registers streams against, so
+      # `up --wait` (and callers) don't race a not-yet-listening gateway.
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:1984/api/streams']
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   caddy:
     <<: *hardening

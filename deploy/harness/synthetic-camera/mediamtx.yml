@@ -25,3 +25,12 @@ paths:
       -c:a aac -ar 16000 -ac 1
       -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam
     runOnInitRestart: yes
+
+  # An H.265/HEVC source, used only to prove the RTSP contract rejects non-H.264.
+  cam-h265:
+    runOnInit: >
+      ffmpeg -re
+      -f lavfi -i testsrc2=size=640x480:rate=15
+      -c:v libx265 -preset ultrafast -pix_fmt yuv420p -g 30
+      -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam-h265
+    runOnInitRestart: yes

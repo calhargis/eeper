@@ -1,0 +1,17 @@
+# go2rtc for eeper — the media gateway. Streams are registered dynamically by the
+# api over the REST API (this file is a seed, copied onto a writable tmpfs at
+# start). Internal-only: no ports are published; the api relays WebRTC signaling
+# and clients never reach go2rtc directly.
+log:
+  level: info
+
+api:
+  listen: ':1984' # internal REST + WebRTC signaling relay target; never published
+
+rtsp:
+  listen: ':8554' # internal RTSP re-serve for downstream consumers (recorder, insight-engine)
+
+webrtc:
+  listen: ':8555' # internal; browser-reachable media transport is wired in M1.2
+  # No public STUN: self-hosted, no internet egress, and it would leak the host IP.
+  ice_servers: []

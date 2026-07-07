@@ -1,0 +1,15 @@
+# Test-only overlay for the M1.1 media-gateway integration tests. Adds a
+# synthetic camera to the SAME project as go2rtc (on the `edge` network) so the
+# gateway can pull rtsp://synthetic-camera:8554/cam. NOT used by a real install.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f video-test.yml --profile core --profile video up -d
+
+services:
+  synthetic-camera:
+    image: bluenviron/mediamtx:latest-ffmpeg@sha256:08c837deb7bac85d509e2a4c2737308e5a34f8f084a46a0d8793cdb0579a6e5d
+    profiles: [video]
+    restart: unless-stopped
+    volumes:
+      - ./harness/synthetic-camera/mediamtx.yml:/mediamtx.yml:ro
+    networks: [edge]

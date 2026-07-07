@@ -17,9 +17,14 @@ RUN pip install .
 FROM python:3.12-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS runtime
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/opt/venv/bin:$PATH"
-# Non-root runtime user (read-only rootfs is enforced by compose; only /tmp is tmpfs).
-RUN groupadd --system app && useradd --system --gid app --uid 10001 app
+    PATH="/opt/venv/bin:$PATH" \
+    HOME=/tmp \
+    TMPDIR=/tmp
+# ffprobe validates camera streams against the RTSP contract (codec + resolution).
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ffmpeg \
+  && rm -rf /var/lib/apt/lists/* \
+  && groupadd --system app && useradd --system --gid app --uid 10001 app
 COPY --from=build /opt/venv /opt/venv
 USER app
 EXPOSE 8000
