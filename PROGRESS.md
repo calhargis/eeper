@@ -7,7 +7,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 - `[A]` = automated criterion (must be green in CI). `[M]` = manual procedure (record date + tester initials when performed, e.g. `✔ 2026-08-14 JD`).
 - Statuses: ⬜ not started · 🔨 in progress · ✅ done · 🚧 blocked (add a note)
 
-**Last updated:** 2026-07-06
+**Last updated:** 2026-07-07
 
 ---
 
@@ -16,14 +16,14 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase | Milestones | Status |
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
-| Phase 0 — Skeleton | M0.1–M0.3 | 🔨 in progress (M0.1–M0.2 implemented) |
+| Phase 0 — Skeleton | M0.1–M0.3 | 🔨 in progress (M0.1–M0.2 done; M0.3 in review) |
 | Phase 1 — Video | M1.1–M1.4 | ⬜ not started |
 | Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M0.3 — auth system (part 1: JWT/refresh, TOTP, roles, api_tokens, lockout); test harnesses follow as part 2
+**Currently working on:** M0.3 part 2 (test harnesses) in review — completes Phase 0; Phase 1 (Video) next
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -82,10 +82,21 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > physical devices. CSP allows `script/style 'unsafe-inline'` for the SvelteKit
 > bootstrap; M1.2 tightens it with hashed CSP.
 
-### M0.3 — Auth, users, test harnesses — 🔨 auth implemented (part 1); harnesses next (part 2)
+### M0.3 — Auth, users, test harnesses — 🔨 implemented (part 1 merged; part 2 harnesses in review)
 - [x] [A] Full auth matrix: login, refresh rotation, revocation, TOTP, role denials
 - [x] [A] Brute-force lockout with backoff
-- [ ] [A] Harness self-test job (synthetic camera + sensor fleet) green and marked required (part 2)
+- [x] [A] Harness self-test job (synthetic camera + sensor fleet) green and marked required
+
+> **Test harnesses (part 2).** A synthetic RTSP camera (mediamtx + ffmpeg test
+> pattern, H.264 720p + known 1 kHz audio) and a synthetic MQTT sensor fleet
+> (scripted mmWave/PIR/pulse-ox on the sensor contract, publishing to a test
+> mosquitto). New `harness` CI workflow boots both and asserts camera streams +
+> fleet publishes (self-test 2/2). A **Playwright browser harness** (`web/e2e/`)
+> drives the first-boot wizard in a real browser (create admin → sign out → sign
+> in), run by the `stack` workflow's `e2e` job against a fresh core stack — this
+> also gives the wizard its first real-browser coverage. Harness images are
+> excluded from the production image build. _Note: marking the `harness` job a
+> required check is a branch-protection setting (repo admin)._
 
 > **Auth (part 1).** JWT access (httpOnly cookie) + opaque refresh tokens stored
 > hashed, grouped into per-login families with **rotation + reuse detection**
@@ -106,7 +117,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > accounts fail with a **generic 401** (no enumeration oracle); and two false-pass
 > tests were replaced with ones that prove server-side behavior.
 
-**Phase 0 exit:** ⬜ stranger can `install.sh` on any Linux box → secure, empty, login-gated app
+**Phase 0 exit:** ✅ (pending M0.3 merge) — a stranger can `install.sh` on any Linux box → secure, empty, login-gated app; all Phase 0 [A] criteria green in CI
 
 ---
 
@@ -248,3 +259,5 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | 2026-07-06 | Tracker created. Planning phase complete (master plan, implementation plan, README). Project renamed Nightlight → eeper. |
 | 2026-07-06 | M0.1 implemented: monorepo layout (`server`/`web`/`adapters`/`firmware`/`deploy`/`docs`/`models`), Python (ruff/mypy-strict/pytest) + web (eslint/svelte-check/prettier) tooling, Conventional-Commits enforcement (commitlint + Husky hooks), two CI workflows (PR checks + multi-arch build/scan/push), pinned base image digests, Renovate. Merged in PR #1; CI green. |
 | 2026-07-06 | M0.2 implemented: hardened Compose `core` stack (Caddy edge proxy w/ local-CA TLS + security headers, FastAPI api, TimescaleDB, static web); `install.sh` (prereq check, secret generation, CA extraction); first-boot wizard + session auth gate; LAN-only/port isolation; every container non-root + read-only rootfs. New `stack` CI workflow boots the stack and runs the `deploy/tests` integration suite (9/9 local). Base images pinned; api/web/caddy pass the Trivy CRITICAL gate. |
+| 2026-07-07 | M0.3 part 1 (auth) merged in PR #3, CI green. |
+| 2026-07-07 | M0.3 part 2 (test harnesses): synthetic RTSP camera + MQTT sensor fleet + `harness` self-test workflow; Playwright browser harness (`e2e` job) driving the first-boot wizard. Phase 0 complete pending merge. |

@@ -1,0 +1,33 @@
+name: eeper-harness
+
+# Test-only inputs used by CI (and local dev) to exercise the pipeline without
+# hardware: a synthetic RTSP camera and a synthetic MQTT sensor fleet. This is
+# NOT part of the production stack.
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2@sha256:6f8d8a947c506f8a2290ec65cd4bd2bc7cb4d43fb5f6271f861cb013e2ef9797
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - '127.0.0.1:${HARNESS_MQTT_PORT:-1883}:1883'
+    restart: unless-stopped
+
+  synthetic-camera:
+    image: bluenviron/mediamtx:latest-ffmpeg@sha256:08c837deb7bac85d509e2a4c2737308e5a34f8f084a46a0d8793cdb0579a6e5d
+    volumes:
+      - ./synthetic-camera/mediamtx.yml:/mediamtx.yml:ro
+    ports:
+      - '127.0.0.1:${HARNESS_RTSP_PORT:-8554}:8554'
+    restart: unless-stopped
+
+  sensor-fleet:
+    build: ./sensor-fleet
+    image: eeper-sensor-fleet:dev
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: '1883'
+      PUBLISH_INTERVAL: '0.5'
+    depends_on:
+      - mosquitto
+    restart: unless-stopped

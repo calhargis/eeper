@@ -5,6 +5,8 @@ node_modules/
 **/.venv/
 web/build/
 web/.svelte-kit/
+web/test-results/
+web/playwright-report/
 **/package-lock.json
 **/*.min.*
 models/manifest.json
