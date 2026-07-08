@@ -1,4 +1,18 @@
 {
   "schema_version": 1,
-  "models": []
+  "models": [
+    {
+      "name": "yamnet-classifier",
+      "version": "1",
+      "filename": "yamnet_classifier.onnx",
+      "url": "https://github.com/calhargis/eeper/releases/download/models-yamnet-v1/yamnet_classifier.onnx",
+      "sha256": "8d6034ca78558935d2d2cf8d43edf3d22bbc8a619382dc67d62ffa81afaad6cc",
+      "bytes": 14939086,
+      "license": "Apache-2.0",
+      "source": "github.com/tensorflow/models research/audioset/yamnet (converted; see models/convert_yamnet.py)",
+      "input": "mel_patches float32 [num_patches, 96, 64] (eeper log-mel frontend version yamnet-logmel-1)",
+      "output": "scores float32 [num_patches, 521]; infant-cry = class index 20",
+      "task": "cry detection (M2.3)"
+    }
+  ]
 }

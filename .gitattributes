@@ -21,3 +21,4 @@
 
 # Audio fixtures are binary.
 *.wav binary
+*.npy binary
