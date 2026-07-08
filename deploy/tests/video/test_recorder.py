@@ -72,7 +72,7 @@ def camera_id(admin: httpx.Client) -> int:
     created = admin.post("/api/v1/cameras", json={"name": "nursery", "source_url": SOURCE})
     if created.status_code == 409:
         listing = admin.get("/api/v1/cameras").json()
-        return int(next(c["id"] for c in listing if c["source_url"] == SOURCE)) if listing else 1
+        return int(next(c["id"] for c in listing if c["name"] == "nursery"))
     assert created.status_code == 201, created.text
     return int(created.json()["id"])
 

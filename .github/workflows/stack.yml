@@ -351,8 +351,13 @@ jobs:
         working-directory: deploy
         run: |
           ./install.sh
+          # Wait on the health-gated core+video services, then start just the
+          # recorder without --wait (it has no HTTP healthcheck; the tests poll for
+          # segments). All profiles are named so the recorder's depends_on resolves.
           docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml \
-            --profile core --profile video --profile record up -d --build --wait
+            --profile core --profile video up -d --build --wait
+          docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml \
+            --profile core --profile video --profile record up -d recorder
 
       # Criteria 1-4: segments written, crash safety (SIGKILL loses at most the
       # active segment), clip promotion (duration-matching playable H.264 + Range
