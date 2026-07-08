@@ -1,0 +1,13 @@
+# Test-only overlay (M1.4): fast recorder settings so the ring-buffer + eviction +
+# crash-safety criteria prove out in seconds. Layer AFTER docker-compose.yml +
+# video-test.yml and enable the `record` profile:
+#   docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml \
+#     --profile core --profile video --profile record up -d
+services:
+  recorder:
+    environment:
+      EEPER_SEGMENT_SECONDS: '2'
+      # ~7 segments' worth (~800KB each). Sized so the crash-safety test (a few
+      # segments) never triggers eviction, while the eviction test records past it.
+      EEPER_MEDIA_QUOTA_BYTES: '6000000'
+      EEPER_RETENTION_INTERVAL_SECONDS: '3'

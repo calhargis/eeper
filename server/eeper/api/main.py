@@ -17,7 +17,7 @@ from eeper.api.camera_monitor import CameraMonitor
 from eeper.api.config import get_settings
 from eeper.api.db import create_schema, get_sessionmaker
 from eeper.api.gateway import Go2rtcClient
-from eeper.api.routers import account, auth, cameras, system, tokens, users
+from eeper.api.routers import account, auth, cameras, clips, system, tokens, users
 
 
 @asynccontextmanager
@@ -61,5 +61,6 @@ v1.include_router(account.router)
 v1.include_router(users.router)
 v1.include_router(tokens.router)
 v1.include_router(cameras.router)
+v1.include_router(clips.router)
 
 app.include_router(v1)

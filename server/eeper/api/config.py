@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     # Background camera health/keep-warm probe cadence.
     health_interval_seconds: float = 3.0
 
+    # Recorder (M1.4). The recorder container writes segments under media_root; the
+    # api reads them + writes promoted clips. Segments ring-buffer under a byte
+    # quota; promoted clips live in a separate subtree and are never evicted.
+    media_root: str = "/media"
+    segment_seconds: int = 10
+    media_quota_bytes: int = 10 * 1024**3  # 10 GiB recording ring buffer
+    retention_interval_seconds: float = 30.0
+    clip_max_seconds: int = 3600  # cap a single clip promotion (disk/DoS bound)
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

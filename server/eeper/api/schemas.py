@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, Field, ValidationInfo, field_validator
 
 Role = Literal["admin", "viewer"]
 
@@ -128,3 +128,34 @@ class CameraOut(BaseModel):
     enabled: bool
     online: bool | None = None
     last_checked: datetime | None = None
+
+
+# ── clips (recordings) ───────────────────────────────────────────────────────
+
+
+class ClipCreate(BaseModel):
+    # Timezone-aware only: naive input would later mix with the recorder's UTC-aware
+    # segment times and raise. Clients send ISO-8601 with an offset (e.g. ...Z).
+    start: AwareDatetime
+    end: AwareDatetime
+
+    @field_validator("end")
+    @classmethod
+    def _end_after_start(cls, end: datetime, info: ValidationInfo) -> datetime:
+        start = info.data.get("start")
+        if start is not None and end <= start:
+            raise ValueError("end must be after start")
+        return end
+
+
+class ClipOut(BaseModel):
+    id: int
+    camera_id: int
+    requested_start: datetime
+    requested_end: datetime
+    actual_start: datetime
+    actual_end: datetime
+    duration_seconds: float
+    size_bytes: int
+    codec: str
+    created_at: datetime

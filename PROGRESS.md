@@ -17,13 +17,13 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
 | Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
-| Phase 1 — Video | M1.1–M1.4 | 🔨 in progress (M1.1–M1.2 merged; M1.3 in review) |
+| Phase 1 — Video | M1.1–M1.4 | 🔨 in progress (M1.1–M1.3 merged; M1.4 in review — closes Phase 1) |
 | Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M1.3 (camera adapters) in review; next up M1.4 (recorder)
+**Currently working on:** M1.4 (recorder) in review — completes Phase 1; Phase 2 (Audio) next
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -191,13 +191,30 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > contract/errors. The v4l2loopback-in-CI limit was a design-workflow finding the
 > user signed off on (hosted fallback).
 
-### M1.4 — Recorder — ⬜
-- [ ] [A] Ring buffer: segments written, quota eviction, promoted clips survive
-- [ ] [A] Promoted clip playable, duration/timestamps match (ffprobe)
-- [ ] [A] Playback endpoint auth-enforced, playable in browser harness
-- [ ] [A] Crash mid-segment loses at most active segment; index consistent
+### M1.4 — Recorder — 🔨 implemented (in review; CI: `stack`/`recorder` job)
+- [x] [A] Ring buffer: segments written, quota eviction, promoted clips survive
+- [x] [A] Promoted clip playable, duration/timestamps match (ffprobe; keyframe-aligned ±1 GOP)
+- [x] [A] Playback endpoint auth-enforced (401/404 + HTTP Range 206), plays in browser harness
+- [x] [A] Crash mid-segment loses at most active segment; index consistent
 
-**Phase 1 exit:** ⬜ bench sustains 24 h recording + live view < 60 % CPU [A]
+> A dedicated **recorder** container (reuses the api image; `record` profile) runs
+> one `ffmpeg -c copy` child per enabled camera, writing MPEG-TS segments to a
+> shared `media-data` volume, plus a retention task that evicts oldest segments
+> over a byte quota. The **filesystem is the index** (no segments table): a
+> segment is finalized iff a strictly-newer sibling exists, so a SIGKILL loses at
+> most the open segment — verified against ffmpeg source + a live docker-kill test.
+> Admin **clip promotion** (`POST /cameras/{id}/clips`) concats the covering
+> finalized segments (`-c copy` + faststart) into `/media/clips` (a subtree
+> retention never touches, so clips survive eviction), storing requested + probed
+> actual windows; **playback** is an authed, household-scoped `FileResponse` with
+> native Range. Starlette floored to ≥0.49.1 (CVE-2025-62727). 7-test `recorder`
+> CI suite + a system-Chrome clip-playback leg, all green. Architecture locked by
+> a design workflow (crash-safety proven against `libavformat/segment.c`).
+
+**Phase 1 exit:** the 24 h sustained-record + live-view CPU-budget check is a
+[MANUAL] bench item ([docs/ci.md](docs/ci.md)) — no self-hosted runner; met by
+construction (`-c copy` everywhere, `scandir`+`unlink` retention, `sendfile`
+playback).
 
 ---
 
@@ -311,4 +328,5 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | 2026-07-07 | M0.3 part 2 (test harnesses): synthetic RTSP camera + MQTT sensor fleet + `harness` self-test workflow; Playwright browser harness (`e2e` job) driving the first-boot wizard. Phase 0 complete pending merge. |
 | 2026-07-07 | M1.1 (media gateway): go2rtc `video` profile (internal, hardened, digest-pinned); admin camera registration + ffprobe contract validation (H.264/≤1080p, H.265 rejected); internal RTSP re-serve; WebRTC signaling relay; background health/recovery monitor. New `video` CI job + synthetic H.265 source; 6-test suite green. Phase 0 fully merged. Merged in PR #5. |
 | 2026-07-07 | M1.2 (live view in the PWA): real browser WebRTC media (go2rtc media port 8555 published + explicit ICE candidate via `EEPER_GO2RTC_CANDIDATE`; control planes stay dark); installable PWA (`@vite-pwa/sveltekit` manifest + Workbox SW, icons); Live view with recv-only WebRTC playback, per-camera health, multi-camera switching, client auth guard (viewer role included). New `e2e-live` (getStats frames <3s, latency, auth redirect, viewer access) + `lighthouse` (installability) CI jobs; `test_gateway_...` rewritten to a media-only-port allowlist. Architecture locked by a design workflow + a headless-Chromium spike. Merged in PR #6. |
-| 2026-07-07 | M1.3 (camera adapters): two first-party adapter images (mediamtx + encoder) — USB (ffmpeg/V4L2, amd64+arm64) and CSI (mediamtx native `rpiCamera`/libcamera, arm64-only, Pi capture = [M] bench); both H.264-baseline/≤1080p contract-conformant + Trivy-CRITICAL-clean. `images.yml` per-image `platforms` (CSI arm64-only, PR-scan fix); new `adapters-usb` CI job (contract + browser end-to-end via the shared suite); phone-RTSP doc. v4l2loopback can't load on hosted runners (verified) → hosted fallback with the synthetic input through the identical path (user-approved). Design-workflow-driven. |
+| 2026-07-07 | M1.3 (camera adapters): two first-party adapter images (mediamtx + encoder) — USB (ffmpeg/V4L2, amd64+arm64) and CSI (mediamtx native `rpiCamera`/libcamera, arm64-only, Pi capture = [M] bench); both H.264-baseline/≤1080p contract-conformant + Trivy-CRITICAL-clean. `images.yml` per-image `platforms` (CSI arm64-only, PR-scan fix); new `adapters-usb` CI job (contract + browser end-to-end via the shared suite); phone-RTSP doc. v4l2loopback can't load on hosted runners (verified) → hosted fallback with the synthetic input through the identical path (user-approved). Design-workflow-driven. Merged in PR #7. |
+| 2026-07-08 | M1.4 (recorder): dedicated recorder container (`record` profile, reuses the api image) — one `ffmpeg -c copy` child per camera writing MPEG-TS segments + a quota/retention task; filesystem-is-index crash-safe design (kill loses at most the active segment, proven vs `libavformat/segment.c` + a live docker-kill test); admin clip promotion (concat covering finalized segments → faststart H.264 MP4 in `/media/clips`, exempt from eviction) + authed household-scoped Range playback (`FileResponse`); `Clip` model; Starlette floored ≥0.49.1 (CVE-2025-62727). New `media-data` volume; `recorder` CI job (7-test suite + system-Chrome clip playback). Closes Phase 1. 24h/CPU exit = [M] bench. Design-workflow-driven. |

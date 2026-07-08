@@ -11,7 +11,17 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -56,6 +66,28 @@ class Camera(Base):
     width: Mapped[int] = mapped_column(Integer)
     height: Mapped[int] = mapped_column(Integer)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Clip(Base):
+    """A promoted recording clip: an H.264 MP4 cut from the ring-buffer segments
+    and kept under ``/media/clips`` so it survives segment eviction. Stores both
+    the requested window and the probed-actual window (keyframe-aligned copy is
+    ±1 GOP, so they can differ slightly)."""
+
+    __tablename__ = "clips"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    camera_id: Mapped[int] = mapped_column(ForeignKey("cameras.id", ondelete="CASCADE"), index=True)
+    path: Mapped[str] = mapped_column(String(500))
+    requested_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    requested_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    actual_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    actual_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    duration_seconds: Mapped[float] = mapped_column(Float)
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
+    codec: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
