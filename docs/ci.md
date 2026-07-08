@@ -40,6 +40,17 @@ Lighthouse CI against the sign-in shell (with the local CA trusted in the NSS DB
 so it's a genuine secure context) and asserts PWA installability, on a throttled
 mobile profile.
 
+Its `adapters-usb` job (M1.3) brings up the core + `video` stack **plus the USB
+adapter** and asserts it passes the same contract-validation suite as native
+cameras: the adapter's stream registers (H.264/≤1080p contract), re-serves H.264,
+answers WebRTC, is hardened, and plays end-to-end in the browser harness. The
+adapter runs a **synthetic `lavfi` input through the identical encode + serve path
+a real webcam takes** — hosted GitHub runners can't load the `v4l2loopback` kernel
+module (kernel lockdown blocks `modprobe`), so the required gate exercises
+everything but the literal V4L2 device open, which is the [MANUAL] bench item. A
+best-effort, non-blocking step opportunistically attempts a real `v4l2loopback`
+capture if a runner ever permits it.
+
 ## `harness.yml` — test-harness self-test
 
 Brings up the synthetic inputs (`deploy/harness/`) — an RTSP synthetic camera and
@@ -53,13 +64,16 @@ Runs on `push` to `main` (build + scan + **push** to GHCR) and on
 `pull_request` (build + scan for the runner arch, **no push**).
 
 - **Discovery:** a first job finds every `**/Dockerfile` and emits a build
-  matrix, so new services are picked up automatically as they land.
-- **Multi-arch:** images build for `linux/amd64` and `linux/arm64` via Buildx +
-  QEMU. Base images are pinned to immutable digests.
+  matrix, so new services are picked up automatically as they land. Each entry
+  carries a `platforms` value — `linux/amd64,linux/arm64` by default, but
+  **`linux/arm64` only** for the Pi-only CSI adapter (`adapters/csi`).
+- **Multi-arch:** images build for their target arch(es) via Buildx + QEMU. Base
+  images are pinned to immutable digests.
 - **Scan (before push):** Trivy scans the built image and **fails the build on
   CRITICAL CVEs** (`ignore-unfixed` to avoid un-actionable noise). PRs scan
   `amd64` for fast feedback; `main` scans **every architecture that gets
-  pushed** (`amd64` + `arm64`) before publishing, so no unscanned arch ships.
+  pushed** before publishing, so no unscanned arch ships. An arm64-only image has
+  no amd64 leg, so its arm64 build+scan runs on PRs too (no coverage hole).
 - **Registry:** `ghcr.io/calhargis/eeper/<service>`, pushed only on `main`
   using the built-in `GITHUB_TOKEN` (no external secrets). Only the `build` job
   requests `packages: write`; everything else is `contents: read`.

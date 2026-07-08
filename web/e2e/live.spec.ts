@@ -6,10 +6,13 @@ import { expect, test, type Page } from '@playwright/test';
 //   1. authed user reaches Live view; getStats() shows flowing frames within 3s.
 //   2. unauthenticated /live redirects to sign-in; a viewer-role user can watch.
 //   3. steady-state WebRTC playout latency stays within the LAN budget.
-const ADMIN = 'liveadmin';
-const VIEWER = 'liveviewer';
+// The source (and admin, to avoid a first-boot clash with a co-running suite) are
+// env-overridable so the M1.3 adapter CI job can point this same suite at the USB
+// adapter's stream; the defaults keep the M1.2 `live` job byte-identical.
+const ADMIN = process.env.EEPER_TEST_ADMIN ?? 'liveadmin';
+const VIEWER = process.env.EEPER_TEST_VIEWER ?? 'liveviewer';
 const PASSWORD = 'correct horse battery staple'; // >= 12 chars
-const SOURCE = 'rtsp://synthetic-camera:8554/cam';
+const SOURCE = process.env.EEPER_TEST_SOURCE ?? 'rtsp://synthetic-camera:8554/cam';
 const FRAME_BUDGET_MS = 3000;
 const LATENCY_BUDGET_MS = 500;
 
