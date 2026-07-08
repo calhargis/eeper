@@ -65,6 +65,8 @@ class Camera(Base):
     codec: Mapped[str] = mapped_column(String(20))
     width: Mapped[int] = mapped_column(Integer)
     height: Mapped[int] = mapped_column(Integer)
+    # Whether the source carries audio — gates the Opus listen-in gateway source.
+    has_audio: Mapped[bool] = mapped_column(Boolean, default=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     retention_interval_seconds: float = 30.0
     clip_max_seconds: int = 3600  # cap a single clip promotion (disk/DoS bound)
 
+    # Insight engine (M2.1). When set (test overlay only), the audio stage writes
+    # the newest 16 kHz mono PCM window per camera as a WAV here for the pipeline
+    # test to read; empty in production (no tap).
+    insight_tap_dir: str = ""
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

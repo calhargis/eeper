@@ -1,0 +1,11 @@
+# Test-only overlay (M2.1): turn on the insight audio tap so the pipeline test can
+# read the extracted PCM windows. Layer AFTER docker-compose.yml + video-test.yml
+# and enable the `insight` profile:
+#   docker compose -f docker-compose.yml -f video-test.yml -f insight-test.yml \
+#     --profile core --profile video --profile insight up -d
+services:
+  insight:
+    environment:
+      EEPER_INSIGHT_TAP_DIR: /run/insight
+    tmpfs:
+      - /run/insight

@@ -57,7 +57,18 @@ class CameraMonitor:
         self._health.pop(camera_id, None)
 
     async def register(self, camera: Camera) -> None:
-        await self._gateway.add_stream(stream_name(camera.id), camera.source_url)
+        name = stream_name(camera.id)
+        # Raw RTSP source first (serves H.264 + AAC to the recorder / audio
+        # extractor). Only if the source HAS audio, add an on-demand ffmpeg source
+        # that transcodes just the audio to Opus for the browser (AAC isn't a
+        # WebRTC codec). It is deliberately audio-only: with no video track, go2rtc
+        # must serve the WebRTC video from source 0 (raw copy), so the first frame
+        # never waits on the transcoder to spin up — the Opus audio simply joins
+        # once ffmpeg is ready. A video-only source skips this entirely.
+        sources = [camera.source_url]
+        if camera.has_audio:
+            sources.append(f"ffmpeg:{name}#audio=opus")
+        await self._gateway.add_stream(name, sources)
 
     async def _enabled_cameras(self) -> list[Camera]:
         async with self._sessionmaker() as session:

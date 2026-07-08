@@ -19,11 +19,17 @@ class Go2rtcClient:
         self._base = base_url.rstrip("/")
         self._timeout = timeout_seconds
 
-    async def add_stream(self, name: str, source: str) -> None:
+    async def add_stream(self, name: str, sources: list[str]) -> None:
+        """Register a stream with its source list in ONE PUT. go2rtc's PUT
+        /api/streams REPLACES the source list with every ``src`` param in the
+        request, so all sources must be sent together (httpx serializes a list as
+        repeated ``src=``). We register the raw RTSP source plus an on-demand
+        ffmpeg source that transcodes audio to Opus for WebRTC (AAC isn't a WebRTC
+        audio codec); the raw source still serves H.264 + AAC over RTSP."""
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.put(
-                    f"{self._base}/api/streams", params={"name": name, "src": source}
+                    f"{self._base}/api/streams", params={"name": name, "src": sources}
                 )
                 response.raise_for_status()
         except httpx.HTTPError as exc:

@@ -93,3 +93,43 @@ async def probe_video(source_url: str, timeout_seconds: float) -> VideoInfo:
     if not isinstance(codec, str) or not isinstance(width, int) or not isinstance(height, int):
         raise ProbeRejected("incomplete video stream info")
     return VideoInfo(codec=codec, width=width, height=height)
+
+
+async def probe_has_audio(source_url: str, timeout_seconds: float) -> bool:
+    """Whether the source carries an audio stream. Used to decide if a camera gets
+    an Opus WebRTC/listen-in source — a video-only source (e.g. a webcam) skips it
+    so go2rtc doesn't spin up a pointless audio transcode. Defaults to False on any
+    probe error (safe: no audio source registered)."""
+    args = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-rtsp_transport",
+        "tcp",
+        "-timeout",
+        str(int(timeout_seconds * 1_000_000)),
+        "-select_streams",
+        "a",
+        "-show_entries",
+        "stream=codec_type",
+        "-of",
+        "csv=p=0",
+        source_url,
+    ]
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL
+        )
+    except FileNotFoundError:
+        return False
+    try:
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds + 2)
+    except TimeoutError:
+        return False
+    finally:
+        if proc.returncode is None:
+            with contextlib.suppress(ProcessLookupError):
+                proc.kill()
+            with contextlib.suppress(BaseException):
+                await proc.wait()
+    return b"audio" in stdout

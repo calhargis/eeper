@@ -80,6 +80,16 @@ type InboundRtp = RTCStats & {
   framesDecoded?: number;
   jitterBufferDelay?: number;
   jitterBufferEmittedCount?: number;
+  packetsReceived?: number;
+};
+
+export type InboundAudioStats = {
+  // Whether an inbound audio RTP report exists at all — distinguishes "no audio
+  // track negotiated" from "track present but no packets yet".
+  hasTrack: boolean;
+  // Total received audio RTP packets — the "audio is flowing" signal. Increments
+  // even while the <video> is muted (mute is a local playout control only).
+  packetsReceived: number;
 };
 
 export async function inboundVideoStats(pc: RTCPeerConnection): Promise<InboundVideoStats> {
@@ -98,4 +108,18 @@ export async function inboundVideoStats(pc: RTCPeerConnection): Promise<InboundV
     }
   });
   return { framesDecoded, jitterBufferMs };
+}
+
+export async function inboundAudioStats(pc: RTCPeerConnection): Promise<InboundAudioStats> {
+  let hasTrack = false;
+  let packetsReceived = 0;
+  const stats = await pc.getStats();
+  stats.forEach((report) => {
+    if (report.type !== 'inbound-rtp') return;
+    const inbound = report as InboundRtp;
+    if (inbound.kind !== 'audio') return;
+    hasTrack = true;
+    packetsReceived = inbound.packetsReceived ?? 0;
+  });
+  return { hasTrack, packetsReceived };
 }

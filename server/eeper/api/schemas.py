@@ -126,6 +126,7 @@ class CameraOut(BaseModel):
     width: int
     height: int
     enabled: bool
+    has_audio: bool = False
     online: bool | None = None
     last_checked: datetime | None = None
 
