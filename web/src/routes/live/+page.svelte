@@ -5,7 +5,12 @@
   import { onDestroy, onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import { fetchCameras, fetchSession, type Camera, type User } from '$lib/api';
-  import { connectCamera, inboundVideoStats, type LiveSession } from '$lib/webrtc';
+  import {
+    connectCamera,
+    inboundAudioStats,
+    inboundVideoStats,
+    type LiveSession,
+  } from '$lib/webrtc';
 
   type Status = 'idle' | 'connecting' | 'live' | 'error';
 
@@ -17,6 +22,8 @@
   let status = $state<Status>('idle');
   let framesDecoded = $state(0);
   let jitterBufferMs = $state<number | null>(null);
+  let audioTrack = $state(false);
+  let audioPackets = $state(0);
   let muted = $state(true);
   let errorMsg = $state('');
 
@@ -52,6 +59,8 @@
     if (videoEl) videoEl.srcObject = null;
     framesDecoded = 0;
     jitterBufferMs = null;
+    audioTrack = false;
+    audioPackets = 0;
   }
 
   async function pollStats(): Promise<void> {
@@ -59,6 +68,9 @@
     const s = await inboundVideoStats(live.pc);
     framesDecoded = s.framesDecoded;
     jitterBufferMs = s.jitterBufferMs;
+    const a = await inboundAudioStats(live.pc);
+    audioTrack = a.hasTrack;
+    audioPackets = a.packetsReceived;
   }
 
   async function connect(id: number): Promise<void> {
@@ -157,6 +169,8 @@
         data-testid="live-video"
         data-frames={framesDecoded}
         data-latency-ms={jitterBufferMs === null ? '' : Math.round(jitterBufferMs)}
+        data-audio-track={audioTrack ? '1' : '0'}
+        data-audio-packets={audioPackets}
       ></video>
 
       <div
@@ -175,8 +189,13 @@
         {/if}
       </div>
 
-      <button class="mute" onclick={() => (muted = !muted)}>
-        {muted ? 'Unmute' : 'Mute'}
+      <button
+        class="mute"
+        data-testid="listen-toggle"
+        aria-label={muted ? 'Listen in' : 'Mute listen-in'}
+        onclick={() => (muted = !muted)}
+      >
+        {muted ? 'Listen in' : 'Mute'}
       </button>
     </div>
 

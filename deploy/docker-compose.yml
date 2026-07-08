@@ -145,6 +145,33 @@ services:
       db:
         condition: service_healthy
 
+  # Insight engine (M2.1, `insight` profile). Reuses the api image with a command
+  # override, like the recorder. M2.1 stage = audio extraction: one ffmpeg
+  # audio-decode child per enabled camera pulling go2rtc's RTSP re-serve, producing
+  # 16 kHz mono PCM windows in-process (M2.2 builds the frame sampler / features /
+  # MQTT on top). No HTTP server (drop the image's healthcheck).
+  insight:
+    <<: *hardening
+    build:
+      context: ../server
+    image: eeper-api:dev
+    profiles: [insight]
+    user: '10001:10001'
+    command: ['python', '-m', 'eeper.insight']
+    healthcheck:
+      disable: true
+    environment:
+      EEPER_DATABASE_URL: postgresql+asyncpg://eeper:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — run deploy/install.sh}@db:5432/eeper
+      # Not used by the insight engine, but Settings requires it to load.
+      EEPER_SECRET_KEY: ${EEPER_SECRET_KEY:?EEPER_SECRET_KEY is required — run deploy/install.sh}
+      EEPER_GO2RTC_RTSP_URL: rtsp://go2rtc:8554
+    tmpfs:
+      - /tmp
+    networks: [edge, internal]
+    depends_on:
+      db:
+        condition: service_healthy
+
   caddy:
     <<: *hardening
     build:

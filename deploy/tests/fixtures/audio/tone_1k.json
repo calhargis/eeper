@@ -1,0 +1,14 @@
+{
+  "_comment": "Assertion contract for the M2.1 audio pipeline. The synthetic camera's audio is a 1 kHz sine at 16 kHz mono; the extractor delivers 1.0s (16000-sample) s16le windows. Both the pure-sine reference WAV and the live AAC-decoded tap measure ~1e9 dominance and ~2894 RMS, so these bounds have orders of magnitude of headroom and stay green across ffmpeg versions.",
+  "expected_hz": 1000,
+  "sample_rate": 16000,
+  "channels": 1,
+  "sample_width": 2,
+  "samples": 16000,
+  "control_hz": [500, 1500, 3000],
+  "dominance_ratio_min": 1000.0,
+  "rms_min": 1000.0,
+  "rms_max": 8000.0,
+  "half_rms_ratio_min": 0.5,
+  "half_rms_ratio_max": 2.0
+}

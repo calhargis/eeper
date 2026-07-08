@@ -59,7 +59,15 @@ playable H.264 MP4** with faststart; the playback endpoint enforces auth and HTT
 Range; eviction over the byte quota keeps **promoted clips**; and the api's
 Starlette is ≥ 0.49.1 (the CVE-2025-62727 Range-parser fix). A Playwright leg on
 **system Chrome** (bundled Chromium can't decode H.264) decodes a promoted clip in
-a real `<video>`.
+a real `<video>`. The same job (M2.1) also starts the **insight engine** and
+asserts the audio pipeline: the synthetic camera's known **1 kHz tone** is
+extracted to 16 kHz mono PCM windows and verified by signal properties (a
+pure-Python Goertzel dominance check against a committed fixture — robust to
+ffmpeg-version drift, unlike a bit-exact checksum). Listen-in (M2.1) rides the
+`e2e-live` + `video` jobs: cameras register a second on-demand ffmpeg source that
+transcodes audio to **Opus** for WebRTC (an aiortc `m=audio opus` assertion guards
+it server-side), and the Live-view browser test asserts inbound audio packets flow
+while muted.
 
 ## `harness.yml` — test-harness self-test
 
@@ -101,6 +109,10 @@ the reference bench (a Raspberry Pi / mini-PC) instead:
 - **Real capture hardware** — a physical USB webcam and a Pi Camera Module 3
   through their adapters (M1.3); hosted runners can't `modprobe v4l2loopback` or
   attach a CSI camera.
+- **Real-mic audio + A/V sync** — real microphone audio is intelligible in the PWA
+  with no gross sync drift against video over 10 min (M2.1). Perceptual, and a
+  hosted job can't run 10 min or judge intelligibility; sync rides go2rtc/WebRTC
+  timestamping.
 - **Phase-1 exit: 24 h sustained record + live view under a CPU budget** (< 60 %
   steady-state, M1.4). A hosted job can neither run 24 h nor produce a stable CPU
   number, so a short proxy would be a false green. The budget is met **by

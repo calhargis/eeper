@@ -176,6 +176,30 @@ def test_webrtc_signaling_relay_returns_valid_answer(
     asyncio.run(negotiate())
 
 
+def test_webrtc_answer_offers_opus_audio(admin: httpx.Client, camera_id: int) -> None:
+    # M2.1 listen-in (deterministic server-side guard): the stream is registered
+    # with a second ffmpeg source that transcodes audio to Opus (AAC isn't a
+    # WebRTC audio codec), so an offer with an audio transceiver gets an m=audio
+    # answer advertising opus.
+    async def negotiate() -> None:
+        pc = RTCPeerConnection()
+        pc.addTransceiver("video", direction="recvonly")
+        pc.addTransceiver("audio", direction="recvonly")
+        await pc.setLocalDescription(await pc.createOffer())
+        response = admin.post(
+            f"/api/v1/cameras/{camera_id}/webrtc",
+            content=pc.localDescription.sdp,
+            headers={"Content-Type": "application/sdp"},
+        )
+        assert response.status_code == 200, response.text
+        sdp = response.text
+        assert "m=audio" in sdp, "no audio m-line — go2rtc Opus source not registered"
+        assert "opus" in sdp.lower(), "audio present but no opus rtpmap"
+        await pc.close()
+
+    asyncio.run(negotiate())
+
+
 def test_webrtc_relay_requires_auth(camera_id: int) -> None:
     # Criterion 4: signaling is only reachable authenticated, through the relay.
     with httpx.Client(base_url=BASE_URL, verify=_ssl_ctx(), timeout=10) as anon:

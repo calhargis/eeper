@@ -57,7 +57,12 @@ class CameraMonitor:
         self._health.pop(camera_id, None)
 
     async def register(self, camera: Camera) -> None:
-        await self._gateway.add_stream(stream_name(camera.id), camera.source_url)
+        name = stream_name(camera.id)
+        # Raw RTSP source first (serves H.264 + AAC to the recorder / audio
+        # extractor); an on-demand ffmpeg source second that transcodes audio to
+        # Opus so the browser gets a WebRTC audio track (AAC isn't a WebRTC codec).
+        sources = [camera.source_url, f"ffmpeg:{name}#video=copy#audio=opus"]
+        await self._gateway.add_stream(name, sources)
 
     async def _enabled_cameras(self) -> list[Camera]:
         async with self._sessionmaker() as session:

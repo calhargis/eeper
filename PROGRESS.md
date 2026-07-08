@@ -7,7 +7,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 - `[A]` = automated criterion (must be green in CI). `[M]` = manual procedure (record date + tester initials when performed, e.g. `✔ 2026-08-14 JD`).
 - Statuses: ⬜ not started · 🔨 in progress · ✅ done · 🚧 blocked (add a note)
 
-**Last updated:** 2026-07-07
+**Last updated:** 2026-07-08
 
 ---
 
@@ -17,13 +17,13 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 |---|---|---|
 | Planning (master plan, implementation plan, README) | — | ✅ done |
 | Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
-| Phase 1 — Video | M1.1–M1.4 | 🔨 in progress (M1.1–M1.3 merged; M1.4 in review — closes Phase 1) |
-| Phase 2 — Audio & first insights | M2.1–M2.4 | ⬜ not started |
+| Phase 1 — Video | M1.1–M1.4 | ✅ done (all merged; register → live → record → clip) |
+| Phase 2 — Audio & first insights | M2.1–M2.4 | 🔨 in progress (M2.1 in review) |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M1.4 (recorder) in review — completes Phase 1; Phase 2 (Audio) next
+**Currently working on:** M2.1 (audio pipeline) in review; next up M2.2 (insight engine core + motion)
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -220,10 +220,23 @@ playback).
 
 ## Phase 2 — Audio & First Insights
 
-### M2.1 — Audio pipeline — ⬜
-- [ ] [A] Known audio track arrives as 16 kHz mono PCM (fixture checksum)
-- [ ] [A] Live view audio packets flowing (getStats)
+### M2.1 — Audio pipeline — 🔨 implemented (in review; CI: `stack`/`recorder`+`e2e-live`+`video` jobs)
+- [x] [A] Known audio track arrives as 16 kHz mono PCM windows, verified vs a fixture
+  (pure-Python Goertzel 1 kHz-tone dominance, not a bit-exact checksum → robust to ffmpeg drift)
+- [x] [A] Live view audio packets flowing (getStats inbound-rtp audio, while muted)
 - [ ] [M] Real mic intelligible, no gross A/V drift over 10 min — ______
+
+> New **insight-engine** service (`server/eeper/insight/`, `insight` profile, reuses
+> the api image — like the recorder). M2.1 stage = audio extraction: one
+> `ffmpeg -vn -ac 1 -ar 16000 -f s16le` child per enabled camera pulling go2rtc's
+> RTSP re-serve, framed into 1.0 s (16000-sample) windows in a per-camera in-process
+> ring (the M2.2 feature-extractor seam), with a test-only WAV tap. **Listen-in**:
+> camera registration now adds a second on-demand go2rtc source
+> (`ffmpeg:camN#video=copy#audio=opus`) so the browser gets a WebRTC audio track
+> (AAC isn't a WebRTC codec) — verified live: the SDP answer carries `m=audio opus`,
+> and the Live view exposes/asserts inbound audio packets flowing (muted). The 1 kHz
+> tone check is source-verified (fixture + live both ~1e9 dominance). Design-workflow
+> + a live Opus spike drove it; 10-min A/V sync = [M] bench.
 
 ### M2.2 — Insight engine core + motion — ⬜
 - [ ] [A] Motion score ordering: still < rolling < sitting-up
@@ -330,3 +343,4 @@ playback).
 | 2026-07-07 | M1.2 (live view in the PWA): real browser WebRTC media (go2rtc media port 8555 published + explicit ICE candidate via `EEPER_GO2RTC_CANDIDATE`; control planes stay dark); installable PWA (`@vite-pwa/sveltekit` manifest + Workbox SW, icons); Live view with recv-only WebRTC playback, per-camera health, multi-camera switching, client auth guard (viewer role included). New `e2e-live` (getStats frames <3s, latency, auth redirect, viewer access) + `lighthouse` (installability) CI jobs; `test_gateway_...` rewritten to a media-only-port allowlist. Architecture locked by a design workflow + a headless-Chromium spike. Merged in PR #6. |
 | 2026-07-07 | M1.3 (camera adapters): two first-party adapter images (mediamtx + encoder) — USB (ffmpeg/V4L2, amd64+arm64) and CSI (mediamtx native `rpiCamera`/libcamera, arm64-only, Pi capture = [M] bench); both H.264-baseline/≤1080p contract-conformant + Trivy-CRITICAL-clean. `images.yml` per-image `platforms` (CSI arm64-only, PR-scan fix); new `adapters-usb` CI job (contract + browser end-to-end via the shared suite); phone-RTSP doc. v4l2loopback can't load on hosted runners (verified) → hosted fallback with the synthetic input through the identical path (user-approved). Design-workflow-driven. Merged in PR #7. |
 | 2026-07-08 | M1.4 (recorder): dedicated recorder container (`record` profile, reuses the api image) — one `ffmpeg -c copy` child per camera writing MPEG-TS segments + a quota/retention task; filesystem-is-index crash-safe design (kill loses at most the active segment, proven vs `libavformat/segment.c` + a live docker-kill test); admin clip promotion (concat covering finalized segments → faststart H.264 MP4 in `/media/clips`, exempt from eviction) + authed household-scoped Range playback (`FileResponse`); `Clip` model; Starlette floored ≥0.49.1 (CVE-2025-62727). New `media-data` volume; `recorder` CI job (7-test suite + system-Chrome clip playback). Closes Phase 1. 24h/CPU exit = [M] bench. Design-workflow-driven. |
+| 2026-07-08 | M2.1 (audio pipeline): new insight-engine service (`insight` profile, reuses the api image) — per-camera ffmpeg audio decode to 16 kHz mono s16le, framed into 1.0s windows in an in-process ring (+ a test WAV tap), verified as the synthetic camera's 1 kHz tone via a stdlib Goertzel dominance check against a committed fixture (robust to ffmpeg drift). Listen-in: camera registration adds a second on-demand go2rtc `ffmpeg:...#audio=opus` source so WebRTC carries an audio track (aiortc `m=audio opus` guard + a muted browser packets-flowing assertion). Audio suite folds into the `recorder` CI job. Phase 1 done. Design-workflow + live Opus spike. |

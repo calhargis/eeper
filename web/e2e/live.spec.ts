@@ -76,6 +76,35 @@ test('authenticated user reaches Live view and frames flow within 3s', async ({ 
   await expect(page.getByTestId('live-status')).toHaveText(/LIVE/);
 });
 
+test('listen-in: audio packets flow in the Live view', async ({ page }) => {
+  // Criterion 2 (M2.1): audio is negotiated (Opus) and packets flow. The <video>
+  // stays muted — mute is a local playout control only; RTP still arrives.
+  await signIn(page, ADMIN);
+  await page.goto('/live');
+  await waitForFrames(page, FRAME_BUDGET_MS);
+  const video = page.getByTestId('live-video');
+
+  // An audio track must be negotiated at all (else no go2rtc Opus source).
+  await expect(video, 'no audio track negotiated — check the go2rtc Opus source').toHaveAttribute(
+    'data-audio-track',
+    '1',
+    { timeout: 5000 },
+  );
+
+  // Packets must arrive and keep arriving.
+  let first = 0;
+  const start = Date.now();
+  while (Date.now() - start < 5000) {
+    first = Number(await video.getAttribute('data-audio-packets'));
+    if (first > 0) break;
+    await page.waitForTimeout(200);
+  }
+  expect(first, 'audio packets should be received').toBeGreaterThan(0);
+  await page.waitForTimeout(1200);
+  const second = Number(await video.getAttribute('data-audio-packets'));
+  expect(second, 'audio packets should keep flowing').toBeGreaterThan(first);
+});
+
 test('steady-state playout latency stays within the LAN budget', async ({ page }) => {
   await signIn(page, ADMIN);
   await page.goto('/live');

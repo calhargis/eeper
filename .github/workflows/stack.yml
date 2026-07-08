@@ -323,7 +323,7 @@ jobs:
         run: docker compose --profile core down -v
 
   recorder:
-    name: Recorder (ring buffer + clips)
+    name: Recorder + audio pipeline
     runs-on: ubuntu-latest
     env:
       EEPER_GO2RTC_CANDIDATE: 127.0.0.1
@@ -345,25 +345,30 @@ jobs:
           # Clip playback needs H.264 decode -> real Chrome, not bundled Chromium.
           (cd web && npx playwright install --with-deps chrome)
 
-      # Core + go2rtc + synthetic camera + the recorder (fast test settings: 2s
-      # segments, a small quota).
-      - name: Bring up the core + video + record stack
+      # Core + go2rtc + synthetic camera + the recorder + the insight engine (audio
+      # extraction). Fast test settings via the -test overlays.
+      - name: Bring up the core + video + record + insight stack
         working-directory: deploy
         run: |
           ./install.sh
-          # Wait on the health-gated core+video services, then start just the
-          # recorder without --wait (it has no HTTP healthcheck; the tests poll for
-          # segments). All profiles are named so the recorder's depends_on resolves.
-          docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml \
+          # Wait on the health-gated core+video services, then start the recorder +
+          # insight without --wait (no HTTP healthcheck; the tests poll for output).
+          # All profiles are named so their depends_on resolves.
+          docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml \
             --profile core --profile video up -d --build --wait
-          docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml \
-            --profile core --profile video --profile record up -d recorder
+          docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml \
+            --profile core --profile video --profile record --profile insight up -d recorder insight
 
       # Criteria 1-4: segments written, crash safety (SIGKILL loses at most the
       # active segment), clip promotion (duration-matching playable H.264 + Range
       # auth), eviction keeps promoted clips; plus the Starlette CVE floor.
       - name: Recorder integration suite
         run: pytest deploy/tests/video/test_recorder.py -v
+
+      # M2.1 criterion 1: the insight engine extracts the synthetic camera's audio
+      # to 16 kHz mono PCM windows that verify as the expected 1 kHz tone.
+      - name: Audio pipeline suite
+        run: pytest deploy/tests/audio/test_audio_pipeline.py -v
 
       # Criterion 3 (real browser): a promoted clip decodes + plays in system Chrome.
       - name: Clip playback harness
@@ -383,9 +388,9 @@ jobs:
       - name: Dump logs on failure
         if: failure()
         working-directory: deploy
-        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml --profile core --profile video --profile record logs --no-color
+        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml --profile core --profile video --profile record --profile insight logs --no-color
 
       - name: Tear down
         if: always()
         working-directory: deploy
-        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml --profile core --profile video --profile record down -v
+        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml --profile core --profile video --profile record --profile insight down -v
