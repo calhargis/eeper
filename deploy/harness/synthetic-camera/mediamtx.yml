@@ -26,6 +26,33 @@ paths:
       -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam
     runOnInitRestart: yes
 
+  # Motion-onset source for the insight motion pipeline (M2.2): a still gray field
+  # with testsrc2 motion overlaid for 4s of every 8s cycle. The still<->moving
+  # boundary is a real motion onset; because the 8s cycle repeats forever, an onset
+  # is guaranteed inside any observation window regardless of when insight connects.
+  # No audio track (has_audio=False -> motion-only extractor).
+  cam-motion:
+    runOnInit: >
+      ffmpeg -re
+      -f lavfi -i color=c=gray:s=1280x720:r=15
+      -f lavfi -i testsrc2=size=1280x720:rate=15
+      -filter_complex "[0:v][1:v]overlay=enable='lt(mod(t,8),4)'[v]"
+      -map "[v]"
+      -c:v libx264 -profile:v baseline -pix_fmt yuv420p -g 15 -tune zerolatency
+      -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam-motion
+    runOnInitRestart: yes
+
+  # A video-only source (no audio track) for the graceful-degradation check: the
+  # engine must run and derive motion with the audio branch absent.
+  cam-noaudio:
+    runOnInit: >
+      ffmpeg -re
+      -f lavfi -i testsrc2=size=1280x720:rate=15
+      -an
+      -c:v libx264 -profile:v baseline -pix_fmt yuv420p -g 15 -tune zerolatency
+      -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam-noaudio
+    runOnInitRestart: yes
+
   # An H.265/HEVC source, used only to prove the RTSP contract rejects non-H.264.
   cam-h265:
     runOnInit: >

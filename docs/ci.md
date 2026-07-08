@@ -69,6 +69,21 @@ transcodes audio to **Opus** for WebRTC (an aiortc `m=audio opus` assertion guar
 it server-side), and the Live-view browser test asserts inbound audio packets flow
 while muted.
 
+The same `recorder` job (M2.2) also exercises the **motion pipeline**. The insight
+engine adds a per-camera video path — an ffmpeg gray-frame decode into a latest-wins
+ring, a pure-Python frame-diff motion score, and a low/medium/high hysteresis state
+machine — plus a new internal-only **mosquitto** broker (no host port). A synthetic
+`cam-motion` source alternates still↔moving on an 8 s cycle, so a real motion **onset**
+is guaranteed in any window; the suite asserts the onset produces a movement-level
+event on MQTT **and** a `state_history` row **within 2 s** (measured on insight-internal
+timestamps, and read from _inside_ the broker + db containers since the broker has no
+host port). A `cam-noaudio` source checks **graceful degradation** — the engine runs
+video-only with the motion extractor alone. A second leg force-recreates the insight
+service with a slowed scorer (`EEPER_INSIGHT_SCORER_DELAY_MS`) and asserts
+**backpressure**: frames are dropped (fed ≫ scored) and the freshest processed frame
+stays < 3 s old. The unit suite (`ci.yml`) covers the score ordering (still < rolling
+< sitting-up) and the anti-flap hysteresis (≤ 1 change on a threshold oscillation).
+
 ## `harness.yml` — test-harness self-test
 
 Brings up the synthetic inputs (`deploy/harness/`) — an RTSP synthetic camera and

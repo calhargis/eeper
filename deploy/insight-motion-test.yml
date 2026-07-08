@@ -1,0 +1,10 @@
+# Test-only overlay (M2.2 backpressure): slow the motion scorer so the test can
+# observe frames being DROPPED rather than queued — memory stays bounded and the
+# freshness of the last processed frame stays < 3s. Layer on top of insight-test.yml
+# and force-recreate the insight service:
+#   docker compose ... -f insight-test.yml -f insight-motion-test.yml \
+#     --profile core --profile video --profile insight up -d --force-recreate insight
+services:
+  insight:
+    environment:
+      EEPER_INSIGHT_SCORER_DELAY_MS: '2000'

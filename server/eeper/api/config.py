@@ -62,8 +62,20 @@ class Settings(BaseSettings):
 
     # Insight engine (M2.1). When set (test overlay only), the audio stage writes
     # the newest 16 kHz mono PCM window per camera as a WAV here for the pipeline
-    # test to read; empty in production (no tap).
+    # test to read; empty in production (no tap). M2.2 also writes a per-camera
+    # motion JSON (score/level/freshness) here when set.
     insight_tap_dir: str = ""
+
+    # Insight engine (M2.2). MQTT event bus for movement-level state + motion
+    # samples. Empty host disables MQTT entirely — the engine still samples,
+    # scores, and writes state_history (graceful degradation). The broker is
+    # internal-only (no host port); TLS + per-device ACLs land in M3.1.
+    mqtt_host: str = ""
+    mqtt_port: int = 1883
+    mqtt_node: str = "insight"  # the {node} segment in eeper/{node}/motion|state
+    # Artificial per-tick scorer slowdown (milliseconds) for the backpressure test;
+    # 0 in production. Nonzero forces the frame-drop path without touching ffmpeg.
+    insight_scorer_delay_ms: int = 0
 
 
 @lru_cache(maxsize=1)

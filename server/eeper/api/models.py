@@ -17,6 +17,8 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Identity,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -91,6 +93,60 @@ class Clip(Base):
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     codec: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class StateHistory(Base):
+    """Time series of derived insight states (a TimescaleDB hypertable keyed on
+    ``ts``). M2.2 writes ``movement_level`` (low/medium/high) from the camera
+    motion score; later milestones add sleep/wake and calm/distressed rows.
+
+    This is an insight/awareness signal, never a medical or vital-sign readout.
+
+    The PK is composite ``(ts, id)``: a hypertable requires its partitioning column
+    (``ts``) in every unique index, so a lone surrogate PK is rejected by
+    TimescaleDB. ``ts`` is set explicitly at score time by the writer (no
+    server_default) so the row's timestamp is the event time, not the insert time.
+    """
+
+    __tablename__ = "state_history"
+    __table_args__ = (Index("ix_state_history_cam_ts", "camera_id", "ts"),)
+
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    # Logical camera reference; no FK — a hypertable row is written by the insight
+    # engine outside the ORM relationship graph, and FK-to/from a hypertable adds
+    # friction for no benefit here.
+    camera_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    state_type: Mapped[str] = mapped_column(String(32))  # e.g. "movement_level"
+    value: Mapped[str] = mapped_column(String(16))  # e.g. "low" | "medium" | "high"
+    confidence: Mapped[float] = mapped_column(Float)  # 0..1
+    # Sorted CSV of the extractor names that fed this state, e.g. "motion".
+    contributing_inputs: Mapped[str] = mapped_column(String(255), default="")
+
+
+class Event(Base):
+    """A discrete insight event (a TimescaleDB hypertable keyed on ``ts``). M2.2
+    emits ``movement_level_change`` when the movement level transitions; later
+    milestones add cry/other events, and ``clip_id`` links an auto-promoted clip.
+
+    Awareness events only — the vocabulary is deliberately non-clinical. Composite
+    ``(ts, id)`` PK for the same hypertable reason as :class:`StateHistory`."""
+
+    __tablename__ = "events"
+    __table_args__ = (Index("ix_events_cam_ts", "camera_id", "ts"),)
+
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    camera_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    type: Mapped[str] = mapped_column(String(48))  # e.g. "movement_level_change"
+    value: Mapped[str] = mapped_column(String(16))  # the new level
+    previous_value: Mapped[str | None] = mapped_column(String(16), default=None)
+    confidence: Mapped[float] = mapped_column(Float)
+    # Nullable link to a promoted clip; always NULL in M2.2 (clip auto-promotion
+    # arrives in M2.4). No FK for the same hypertable-friction reason.
+    clip_id: Mapped[int | None] = mapped_column(BigInteger, default=None)
 
 
 class RefreshToken(Base):

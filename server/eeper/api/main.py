@@ -15,14 +15,14 @@ from fastapi import APIRouter, FastAPI
 from eeper import __version__
 from eeper.api.camera_monitor import CameraMonitor
 from eeper.api.config import get_settings
-from eeper.api.db import create_schema, get_sessionmaker
+from eeper.api.db import create_schema_and_hypertables, get_sessionmaker
 from eeper.api.gateway import Go2rtcClient
 from eeper.api.routers import account, auth, cameras, clips, system, tokens, users
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    await create_schema()
+    await create_schema_and_hypertables()
     settings = get_settings()
     gateway = Go2rtcClient(settings.go2rtc_url)
     monitor = CameraMonitor(gateway, get_sessionmaker(), settings)
