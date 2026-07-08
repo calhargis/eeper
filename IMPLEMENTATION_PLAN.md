@@ -112,6 +112,24 @@ The plan depends on a small set of test harnesses, defined here once:
 
 # Phase 2 — Audio & First Insights
 
+## M2.0 — Labeled audio fixture library
+
+Long-lead item; blocks the M2.3 quality gate and feeds M3.3's full-night traces. Can start any time after M0.1 (needs only CI, not the stack).
+
+**Deliverables:** `/fixtures` tooling — a per-clip manifest (source URL, license, sha256, labels, verification status) and a deterministic fetch-and-build script; **no third-party audio committed to the repo**. Source set: donateacry-corpus (ODbL) and per-clip CC0/CC-BY FSD50K clips for cry positives; MUSAN, LibriSpeech/Common Voice, and FSD50K household/pet clips for confusers; project-recorded hard negatives (white-noise machine, lullaby tracks, TV-with-crying-baby, sibling vocalizations). NC-licensed sources (e.g., ESC-50) are excluded by policy. Scene synthesis via Scaper: room impulse responses, nursery noise floor, swept SNRs, seeded and deterministic, emitting frame-accurate onset/offset annotations. Two-person verification pass over all source clips. Frozen, versioned eval split (≥ 100 cry scenes, ≥ 300 confuser scenes) plus a disjoint dev split for threshold tuning. License/provenance file including the ODbL share-alike note for any future redistributed subset.
+
+**Testing criteria:**
+- [AUTO] Manifest integrity: every entry has a source URL, a license identifier from the allowed set (no NC), a sha256, labels, and a verification status; CI fails on any missing field or disallowed license.
+- [AUTO] Reproducible build: two independent CI runs of `fixtures build` from a clean cache produce bit-identical audio and annotation files (hash comparison).
+- [AUTO] Fetch verification: a tampered or substituted source file (wrong sha256) fails the build.
+- [AUTO] Split discipline: eval and dev splits are disjoint at the source-clip level (no source clip contributes scenes to both); asserted by the build.
+- [AUTO] Statistical floor: eval split contains ≥ 100 cry scenes and ≥ 300 confuser scenes, with every confuser category (speech, music/TV, pets, white noise/lullaby, sibling/other-child) represented by ≥ 30 scenes.
+- [AUTO] Annotation sanity: every synthesized scene's onset/offset annotations fall within the clip bounds, and every cry scene contains ≥ 1 cry event annotation.
+- [MANUAL] Verification pass: two reviewers have listened to all source clips against the rubric (cry present: yes/no/unclear; unclear discarded); disagreements resolved and recorded in the manifest.
+- [MANUAL] Realism spot-check: a reviewer listens to a random 20-scene sample of synthesized eval audio and confirms it plausibly resembles far-field nursery capture (no synthesis artifacts, sane levels).
+
+**Done means:** `fixtures build` produces the versioned library (`fixtures-v1`) from the manifest alone on a clean machine, and the eval split is frozen — any subsequent change bumps the fixture version and re-baselines dependent gates (recorded in PROGRESS.md).
+
 ## M2.1 — Audio pipeline
 
 **Deliverables:** audio extraction from camera streams and standalone mic sources (USB adapter; ESP32/I2S deferred to M3.1's MQTT bus for control, audio via RTSP), normalization to 16 kHz mono, listen-in audio in Live view.
@@ -138,7 +156,7 @@ The plan depends on a small set of test harnesses, defined here once:
 
 **Testing criteria:**
 - [AUTO] Model fetch: first run downloads the manifest's models, verifies checksums, and refuses a tampered file.
-- [AUTO] Classifier quality gate on the fixture library: recall ≥ 0.9 on cry clips, false-positive rate ≤ 0.1 on the confuser set (TV, pets, adult speech) at default sensitivity. Thresholds are encoded in CI so model or preprocessing regressions fail the build.
+- [AUTO] Classifier quality gate on the frozen `fixtures-v1` eval split (M2.0): recall ≥ 0.9 on cry scenes, false-positive rate ≤ 0.1 on the confuser set (speech, music/TV, pets, white noise/lullaby, sibling) at default sensitivity. Thresholds are encoded in CI (pinned to the fixture version) so model or preprocessing regressions fail the build.
 - [AUTO] Integration: streaming a cry fixture through the synthetic camera produces a `cry_detected` event end-to-end within 2 s.
 - [AUTO] ONNX Runtime CPU path runs on both amd64 and arm64 images (inference smoke test in multi-arch CI).
 - [MANUAL] Bench: a recorded cry played from a speaker at realistic distance/volume in a quiet room triggers detection; normal household TV audio for 30 minutes does not. (Real acoustics.)

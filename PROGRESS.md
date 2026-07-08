@@ -25,7 +25,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 
 **Currently working on:** M2.2 (insight engine core + motion) in review; next up M2.3 (cry detection)
 **Blockers:** none
-**Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
+**Labeled audio fixture library:** now tracked as its own milestone **M2.0** (see Phase 2 below) — long-lead; blocks the M2.3 quality gate and feeds M3.3's full-night traces — ⬜ not started
 
 ---
 
@@ -219,6 +219,23 @@ playback).
 ---
 
 ## Phase 2 — Audio & First Insights
+
+### M2.0 — Labeled audio fixture library — ⬜
+- [ ] [A] Manifest integrity: required fields + allowed-license enforcement
+- [ ] [A] Reproducible build: bit-identical output across clean CI runs
+- [ ] [A] Tampered source file fails the build
+- [ ] [A] Eval/dev splits disjoint at source-clip level
+- [ ] [A] Statistical floor: ≥100 cry / ≥300 confuser scenes, ≥30 per confuser category
+- [ ] [A] Annotation sanity: bounds + ≥1 cry event per cry scene
+- [ ] [M] Two-person verification pass complete, recorded in manifest — ______
+- [ ] [M] Realism spot-check of synthesized scenes — ______
+
+> Long-lead item; can start any time after M0.1 (needs only CI, not the stack).
+> Produces the frozen, versioned `fixtures-v1` eval split that M2.3's quality gate
+> pins to, plus a disjoint dev split for threshold tuning. No third-party audio is
+> committed — a per-clip manifest (source, license, sha256, labels) + a deterministic
+> Scaper build reproduce the library. NC-licensed sources (e.g. ESC-50) are excluded
+> by policy; cry positives come from donateacry-corpus (ODbL) + CC0/CC-BY FSD50K.
 
 ### M2.1 — Audio pipeline — 🔨 implemented (in review; CI: `stack`/`recorder`+`e2e-live`+`video` jobs)
 - [x] [A] Known audio track arrives as 16 kHz mono PCM windows, verified vs a fixture
