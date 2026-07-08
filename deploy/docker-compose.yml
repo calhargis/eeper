@@ -49,6 +49,11 @@ services:
       EEPER_GO2RTC_URL: http://go2rtc:1984
     tmpfs:
       - /tmp
+    # The shared media volume: the recorder writes segments here; the api reads
+    # them and writes promoted clips under /media/clips. Writable under the
+    # read-only rootfs because it's a mounted named volume.
+    volumes:
+      - media-data:/media
     networks: [edge, internal]
     depends_on:
       db:
@@ -108,6 +113,38 @@ services:
       retries: 10
       start_period: 5s
 
+  # Segment recorder (M1.4, `record` profile). Reuses the api image (same ffmpeg +
+  # eeper package) with a different command, so it's covered by the api's Trivy
+  # scan — no extra image. A dedicated container (not an api task) for crash
+  # isolation: the crash-safety test SIGKILLs it, which must not touch the api/db.
+  # It records each enabled camera from go2rtc's internal RTSP and evicts oldest
+  # segments over the quota. Needs `edge` (reach go2rtc) + `internal` (reach db).
+  recorder:
+    <<: *hardening
+    build:
+      context: ../server
+    image: eeper-api:dev
+    profiles: [record]
+    user: '10001:10001'
+    command: ['python', '-m', 'eeper.recorder']
+    # The recorder reuses the api image but runs no HTTP server, so drop the
+    # image's HTTP healthcheck (it would never pass).
+    healthcheck:
+      disable: true
+    environment:
+      EEPER_DATABASE_URL: postgresql+asyncpg://eeper:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — run deploy/install.sh}@db:5432/eeper
+      # Not used by the recorder, but Settings requires it to load.
+      EEPER_SECRET_KEY: ${EEPER_SECRET_KEY:?EEPER_SECRET_KEY is required — run deploy/install.sh}
+      EEPER_GO2RTC_RTSP_URL: rtsp://go2rtc:8554
+    volumes:
+      - media-data:/media
+    tmpfs:
+      - /tmp
+    networks: [edge, internal]
+    depends_on:
+      db:
+        condition: service_healthy
+
   caddy:
     <<: *hardening
     build:
@@ -137,6 +174,7 @@ services:
 volumes:
   db-data:
   caddy-data:
+  media-data: # recording segments + promoted clips (shared by recorder + api)
 
 networks:
   edge:

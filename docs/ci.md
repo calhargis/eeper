@@ -51,6 +51,16 @@ everything but the literal V4L2 device open, which is the [MANUAL] bench item. A
 best-effort, non-blocking step opportunistically attempts a real `v4l2loopback`
 capture if a runner ever permits it.
 
+Its `recorder` job (M1.4) brings up the core + `video` + `record` stack (the
+recorder container, fast test settings) and asserts the ring-buffer criteria:
+segments are written; a `SIGKILL` mid-segment loses **at most the active segment**
+(the crash-safe filesystem index); clip promotion yields a **duration-matching
+playable H.264 MP4** with faststart; the playback endpoint enforces auth and HTTP
+Range; eviction over the byte quota keeps **promoted clips**; and the api's
+Starlette is ≥ 0.49.1 (the CVE-2025-62727 Range-parser fix). A Playwright leg on
+**system Chrome** (bundled Chromium can't decode H.264) decodes a promoted clip in
+a real `<video>`.
+
 ## `harness.yml` — test-harness self-test
 
 Brings up the synthetic inputs (`deploy/harness/`) — an RTSP synthetic camera and
@@ -82,3 +92,19 @@ Runs on `push` to `main` (build + scan + **push** to GHCR) and on
 
 Base image digests are pinned in each `Dockerfile` (`FROM image@sha256:…`).
 [Renovate](../renovate.json) keeps them current and pins any new ones.
+
+## [MANUAL] bench criteria
+
+A few acceptance criteria can't run on hosted GitHub runners and are validated on
+the reference bench (a Raspberry Pi / mini-PC) instead:
+
+- **Real capture hardware** — a physical USB webcam and a Pi Camera Module 3
+  through their adapters (M1.3); hosted runners can't `modprobe v4l2loopback` or
+  attach a CSI camera.
+- **Phase-1 exit: 24 h sustained record + live view under a CPU budget** (< 60 %
+  steady-state, M1.4). A hosted job can neither run 24 h nor produce a stable CPU
+  number, so a short proxy would be a false green. The budget is met **by
+  construction**: the record path is `ffmpeg -c copy` (RTSP depacketize + TS mux,
+  no decode/encode), clip promotion is on-demand `-c copy` concat, retention is
+  `scandir` + `unlink`, and playback is a `sendfile` `FileResponse` — so
+  steady-state CPU is a few percent per camera, dominated by I/O.

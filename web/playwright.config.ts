@@ -32,5 +32,13 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // Clip playback (M1.4) needs H.264 decode, which Playwright's bundled
+      // Chromium lacks — pin system Chrome (installed via `playwright install chrome`).
+      name: 'clips',
+      testMatch: /clips\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    },
   ],
 });

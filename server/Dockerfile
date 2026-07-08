@@ -24,7 +24,12 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ffmpeg \
   && rm -rf /var/lib/apt/lists/* \
-  && groupadd --system app && useradd --system --gid app --uid 10001 app
+  && groupadd --system app && useradd --system --gid app --uid 10001 app \
+  # Own /media in the image so a fresh media-data named volume inherits 10001
+  # ownership on first mount (same pattern the db uses for PGDATA), letting the
+  # non-root recorder/api write segments + clips under a read-only rootfs.
+  && mkdir -p /media/rec /media/clips \
+  && chown -R app:app /media
 COPY --from=build /opt/venv /opt/venv
 USER app
 EXPOSE 8000
