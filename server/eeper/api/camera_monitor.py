@@ -59,9 +59,15 @@ class CameraMonitor:
     async def register(self, camera: Camera) -> None:
         name = stream_name(camera.id)
         # Raw RTSP source first (serves H.264 + AAC to the recorder / audio
-        # extractor); an on-demand ffmpeg source second that transcodes audio to
-        # Opus so the browser gets a WebRTC audio track (AAC isn't a WebRTC codec).
-        sources = [camera.source_url, f"ffmpeg:{name}#video=copy#audio=opus"]
+        # extractor). Only if the source HAS audio, add an on-demand ffmpeg source
+        # that transcodes just the audio to Opus for the browser (AAC isn't a
+        # WebRTC codec). It is deliberately audio-only: with no video track, go2rtc
+        # must serve the WebRTC video from source 0 (raw copy), so the first frame
+        # never waits on the transcoder to spin up — the Opus audio simply joins
+        # once ffmpeg is ready. A video-only source skips this entirely.
+        sources = [camera.source_url]
+        if camera.has_audio:
+            sources.append(f"ffmpeg:{name}#audio=opus")
         await self._gateway.add_stream(name, sources)
 
     async def _enabled_cameras(self) -> list[Camera]:

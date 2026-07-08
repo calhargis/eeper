@@ -189,14 +189,16 @@
         {/if}
       </div>
 
-      <button
-        class="mute"
-        data-testid="listen-toggle"
-        aria-label={muted ? 'Listen in' : 'Mute listen-in'}
-        onclick={() => (muted = !muted)}
-      >
-        {muted ? 'Listen in' : 'Mute'}
-      </button>
+      {#if selected?.has_audio}
+        <button
+          class="mute"
+          data-testid="listen-toggle"
+          aria-label={muted ? 'Listen in' : 'Mute listen-in'}
+          onclick={() => (muted = !muted)}
+        >
+          {muted ? 'Listen in' : 'Mute'}
+        </button>
+      {/if}
     </div>
 
     {#if selected}

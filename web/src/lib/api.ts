@@ -10,6 +10,7 @@ export type Camera = {
   width: number;
   height: number;
   enabled: boolean;
+  has_audio: boolean;
   online: boolean | null;
   last_checked: string | null;
 };

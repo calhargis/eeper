@@ -21,7 +21,7 @@ from eeper.api.camera_monitor import CameraMonitor, stream_name
 from eeper.api.dependencies import AdminUser, CurrentUser, SessionDep, SettingsDep
 from eeper.api.gateway import GatewayError, Go2rtcClient
 from eeper.api.models import Camera, User
-from eeper.api.probe import ProbeRejected, ProbeUnavailable, probe_video
+from eeper.api.probe import ProbeRejected, ProbeUnavailable, probe_has_audio, probe_video
 from eeper.api.schemas import CameraCreate, CameraOut, MessageOut
 
 router = APIRouter(prefix="/cameras", tags=["cameras"])
@@ -48,6 +48,7 @@ def _camera_out(camera: Camera, monitor: CameraMonitor) -> CameraOut:
         width=camera.width,
         height=camera.height,
         enabled=camera.enabled,
+        has_audio=camera.has_audio,
         online=health.online if health else None,
         last_checked=health.last_checked if health else None,
     )
@@ -106,6 +107,8 @@ async def register_camera(
             f"Resolution {info.width}x{info.height} exceeds the 1080p limit.",
         )
 
+    has_audio = await probe_has_audio(body.source_url, settings.probe_timeout_seconds)
+
     camera = Camera(
         household_id=admin.household_id,
         name=body.name,
@@ -113,6 +116,7 @@ async def register_camera(
         codec=info.codec,
         width=info.width,
         height=info.height,
+        has_audio=has_audio,
     )
     session.add(camera)
     try:

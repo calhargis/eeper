@@ -81,6 +81,12 @@ test('listen-in: audio packets flow in the Live view', async ({ page }) => {
   // stays muted — mute is a local playout control only; RTP still arrives.
   await signIn(page, ADMIN);
   await page.goto('/live');
+  // A video-only source (e.g. the USB adapter) has no listen-in; skip there.
+  const hasAudio = await page.evaluate(async () => {
+    const cams = (await (await fetch('/api/v1/cameras')).json()) as { has_audio: boolean }[];
+    return cams.length > 0 && cams[0].has_audio === true;
+  });
+  test.skip(!hasAudio, 'source has no audio track (video-only) — listen-in not applicable');
   await waitForFrames(page, FRAME_BUDGET_MS);
   const video = page.getByTestId('live-video');
 
