@@ -323,7 +323,7 @@ jobs:
         run: docker compose --profile core down -v
 
   recorder:
-    name: Recorder + audio pipeline
+    name: Recorder + audio + motion pipeline
     runs-on: ubuntu-latest
     env:
       EEPER_GO2RTC_CANDIDATE: 127.0.0.1
@@ -385,12 +385,32 @@ jobs:
           path: web/playwright-report/
           retention-days: 7
 
+      # M2.2 C3 + C5: a motion onset on the synthetic cam-motion source produces a
+      # movement-level event on MQTT + a state_history row within 2s; a video-only
+      # source runs with the motion extractor only. (MQTT is read inside the broker
+      # container + state_history inside db — the broker has no host port.)
+      - name: Motion pipeline suite
+        run: pytest deploy/tests/insight/test_motion_pipeline.py -v
+
+      # M2.2 C4: slow the scorer (overlay) and confirm frames are DROPPED not queued
+      # — freshness < 3s, fed >> scored. Recreate only the insight service.
+      - name: Slow the scorer for the backpressure check
+        working-directory: deploy
+        run: >
+          docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml
+          -f insight-test.yml -f insight-motion-test.yml
+          --profile core --profile video --profile record --profile insight
+          up -d --force-recreate insight
+
+      - name: Motion backpressure suite
+        run: pytest deploy/tests/insight/test_backpressure.py -v
+
       - name: Dump logs on failure
         if: failure()
         working-directory: deploy
-        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml --profile core --profile video --profile record --profile insight logs --no-color
+        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml -f insight-motion-test.yml --profile core --profile video --profile record --profile insight logs --no-color
 
       - name: Tear down
         if: always()
         working-directory: deploy
-        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml --profile core --profile video --profile record --profile insight down -v
+        run: docker compose -f docker-compose.yml -f video-test.yml -f recorder-test.yml -f insight-test.yml -f insight-motion-test.yml --profile core --profile video --profile record --profile insight down -v

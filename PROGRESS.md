@@ -18,12 +18,12 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Planning (master plan, implementation plan, README) | — | ✅ done |
 | Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
 | Phase 1 — Video | M1.1–M1.4 | ✅ done (all merged; register → live → record → clip) |
-| Phase 2 — Audio & first insights | M2.1–M2.4 | 🔨 in progress (M2.1 in review) |
+| Phase 2 — Audio & first insights | M2.1–M2.4 | 🔨 in progress (M2.1 merged; M2.2 in review) |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M2.1 (audio pipeline) in review; next up M2.2 (insight engine core + motion)
+**Currently working on:** M2.2 (insight engine core + motion) in review; next up M2.3 (cry detection)
 **Blockers:** none
 **Fixture library sourcing (long-lead item for M2.3/M3.3):** ⬜ not started — begin hunting cry corpora and recording synthetic nights early
 
@@ -238,12 +238,29 @@ playback).
 > tone check is source-verified (fixture + live both ~1e9 dominance). Design-workflow
 > + a live Opus spike drove it; 10-min A/V sync = [M] bench.
 
-### M2.2 — Insight engine core + motion — ⬜
-- [ ] [A] Motion score ordering: still < rolling < sitting-up
-- [ ] [A] Hysteresis: threshold-oscillating trace → ≤ 1 state change
-- [ ] [A] Rolling fixture → movement state event on MQTT + DB row within 2 s
-- [ ] [A] Backpressure: frames dropped, memory bounded, freshness < 3 s
-- [ ] [A] Video-only degradation: registry matches available inputs
+### M2.2 — Insight engine core + motion — 🔨 implemented (in review; CI: `stack`/`recorder` job)
+- [x] [A] Motion score ordering: still < rolling < sitting-up (unit; measured 0.000 < 0.012 < 0.052)
+- [x] [A] Hysteresis: threshold-oscillating trace → ≤ 1 state change (unit; dual-band + post-transition dwell)
+- [x] [A] cam-motion onset → movement-level event on MQTT + `state_history` row within 2 s (integration)
+- [x] [A] Backpressure: frames dropped, memory bounded (ring ≤ maxlen), freshness < 3 s (unit + integration)
+- [x] [A] Video-only degradation: engine runs, registry reports exactly the matching extractors (unit + live)
+
+> The insight engine gains a **video path** alongside M2.1's audio: a second ffmpeg
+> child per camera decodes gray frames (`fps=5,scale=160x120,format=gray`) into a
+> latest-wins `FrameRing`; a per-camera scorer diffs consecutive frames (pure-Python
+> normalized MAD, no numpy), EWMA-smooths, and runs a **low/medium/high hysteresis**
+> state machine (dual enter/exit bands + post-transition-only min-dwell — leading edge
+> fast for onset, trailing edge sticky against flap). Transitions write `state_history`
+> + `events` (new TimescaleDB hypertables, composite `(ts,id)` PK — the partitioning
+> column must be in every unique index) then publish over MQTT (`eeper/insight/state`
+> retained; `.../motion` per tick) to a new internal-only **mosquitto** broker (no host
+> port; TLS/ACLs are M3.1). **Backpressure**: the ring drops the backlog so a slow
+> scorer always reads the freshest pair. **Graceful degradation**: the audio child is
+> spawned only when the source has audio; a video-only camera runs with the motion
+> extractor alone. Per-stream reap (a video hiccup never drops listen-in audio).
+> Adversarial design workflow (3 proposals → critique → synthesis) + live calibration
+> (Timescale PK, ffmpeg framing, cam-motion 8 s still↔moving cycle) drove it; the 10 min
+> A/V-sync-style perceptual checks stay [M] bench.
 
 ### M2.3 — Cry detection — ⬜
 - [ ] [A] Model fetch: checksum verification, tampered file refused
@@ -344,3 +361,4 @@ playback).
 | 2026-07-07 | M1.3 (camera adapters): two first-party adapter images (mediamtx + encoder) — USB (ffmpeg/V4L2, amd64+arm64) and CSI (mediamtx native `rpiCamera`/libcamera, arm64-only, Pi capture = [M] bench); both H.264-baseline/≤1080p contract-conformant + Trivy-CRITICAL-clean. `images.yml` per-image `platforms` (CSI arm64-only, PR-scan fix); new `adapters-usb` CI job (contract + browser end-to-end via the shared suite); phone-RTSP doc. v4l2loopback can't load on hosted runners (verified) → hosted fallback with the synthetic input through the identical path (user-approved). Design-workflow-driven. Merged in PR #7. |
 | 2026-07-08 | M1.4 (recorder): dedicated recorder container (`record` profile, reuses the api image) — one `ffmpeg -c copy` child per camera writing MPEG-TS segments + a quota/retention task; filesystem-is-index crash-safe design (kill loses at most the active segment, proven vs `libavformat/segment.c` + a live docker-kill test); admin clip promotion (concat covering finalized segments → faststart H.264 MP4 in `/media/clips`, exempt from eviction) + authed household-scoped Range playback (`FileResponse`); `Clip` model; Starlette floored ≥0.49.1 (CVE-2025-62727). New `media-data` volume; `recorder` CI job (7-test suite + system-Chrome clip playback). Closes Phase 1. 24h/CPU exit = [M] bench. Design-workflow-driven. |
 | 2026-07-08 | M2.1 (audio pipeline): new insight-engine service (`insight` profile, reuses the api image) — per-camera ffmpeg audio decode to 16 kHz mono s16le, framed into 1.0s windows in an in-process ring (+ a test WAV tap), verified as the synthetic camera's 1 kHz tone via a stdlib Goertzel dominance check against a committed fixture (robust to ffmpeg drift). Listen-in: camera registration adds a second on-demand go2rtc `ffmpeg:...#audio=opus` source so WebRTC carries an audio track (aiortc `m=audio opus` guard + a muted browser packets-flowing assertion). Audio suite folds into the `recorder` CI job. Phase 1 done. Design-workflow + live Opus spike. |
+| 2026-07-08 | M2.2 (insight engine core + motion): the insight supervisor gains a per-camera video path — ffmpeg gray-frame decode (160×120@5fps) into a latest-wins `FrameRing`, a pure-Python normalized frame-diff motion score (no numpy), EWMA smoothing, and a low/medium/high hysteresis state machine (dual enter/exit bands + post-transition-only min-dwell). Transitions write new `state_history`/`events` TimescaleDB hypertables (composite `(ts,id)` PK — partition column required in every unique index) then publish over MQTT (retained `eeper/insight/state`, per-tick `.../motion`) to a new internal-only mosquitto broker (no host port; TLS/ACLs are M3.1). Backpressure = ring drops the backlog (bounded memory, freshest pair scored); graceful degradation = audio child spawned only when the source has audio, per-stream reap keeps listen-in alive through a video hiccup. New `cam-motion` (8 s still↔moving) + `cam-noaudio` synthetic sources; motion + backpressure suites fold into the `recorder` CI job. Adversarial design workflow (3 proposals → critique → synthesis) + live calibration. |

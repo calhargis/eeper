@@ -126,6 +126,11 @@ services:
     image: eeper-api:dev
     profiles: [record]
     user: '10001:10001'
+    # tini as PID 1 forwards SIGTERM to the Python process (which runs as the
+    # container's PID 1 otherwise, where the default SIG_DFL disposition is ignored)
+    # so `docker stop` triggers the supervisor's graceful ffmpeg SIGTERM->KILL
+    # teardown instead of waiting the grace period then SIGKILL.
+    init: true
     command: ['python', '-m', 'eeper.recorder']
     # The recorder reuses the api image but runs no HTTP server, so drop the
     # image's HTTP healthcheck (it would never pass).
@@ -157,6 +162,10 @@ services:
     image: eeper-api:dev
     profiles: [insight]
     user: '10001:10001'
+    # tini forwards SIGTERM so `docker stop` runs the supervisor's graceful teardown
+    # (ffmpeg SIGTERM->KILL + MQTT disconnect) rather than SIGKILL after the grace
+    # period — see the recorder note above.
+    init: true
     command: ['python', '-m', 'eeper.insight']
     healthcheck:
       disable: true
@@ -165,12 +174,40 @@ services:
       # Not used by the insight engine, but Settings requires it to load.
       EEPER_SECRET_KEY: ${EEPER_SECRET_KEY:?EEPER_SECRET_KEY is required — run deploy/install.sh}
       EEPER_GO2RTC_RTSP_URL: rtsp://go2rtc:8554
+      # Movement-level events + motion samples publish to the internal MQTT broker.
+      EEPER_MQTT_HOST: mqtt
+      EEPER_MQTT_PORT: '1883'
     tmpfs:
       - /tmp
     networks: [edge, internal]
     depends_on:
       db:
         condition: service_healthy
+      mqtt:
+        condition: service_healthy
+
+  # Internal MQTT broker (M2.2): the insight-engine publishes movement-level events
+  # + motion samples here; later, sensor nodes join it (M3.1 hardens it with TLS +
+  # per-device ACLs). No host port — reachable only by services on `internal`.
+  mqtt:
+    <<: *hardening
+    image: eclipse-mosquitto:2.0.22@sha256:212f89e1eaeb2c322d6441b64396e3346026674db8fa9c27beac293405c32b3c
+    profiles: [insight]
+    user: '1883:1883'
+    command: ['mosquitto', '-c', '/mosquitto/config/mosquitto.conf']
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    tmpfs:
+      - /mosquitto/data
+      - /mosquitto/log
+    networks: [internal]
+    healthcheck:
+      # Liveness = can connect + publish. Exec form (no shell) sidesteps $SYS/quote
+      # pitfalls; the message goes nowhere (no subscribers).
+      test: ['CMD', 'mosquitto_pub', '-h', '127.0.0.1', '-t', 'healthcheck', '-m', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   caddy:
     <<: *hardening
