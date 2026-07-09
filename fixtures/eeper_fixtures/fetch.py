@@ -14,6 +14,8 @@ import hashlib
 import os
 import tarfile
 import tempfile
+import time
+import urllib.error
 import urllib.request
 import zipfile
 from collections.abc import Callable
@@ -24,6 +26,10 @@ from eeper_fixtures.manifest import ClipSpec, Fetch
 
 Opener = Callable[[str], IO[bytes]]
 _CHUNK = 1 << 20
+# Public mirrors (raw.githubusercontent, huggingface) rate-limit rapid sequential
+# fetches; back off + retry so a clean-cache build of the whole manifest is reliable.
+_RETRY_CODES = {429, 500, 502, 503, 504}
+_MAX_ATTEMPTS = 6
 
 
 class FixtureFetchError(RuntimeError):
@@ -60,8 +66,28 @@ def _atomic_write(target: Path, data: bytes) -> None:
 
 
 def _download(url: str, opener: Opener) -> bytes:
-    with opener(url) as resp:
-        return resp.read()
+    last: Exception | None = None
+    for attempt in range(_MAX_ATTEMPTS):
+        try:
+            with opener(url) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as exc:  # rate limit / transient server error
+            last = exc
+            if exc.code not in _RETRY_CODES or attempt == _MAX_ATTEMPTS - 1:
+                raise
+            retry_after = exc.headers.get("Retry-After") if exc.headers else None
+            wait = (
+                float(retry_after)
+                if retry_after and retry_after.isdigit()
+                else min(60.0, 2.0**attempt)
+            )
+            time.sleep(wait)
+        except urllib.error.URLError as exc:  # transient network blip
+            last = exc
+            if attempt == _MAX_ATTEMPTS - 1:
+                raise
+            time.sleep(min(30.0, 2.0**attempt))
+    raise FixtureFetchError(f"failed to fetch {url} after {_MAX_ATTEMPTS} attempts: {last}")
 
 
 def _fetch_archive(fetch: Fetch, cache_dir: Path, opener: Opener) -> Path:
