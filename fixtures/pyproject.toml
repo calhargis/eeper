@@ -49,5 +49,5 @@ strict = true
 
 [[tool.mypy.overrides]]
 # Third-party audio libs ship no type stubs.
-module = ["scaper.*", "soundfile.*", "jams.*"]
+module = ["scaper.*", "soundfile.*", "jams.*", "scipy.*"]
 ignore_missing_imports = true

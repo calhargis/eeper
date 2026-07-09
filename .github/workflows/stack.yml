@@ -392,6 +392,11 @@ jobs:
       - name: Motion pipeline suite
         run: pytest deploy/tests/insight/test_motion_pipeline.py -v
 
+      # M2.3 crit 3: a sustained sound on the synthetic cam-sound source produces a
+      # sound_elevated event on MQTT + a state_history row end-to-end.
+      - name: Sound pipeline suite
+        run: pytest deploy/tests/insight/test_sound_pipeline.py -v
+
       # M2.2 C4: slow the scorer (overlay) and confirm frames are DROPPED not queued
       # — freshness < 3s, fed >> scored. Recreate only the insight service.
       - name: Slow the scorer for the backpressure check

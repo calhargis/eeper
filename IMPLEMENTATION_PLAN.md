@@ -10,6 +10,8 @@ This document breaks the six phases of the master plan into concrete milestones.
 
 The bias is automated-first: a criterion is only [MANUAL] when the thing being verified is inherently physical or perceptual.
 
+**Quality-gate thresholds must trace to a stated product consequence, with the derivation recorded next to the number.** A gate that asserts "recall ≥ 0.9" without an answer to "0.9 of *what*, and who suffers at 0.85?" cannot be reasoned about when it's breached — you can't tell whether it matters. This is a hard lesson from M2.3, where an untraceable window-level "recall ≥ 0.9 / FPR ≤ 0.1" bar (inherited from a first draft, provable against no user harm) masked the real question until the gate was rebuilt around episodes and nights — the quantities a parent actually experiences. Where a model can't yet meet a product-derived bar, record the honest measured number as a **ratcheted baseline** (CI fails on regression, the floor only moves up) and give the gap a milestone rather than a euphemism.
+
 ---
 
 ## Testing Infrastructure (built in M0.3, used everywhere)
@@ -150,29 +152,44 @@ Long-lead item; blocks the M2.3 quality gate and feeds M3.3's full-night traces.
 - [AUTO] Backpressure: when the engine is artificially slowed, frames are dropped rather than queued (memory stays bounded; freshness of last processed frame stays < 3 s).
 - [AUTO] Graceful degradation: engine starts and runs with video-only input; extractor registry reports exactly the extractors matching available inputs.
 
-## M2.3 — Cry detection
+## M2.3 — Audio nudges: sound level + experimental cry detection
 
-**Deliverables:** pretrained audio-event model (YAMNet-class) via ONNX Runtime, cry classifier with confidence output, sensitivity setting, model fetch tooling (`/models` manifest, checksum-verified download at first run).
+v1's audio nudge is **sustained sound level** — the robust, model-free behaviour of every classic audio baby monitor: in a quiet nursery, sustained sound above the ambient floor means the baby needs attention. **Cry classification** (telling a cry from a bark or a loud TV) ships **experimental and off by default**. This is a measured decision, not a shortcut: exhaustive evaluation (recorded in the M2.3 PR) showed pretrained YAMNet cannot carry cry classification to a first-class bar — at any false-nudge-safe operating point, sustained-episode recall for a single infant caps at ~0.70, because a cry the model cannot hear stays unheard for the whole episode (window errors correlate in time, so temporal voting cannot exceed the model's per-infant detectability). The trained model that unlocks first-class cry detection is **M2.5**. The two signals follow the graceful-degradation principle applied to the roadmap: the sound-level nudge carries the product now, the classifier improves it later.
+
+**Deliverables:** sound-level detector (per-window RMS/dBFS, adaptive quiet-only baseline, k-of-n sustained-elevation state machine → `sound_elevated` event; on by default for audio cameras, no model). Experimental cry classifier (pretrained YAMNet-class model via ONNX Runtime with eeper's versioned NumPy log-mel frontend, pet-suppressed window scoring + k-of-n episode detector → `cry_detected`; off by default) with confidence output and sensitivity settings. Model fetch tooling (`/models` manifest, checksum-verified download at first run). Long-form scene synthesis in the fixture tooling (multi-minute cry episodes + confuser-only nights, reused by M3.3's full-night traces).
 
 **Testing criteria:**
 - [AUTO] Model fetch: first run downloads the manifest's models, verifies checksums, and refuses a tampered file.
-- [AUTO] Classifier quality gate on the frozen `fixtures-v1` eval split (M2.0): recall ≥ 0.9 on cry scenes, false-positive rate ≤ 0.1 on the confuser set (speech, music/TV, pets, white noise/lullaby, sibling) at default sensitivity. Thresholds are encoded in CI (pinned to the fixture version) so model or preprocessing regressions fail the build.
-- [AUTO] Integration: streaming a cry fixture through the synthetic camera produces a `cry_detected` event end-to-end within 2 s.
+- [AUTO] Sound-level product gate on the frozen `fixtures-v1` eval split (M2.0), each threshold derived from a stated parent consequence and recorded next to the number: episode recall ≥ 0.90 on sustained cry episodes (a real crying spell must be caught); median onset→nudge latency ≤ 10 s (useful while the baby is still crying); ≤ 1 false event per synthesized 8 h quiet night (a quiet nursery must not manufacture wake-ups); a continuous white-noise-machine night is absorbed by the adaptive baseline. Encoded in CI, pinned to the fixture version.
+- [AUTO] Cry-classifier window ratchet baselines on the same split (near-field + physically-based far-field recall/FPR) are recorded and RATCHETED: CI fails on a regression below the floor, but they do not block on an aspirational absolute — cry accuracy is M2.5's bar, not v1's. They are M2.5's starting line.
+- [AUTO] Integration: a sustained sound streamed through the synthetic camera produces a `sound_elevated` event end-to-end (MQTT + `state_history`).
 - [AUTO] ONNX Runtime CPU path runs on both amd64 and arm64 images (inference smoke test in multi-arch CI).
-- [MANUAL] Bench: a recorded cry played from a speaker at realistic distance/volume in a quiet room triggers detection; normal household TV audio for 30 minutes does not. (Real acoustics.)
+- [MANUAL] Bench: a recorded cry played from a speaker at realistic distance/volume in a quiet room raises a sound-level nudge; a quiet room over 30 minutes does not. (Real acoustics. A sound monitor honestly also nudges on other sustained sound — a loud TV, a barking dog — which is correct behaviour and documented; cry-vs-not discrimination is the M2.5 bench.)
 
 ## M2.4 — Events, clips, and nudges
 
 **Deliverables:** event records linked to auto-promoted clips (pre/post roll), Tonight view v0 (event list with tappable clips), Web Push notifications with per-user preferences and quiet-hours toggle, nudge copy per the safety stance.
 
 **Testing criteria:**
-- [AUTO] Integration: a cry event auto-promotes a clip spanning the configured pre/post roll; the event API returns the clip reference; the clip is playable.
+- [AUTO] Integration: an audio nudge (the primary `sound_elevated` event in v1; `cry_detected` too once M2.5 makes cry first-class) auto-promotes a clip spanning the configured pre/post roll; the event API returns the clip reference; the clip is playable.
 - [AUTO] Playwright: the event appears in Tonight view without reload (WebSocket push) and its clip plays on tap.
 - [AUTO] Web Push: a subscribed test client (headless push service) receives the nudge; users with notifications off or in quiet hours do not (matrix test).
 - [AUTO] Copy lint: notification templates are checked against a denylist of clinical/alarm terms ("oxygen", "vital", "emergency", "apnea") — encoding the Section 2 stance as a test.
 - [MANUAL] Push notifications arrive on physical iOS and Android with the PWA backgrounded and the phone locked. (OS push behavior is not reliably emulatable.)
 
-**Phase 2 exit:** all green; end-to-end demo criterion — from speaker-played cry to phone nudge with playable clip — passes on the bench ([MANUAL], recorded in checklist).
+## M2.5 — Trained cry model (first-class cry detection)
+
+Promoted from the M2.3 finding: pretrained YAMNet cannot distinguish a cry from other sustained sounds to a first-class bar. This milestone builds a reproducible **trained** cry model — a head on YAMNet embeddings or a small purpose-built CNN — on a sourced cry corpus (donateacry full + FSD50K cry positives + near/far-field augmentation), unlocking cry classification as a first-class, on-by-default nudge and lifting far-field (room-corner camera) placement and latency. Its starting line is the M2.3 window ratchet baselines; each gate below must ratchet those UP. Sits after M2.4 because the sound-level nudge already carries the Phase 2 demo — this is a capability upgrade, not a blocker.
+
+**Deliverables:** cry-corpus manifest + a reproducible training pipeline producing a checksum-pinned ONNX artifact (fetched + verified like the pretrained model); the classifier flips to on-by-default; the episode gate becomes blocking.
+
+**Testing criteria:**
+- [AUTO] Reproducible training: the model artifact rebuilds from the corpus manifest + a pinned pipeline on a clean machine (checksum match), and is fetched + checksum-verified at first run.
+- [AUTO] Quality gate on the frozen fixtures eval split, ratcheted UP from M2.3's baselines: near-field cry recall ≥ 0.9 / FPR ≤ 0.1 AND far-field recall/FPR clearing a product-derived floor; episode recall ≥ 0.95 for sustained episodes at ≤ 1 false cry-nudge per synthesized 8 h night. Thresholds encoded in CI, pinned to the fixture version.
+- [AUTO] ONNX Runtime CPU path runs on both amd64 and arm64 (inference smoke test in multi-arch CI).
+- [MANUAL] Bench: a speaker-played cry raises a *cry* nudge; 30 minutes of household TV / pet audio does not (real cry-vs-not discrimination — the capability the sound-level nudge intentionally does not claim).
+
+**Phase 2 exit:** all green through M2.4; end-to-end demo criterion — from speaker-played cry to phone nudge (sound-level in v1) with playable clip — passes on the bench ([MANUAL], recorded in checklist). M2.5 upgrades the nudge from sound-level to cry classification and can land after the demo.
 
 ---
 

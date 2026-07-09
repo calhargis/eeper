@@ -24,6 +24,8 @@ dependencies = [
   "pyotp>=2.9,<3.0",
   "httpx>=0.27,<1.0", # async client for the go2rtc media gateway
   "paho-mqtt>=2.0,<3.0", # MQTT client for insight event publishing (M2.2)
+  "numpy>=1.26,<3", # log-mel audio frontend for the cry classifier (M2.3)
+  "onnxruntime>=1.19,<2", # CPU inference for the YAMNet-class cry model (M2.3)
 ]
 
 [project.optional-dependencies]
@@ -68,7 +70,7 @@ files = ["eeper", "tests"]
 
 [[tool.mypy.overrides]]
 # These libraries don't ship type information.
-module = ["pyotp.*", "testcontainers.*"]
+module = ["pyotp.*", "testcontainers.*", "onnxruntime.*"]
 ignore_missing_imports = true
 
 # ─── pytest ────────────────────────────────────────────────────────────────

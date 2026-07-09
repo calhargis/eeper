@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+from pathlib import Path
 
 from eeper.api.config import Settings
 from eeper.insight.frame import FRAME_SPEC, FrameRing
@@ -95,6 +96,28 @@ async def test_reconcile_reaps_video_stream_without_touching_audio() -> None:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
+
+
+async def test_setup_cry_degrades_gracefully_on_bad_manifest(tmp_path: Path) -> None:
+    # A malformed models manifest (a model entry missing its sha256) must NOT crash
+    # the engine: _setup_cry catches every failure and runs sound-level only, leaving
+    # the classifier unset. (Regression: the narrow except let KeyError/onnxruntime
+    # load errors escape run() and tear the whole supervisor down.)
+    bad = tmp_path / "manifest.json"
+    bad.write_text(
+        '{"schema_version": 1, "models": [{"name": "yamnet-classifier", "version": "1", '
+        '"filename": "m.onnx", "url": "http://example/m.onnx"}]}'  # no sha256 -> KeyError
+    )
+    settings = Settings(
+        database_url="postgresql+asyncpg://x/y",
+        secret_key="0" * 16,
+        cry_detection_enabled=True,
+        insight_models_manifest=str(bad),
+        insight_models_cache=str(tmp_path / "cache"),
+    )
+    sup = InsightSupervisor(sessionmaker=None, settings=settings)  # type: ignore[arg-type]
+    await sup._setup_cry()  # must not raise
+    assert sup._cry_classifier is None
 
 
 async def test_video_only_camera_spawns_no_audio_child() -> None:

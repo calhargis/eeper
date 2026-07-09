@@ -5,10 +5,16 @@ forget from the asyncio scoring loop: paho runs its network loop in a background
 thread (``loop_start``) and ``publish`` is thread-safe and non-blocking, so a
 down/unreachable broker never blocks or crashes the engine — samples are dropped
 (qos0) or bounded-queued (qos1, capped) while paho auto-reconnects. With no host
-configured the publisher is an inert no-op (graceful degradation). Topics follow
-the established sensor contract ``eeper/{node}/motion`` / ``.../state``.
+configured the publisher is an inert no-op (graceful degradation).
 
-The vocabulary is deliberately non-clinical: movement level, never a vital sign.
+Topics (all under ``eeper/{node}/``): per-tick samples ``motion/cam{id}`` and
+``sound/cam{id}`` (qos0, not retained); state transitions on a per-signal-type
+retained topic ``state/cam{id}/{state_type}`` where ``state_type`` is
+``movement_level`` | ``sound_level`` | ``cry`` (qos1, retained, so signals never
+clobber each other's last-known state).
+
+The vocabulary is deliberately non-clinical: movement + sound level, never a vital
+sign. (This class predates the sound/cry signals — the name is historical.)
 """
 
 from __future__ import annotations
@@ -70,24 +76,44 @@ class MotionPublisher:
             retain=False,
         )
 
+    def publish_sound(
+        self, camera_id: int, loudness_dbfs: float, elevation_db: float, ts: float
+    ) -> None:
+        """A per-tick sound-level sample: loudness and how far it sits above the
+        adaptive baseline. eeper/{node}/sound/cam{id}."""
+        self._publish(
+            f"eeper/{self._node}/sound/cam{camera_id}",
+            {
+                "ts": ts,
+                "type": "sound_level",
+                "value": round(loudness_dbfs, 1),
+                "unit": "dBFS",
+                "elevation": round(elevation_db, 1),
+            },
+            qos=0,
+            retain=False,
+        )
+
     def publish_state(
         self,
         camera_id: int,
-        level: str,
+        state_type: str,
+        value: str,
         previous: str | None,
         confidence: float,
         contributing: list[str],
         ts: float,
     ) -> None:
-        """A movement-level transition. Retained so a subscriber that connects just
-        after a change still receives the last transition (hardens the onset path).
-        eeper/{node}/state/cam{id}."""
+        """A signal state transition (movement_level / sound_level / cry). Retained,
+        on a per-state-type topic so signals never clobber each other's last-known
+        state, so a subscriber that connects just after a change still receives it.
+        eeper/{node}/state/cam{id}/{state_type}."""
         self._publish(
-            f"eeper/{self._node}/state/cam{camera_id}",
+            f"eeper/{self._node}/state/cam{camera_id}/{state_type}",
             {
                 "ts": ts,
-                "state_type": "movement_level",
-                "value": level,
+                "state_type": state_type,
+                "value": value,
                 "previous": previous,
                 "confidence": round(confidence, 3),
                 "contributing_inputs": contributing,

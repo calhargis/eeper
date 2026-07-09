@@ -18,12 +18,12 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Planning (master plan, implementation plan, README) | — | ✅ done |
 | Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
 | Phase 1 — Video | M1.1–M1.4 | ✅ done (all merged; register → live → record → clip) |
-| Phase 2 — Audio & first insights | M2.1–M2.4 | 🔨 in progress (M2.1 merged; M2.2 in review) |
+| Phase 2 — Audio & first insights | M2.0–M2.5 | 🔨 in progress (M2.1 merged; M2.2, M2.0, M2.3 in review; M2.5 promoted) |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M2.0 (labeled audio fixture library) in review; M2.3 (cry detection) infra on a branch, awaiting fixtures-v1
+**Currently working on:** M2.3 (audio nudges: sound-level + experimental cry) in review; M2.0 fixture library in review
 **Blockers:** none
 **Labeled audio fixture library:** milestone **M2.0** — 🔨 implemented (in review): the `fixtures/` tooling + a real `fixtures-v1` manifest (236 source clips → 630 scenes, all AUTO gates green); [M] two-person verification + realism spot-check pending. sibling/other-child confuser deferred to fixtures-v1.1 (see M2.0).
 
@@ -287,21 +287,35 @@ playback).
 > (Timescale PK, ffmpeg framing, cam-motion 8 s still↔moving cycle) drove it; the 10 min
 > A/V-sync-style perceptual checks stay [M] bench.
 
-### M2.3 — Cry detection — ⬜
-- [ ] [A] Model fetch: checksum verification, tampered file refused
-- [ ] [A] Quality gate: recall ≥ 0.9 on cries, FPR ≤ 0.1 on confusers
-- [ ] [A] Cry fixture → `cry_detected` event end-to-end within 2 s
-- [ ] [A] ONNX CPU inference smoke test on amd64 + arm64
-- [ ] [M] Speaker-played cry triggers; 30 min of TV does not — ______
+### M2.3 — Audio nudges: sound level + experimental cry — 🔨 implemented (in review; CI: `audio` + `stack`/`recorder` jobs)
+Reframed after exhaustive measurement (in the PR): pretrained YAMNet can't carry cry
+*classification* to a first-class bar (sustained-episode recall for one infant caps
+~0.70 at any false-nudge-safe point — correlated window errors). v1 nudge = **sound
+level** (robust, model-free); cry classification ships **experimental, off by
+default**, with window ratchet baselines; the trained model is **M2.5**.
+- [x] [A] Model fetch: checksum verification, tampered file refused
+- [x] [A] Sound-level product gate on `fixtures-v1`: episode recall ≥ 0.90, latency ≤ 10 s, ≤ 1 false event / quiet 8 h night, continuous-noise absorbed (product-derived, in CI)
+- [x] [A] Cry-classifier window ratchet baselines (near + physically-based far-field recall/FPR) recorded + ratcheted (regression fails; not an absolute)
+- [x] [A] Sustained sound → `sound_elevated` event end-to-end (MQTT + `state_history`)
+- [x] [A] ONNX CPU inference smoke test on amd64 + arm64
+- [ ] [M] Speaker-played cry raises a sound nudge; a quiet room 30 min does not — ______
 
 ### M2.4 — Events, clips, nudges — ⬜
-- [ ] [A] Cry event auto-promotes pre/post-roll clip, linked and playable
+- [ ] [A] Audio nudge (`sound_elevated` in v1) auto-promotes pre/post-roll clip, linked and playable
 - [ ] [A] Playwright: event appears in Tonight v0 via WebSocket; clip plays
 - [ ] [A] Web Push matrix: subscribed receives; opted-out/quiet-hours do not
 - [ ] [A] Copy lint: notification templates pass clinical-terms denylist
 - [ ] [M] Push arrives on physical iOS + Android, backgrounded + locked — ______
 
-**Phase 2 exit:** ⬜ [M] speaker cry → phone nudge → playable clip on bench — ______
+### M2.5 — Trained cry model (first-class cry detection) — ⬜
+Promoted from M2.3: the trained-model unlock for cry classification. Starts from the
+M2.3 window ratchet baselines; lands after the Phase 2 demo (sound-level carries it).
+- [ ] [A] Reproducible training: artifact rebuilds from the corpus manifest (checksum), fetched + verified
+- [ ] [A] Quality gate ratcheted UP: near-field recall ≥ 0.9 / FPR ≤ 0.1 + far-field floor; episode recall ≥ 0.95 at ≤ 1 false cry-nudge / 8 h night
+- [ ] [A] ONNX CPU inference smoke on amd64 + arm64
+- [ ] [M] Speaker cry raises a *cry* nudge; 30 min TV/pets does not — ______
+
+**Phase 2 exit:** ⬜ [M] speaker cry → phone nudge (sound-level in v1) → playable clip on bench — ______ (M2.5 upgrades the nudge to cry classification, can land after the demo)
 
 ---
 
@@ -376,6 +390,7 @@ playback).
 
 | Date | Change |
 |---|---|
+| 2026-07-09 | M2.3 (audio nudges): reframed after exhaustive measurement — pretrained YAMNet can't carry cry *classification* to a first-class bar (sustained-episode recall for one infant caps ~0.70 at any false-nudge-safe operating point; window errors correlate in time, so temporal voting can't exceed the model's per-infant detectability). v1 ships **sound-level** nudges (per-window RMS/dBFS, adaptive quiet-only baseline, k-of-n sustained-elevation state machine → `sound_elevated`; model-free, on by default): episode recall 0.95, ~2 s latency, 0 false events on a quiet night. **Cry classification** ships experimental + off by default (frozen YAMNet + eeper NumPy log-mel frontend + pet-suppressed window scoring + k-of-n episode detector → `cry_detected`); its window-level accuracy (near-field + physically-based far-field, pyroomacoustics) is recorded as **ratchet baselines**. New `audio` CI workflow (product-derived sound gate + cry ratchets on the frozen eval split, deterministic; multi-arch ONNX CPU smoke); long-form scene synthesis added to the fixture tooling (episodes + nights, M3.3-ready); `cam-sound` synthetic source + sound pipeline suite in the `recorder` job. Per-signal-type MQTT state topics + generalized state writer. **M2.5** promoted (trained cry model); plan gains the meta-lesson that gate thresholds must trace to a product consequence. |
 | 2026-07-06 | Tracker created. Planning phase complete (master plan, implementation plan, README). Project renamed Nightlight → eeper. |
 | 2026-07-06 | M0.1 implemented: monorepo layout (`server`/`web`/`adapters`/`firmware`/`deploy`/`docs`/`models`), Python (ruff/mypy-strict/pytest) + web (eslint/svelte-check/prettier) tooling, Conventional-Commits enforcement (commitlint + Husky hooks), two CI workflows (PR checks + multi-arch build/scan/push), pinned base image digests, Renovate. Merged in PR #1; CI green. |
 | 2026-07-06 | M0.2 implemented: hardened Compose `core` stack (Caddy edge proxy w/ local-CA TLS + security headers, FastAPI api, TimescaleDB, static web); `install.sh` (prereq check, secret generation, CA extraction); first-boot wizard + session auth gate; LAN-only/port isolation; every container non-root + read-only rootfs. New `stack` CI workflow boots the stack and runs the `deploy/tests` integration suite (9/9 local). Base images pinned; api/web/caddy pass the Trivy CRITICAL gate. |

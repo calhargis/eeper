@@ -37,6 +37,11 @@ class WindowRing:
         self._spec = spec
         self._buf = bytearray()
         self.windows: collections.deque[bytes] = collections.deque(maxlen=maxlen)
+        # Monotonic count of windows ever emitted (never wraps with the deque). The
+        # audio scorer diffs this against its own cursor to score only new windows and
+        # to detect (and drop) a backlog under load — the same freshness bookkeeping
+        # the frame ring uses.
+        self.windows_emitted = 0
 
     def feed(self, data: bytes) -> list[bytes]:
         self._buf.extend(data)
@@ -46,5 +51,6 @@ class WindowRing:
             window = bytes(self._buf[:window_bytes])
             del self._buf[:window_bytes]
             self.windows.append(window)
+            self.windows_emitted += 1
             emitted.append(window)
         return emitted

@@ -78,7 +78,9 @@ def test_motion_onset_produces_state_and_event_within_2s(
 ) -> None:
     camera_id = motion_camera["id"]
     assert motion_camera["has_audio"] is False  # cam-motion has no audio track
-    topic = f"eeper/insight/state/cam{camera_id}"
+    # State transitions publish on a per-signal-type retained topic (M2.3), so a
+    # movement change and a sound/cry change never clobber each other's last value.
+    topic = f"eeper/insight/state/cam{camera_id}/movement_level"
 
     deadline = time.time() + 45
     t_onset = _await_onset(stack, camera_id, deadline)

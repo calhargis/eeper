@@ -23,15 +23,21 @@ class Modality(StrEnum):
 class ExtractorSpec:
     name: str
     requires: frozenset[Modality]
-    # "active": implemented and running in M2.2. "declared": the input branch is
-    # recognised so the registry reports it, but the extractor itself lands later
-    # (e.g. the M2.3 cry/audio-event classifier).
+    # "active": implemented and running by default. "experimental": implemented but
+    # off by default because it can't yet meet its quality bar (the M2.3 cry
+    # classifier — see models/cryeval.py; the trained model is M2.5). "declared": the
+    # input branch is recognised but the extractor lands later.
     status: str
 
 
 REGISTRY: tuple[ExtractorSpec, ...] = (
     ExtractorSpec("motion", frozenset({Modality.VIDEO}), "active"),
-    ExtractorSpec("audio_level", frozenset({Modality.AUDIO}), "declared"),
+    # Sound level (sustained loudness above the nursery floor) is the v1 audio nudge —
+    # robust, model-free, always on for audio cameras.
+    ExtractorSpec("sound_level", frozenset({Modality.AUDIO}), "active"),
+    # Cry classification is experimental + off by default (pretrained YAMNet can't
+    # carry it to the bar; M2.5 is the trained-model unlock).
+    ExtractorSpec("cry", frozenset({Modality.AUDIO}), "experimental"),
 )
 
 
