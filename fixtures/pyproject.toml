@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eeper-fixtures"
+version = "0.0.0"
+description = "eeper labeled audio fixture library tooling (M2.0) — manifest, deterministic fetch + Scaper build."
+readme = "README.md"
+requires-python = ">=3.12"
+# CI-only tooling, kept SEPARATE from the server package: scaper 1.6.5 uses np.Inf
+# (removed in numpy 2), so this pins numpy<2 — which must not constrain the server's
+# numpy 2.x. The reproducible build runs in a digest-pinned container (see Dockerfile).
+dependencies = [
+  "scaper>=1.6.5,<2",
+  "numpy<2",
+  "soundfile>=0.12,<0.14",
+  "jams>=0.3,<0.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6,<1.0",
+  "mypy>=1.11,<2.0",
+  "pytest>=8.0,<9.0",
+]
+
+[project.scripts]
+fixtures = "eeper_fixtures.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["eeper_fixtures*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "S311"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[[tool.mypy.overrides]]
+# Third-party audio libs ship no type stubs.
+module = ["scaper.*", "soundfile.*", "jams.*"]
+ignore_missing_imports = true
