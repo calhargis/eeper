@@ -11,7 +11,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from eeper_fixtures import build as build_mod
 from eeper_fixtures.checks import (
     check_annotations,
     check_floor,
@@ -20,6 +19,7 @@ from eeper_fixtures.checks import (
     load_scenes,
 )
 from eeper_fixtures.manifest import load_manifest, validate
+from eeper_fixtures.provenance import render as render_provenance
 
 
 def _report(errors: list[str]) -> int:
@@ -37,6 +37,8 @@ def _cmd_verify(args: argparse.Namespace) -> int:
 
 
 def _cmd_build(args: argparse.Namespace) -> int:
+    from eeper_fixtures import build as build_mod  # lazy: pulls scaper/jams
+
     manifest = load_manifest(args.manifest)
     errors = validate(manifest)
     if errors:
@@ -62,7 +64,18 @@ def _cmd_check(args: argparse.Namespace) -> int:
     return _report(errors)
 
 
+def _cmd_provenance(args: argparse.Namespace) -> int:
+    text = render_provenance(load_manifest(args.manifest))
+    if args.out:
+        args.out.write_text(text)
+    else:
+        print(text)
+    return 0
+
+
 def _cmd_repro(args: argparse.Namespace) -> int:
+    from eeper_fixtures import build as build_mod  # lazy: keeps the CLI importable without deps
+
     hashes_a = build_mod.library_hashes(args.a)
     hashes_b = build_mod.library_hashes(args.b)
     if not hashes_a:
@@ -99,12 +112,16 @@ def main(argv: list[str] | None = None) -> int:
     p_repro.add_argument("--a", type=Path, required=True)
     p_repro.add_argument("--b", type=Path, required=True)
 
+    p_prov = sub.add_parser("provenance", help="render the license/provenance report")
+    p_prov.add_argument("--out", type=Path, default=None)
+
     args = parser.parse_args(argv)
     return {
         "verify": _cmd_verify,
         "build": _cmd_build,
         "check": _cmd_check,
         "repro": _cmd_repro,
+        "provenance": _cmd_provenance,
     }[args.command](args)
 
 

@@ -1,0 +1,4273 @@
+{
+  "clips": [
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-00",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/549a46d8-9c84-430e-ade8-97eae2bef787-1430130772174-1.7-m-48-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "32938732caae90647a1d90ac5b91d8143e3a05accb5f3ce9aabf97d63a0bb815",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-01",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138495-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "93cddc17fc9c95e07aa6803cf1a674b8a9448af443a65b966345901952d30f7f",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-02",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138506-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "62266dea0b78cd004afd86feee74ff29c706cb12f1f248c988904a1fcd28d61d",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-03",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138514-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "fcbbb79779954c227ae708b04f4a5ef2731727b24769c7a6aabc82762fad48a2",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-04",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138524-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "dd12c99d9308e2dc04e7c8f690bb7e3d0734df503b1440472aca428b43f3b913",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-05",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138536-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "61e2d85c38f1ecd70828618b17ecb965fac133078f2ba8f088227744ae2f6290",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-06",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138545-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "05231087b4c12ee7afccec781dd189cd98f9fc21afd8cbe01a39bc2cca3fa4e1",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-07",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138591-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "f3cb45e19ca8d2e8b4c36879ae4d2b28e1ff6ef7d4f9bdc5c07781e779c35413",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-08",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/643D64AD-B711-469A-AF69-55C0D5D3E30F-1430138647-1.0-m-72-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "1f0342b5391d66d33b0f8d3eb9fdf956bf41a5933afbb446dfdc8c963708dd7c",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-09",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/69BDA5D6-0276-4462-9BF7-951799563728-1436936185-1.1-m-26-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "898f0afd3ece064760bc81c4aef2a08c443a9191a5bd3121f5aa76359dce5bd6",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-10",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/999bf14b-e417-4b44-b746-9253f81efe38-1430974001343-1.7-m-26-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "dff73686f70b9b0ed15fa792d2b9a589eabc81bac9e633cfabf50aa3c9fd0efa",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-belly_pain-11",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/belly_pain/C421C6FE-DFEE-4080-8AEA-848E7CE4756B-1430548333-1.0-f-26-bp.wav"
+      },
+      "labels": ["cry", "belly_pain"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "6a6b725d84b74139fbade066b69faea9b4f97923e57322b7530631c7cc28a287",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-00",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/5afc6a14-a9d8-45f8-b31d-c79dd87cc8c6-1430757039803-1.7-m-48-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "4ae5bcdee6c194b277c3ab1ec734657abc69325f87b91e03a60bf6abb90d6844",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-01",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/79FF400A-97E2-4701-987D-C7C850D5523C-1430089648-1.0-f-48-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "66652fec83cc5302ec5caf8244f79c2573efd8dbd31a519f49c9acb7e4663c87",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-02",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/7A864194-4B6B-4850-ABBF-0C2A8170107B-1436846915-1.1-f-26-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "1a6ef5fe6861b864494424da9ac8cb7962a148662b9af12bc079ae434c56f63d",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-03",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/7E4B9C14-F955-4BED-9B03-7F3096A6CBFF-1430232208-1.0-f-26-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "3826fec9f6458e8ead6b9941cb39d57b15cd7983b5915c4cd71632cd8e918b39",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-04",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/7E4B9C14-F955-4BED-9B03-7F3096A6CBFF-1430540826-1.0-f-26-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "1366cc9a9a007766a30b0e52a1d80a9997479bc531f4b99b9b802cd8d9454e85",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-05",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/AEA8AE04-D00E-48A7-8A0B-6D87E2175121-1430563241-1.0-f-72-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "5cf186200e54ba6af5358795ecb62ac653a671f364da7a5a6b55581edf05b441",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-06",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/F24DE44B-762C-4149-AC92-96A5E57ED118-1430816949-1.0-m-04-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "f74c6e519d8ad0513bdb38146c67ed6a6fe4ea58afdef1330f75e5543cb2f713",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-burping-07",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/burping/af30880e-5f98-4dc0-b37a-be6b21fa0ba3-1431240072536-1.7-m-26-bu.wav"
+      },
+      "labels": ["cry", "burping"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "e3d97a981286f9e4ef44b59fd9074f551ee689c1a727a537476f7901172354a9",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-00",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/10A40438-09AA-4A21-83B4-8119F03F7A11-1430925142-1.0-f-26-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "c9f05e92372d94ec29e70762ebd8198e25cd85ee945125356a2bff8df8dd759f",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-01",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/11417AC2-DCC9-48CD-8177-CA8665E51B2F-1436881512-1.1-m-48-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "b5348fa5f1666b412a152cf03df89ceb725ea7fd29d7169d80641409d739c788",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-02",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/1309B82C-F146-46F0-A723-45345AFA6EA8-1430703937-1.0-f-48-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "32f9d12c79cec22682fcf543243bcde83078bfeaecffd763e5fd586a361e70b0",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-03",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/1309B82C-F146-46F0-A723-45345AFA6EA8-1430704008-1.0-f-48-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "abc02e6b83abbf6c7e4a8887a307e24e321d8fcf1a80b86abc7d911f618bd9cd",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-04",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/1309B82C-F146-46F0-A723-45345AFA6EA8-1432801693-1.1-f-26-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "9d33056a41efae4973ee6af42ef643ecf0874ab78cc4d010c8a2296aee037fdb",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-05",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/1309B82C-F146-46F0-A723-45345AFA6EA8-1432801703-1.1-f-26-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "0729eebaba0708bc24f45c7d19b0b078098e8590dc9bb040118661771d5a9fd1",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-06",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/2294E2B2-8E36-4DA6-A898-B947CB9446AB-1436462707-1.1-m-26-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "c31b5d51639b28b01915fe8ea0d85971746260054effd5913f8348efb5941227",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-07",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/64acb345-a61e-4ef3-a5a6-cf83c04b83f1-1430058990597-1.7-m-72-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "a4bcd58370f7ce51747a6538ad52417ed275f912b813df669ba617aa00c6a96d",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-08",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/64acb345-a61e-4ef3-a5a6-cf83c04b83f1-1430059012473-1.7-m-72-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "1cad569fe828d51c2545b79c01e68ec4bbe9656782e7337ebb252396ed7d1d77",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-09",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/665BDF6D-2897-49F9-8AD0-978B3B2A0468-1430530218-1.0-m-26-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "e8eb97b1f0338ddb80749f77eacde9958e230adb2f0b44538d1763531178db38",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-10",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/79FF400A-97E2-4701-987D-C7C850D5523C-1430089621-1.0-f-48-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "202c69a7c7c7cb67db65a446973d3591e79750c03ce9a4646c401b758d6a2423",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-discomfort-11",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/discomfort/79FF400A-97E2-4701-987D-C7C850D5523C-1430089688-1.0-f-48-dc.wav"
+      },
+      "labels": ["cry", "discomfort"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "66bf3c3112782465310eb047ef66dcc83bdc625964e51112fcd90c0b9ed7254f",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-00",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/02c3b725-26e4-4a2c-9336-04ddc58836d9-1430726196216-1.7-m-04-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "92e659ecfdb745b96880dc49edfdf51a120b6037013ef0a3f6b50d0d81d7a2f1",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-01",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/02ead89b-aa02-453e-8b83-6ebde9fe7551-1430233132879-1.7-m-26-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "76ead9148c54c2974a13926c73ba0f5766829f3571ea2d1cf10c9fb8298b68a3",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-02",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/035c6b30-a145-42b9-8d0f-445cd9003d2c-1435948197257-1.7-m-04-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "9556e16de3d5f72db6460d0e822c7fb7e82749490f5284ffabd34886cad52818",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-03",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/03abcb8f-400a-47d8-ad82-7e4586cc06be-1431864192133-1.7-f-48-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "7c5f9fde2eabd42405c4332c10a55fa1a96c59d58fb1abb25bda0820f6f5facf",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-04",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/045C5483-69E1-4BEC-B1D8-9286D174B9B2-1430102996-1.0-m-04-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "a56b22517d2f76dd07187e2af8d70c556ebdeb0ff23b43264b000e25f8b2ce49",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-05",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/04c3386b-e6bc-4bd0-8456-d46ae21a73fc-1435305829013-1.7-f-26-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "99027247baf8f2cd5dd542b7d544b8526358f4bc214a67f1da4bdbeabe6792a9",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-06",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/0776b33b-c41a-4a2e-8b9c-f1c184be00c8-1437123838264-1.7-f-26-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "cb4f4c0a6912851570474e0598fbf27ac72064d7a9db48d64e572ffca6c2b40c",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-07",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/08E9485B-2772-444B-A636-77E14DD14A8C-1431493441-1.0-m-04-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "4ffbf806bbd5b2aca83371d12a780f9e9784f47d339cb2092f88ecb2c6c4857f",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-08",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/08E9485B-2772-444B-A636-77E14DD14A8C-1431493453-1.0-m-04-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "c54ad3df23caad2ba6edf1c6a2a86cf0935b601707df5ad7c891fe115463f152",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-09",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/090C15A8-5406-4EA5-97A3-81F6527227C0-1430147515-1.0-m-72-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "20f0de95800cfc697ce12797055046ffd6fcbb66c2c08ed0f84c56224f333d64",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-10",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/090C15A8-5406-4EA5-97A3-81F6527227C0-1430147525-1.0-m-72-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "2a1ea6ed5e9038fc6ca9e8a253c62e6c150b80ead9cb495afae5547af5e1689c",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-hungry-11",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/hungry/090C15A8-5406-4EA5-97A3-81F6527227C0-1430147533-1.0-m-72-hu.wav"
+      },
+      "labels": ["cry", "hungry"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "fcf72cd6c47f47f6d7a1c4288b962f3e8fe9ebad1d86d8db0392f548d96df4ac",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-00",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/03ADDCFB-354E-416D-BF32-260CF47F7060-1433658024-1.1-f-04-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "189626f591de133ba6cc47f438b37c3c4c425a3efa26a1cca53cb481a202dd66",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-01",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/06c4cfa2-7fa6-4fda-91a1-ea186a4acc64-1430029221058-1.7-f-26-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "c2e1a8445b27df6a1ec9e5cf06d4c208a64c6f7974ae1f629f1e599c5d43ad87",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-02",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/06c4cfa2-7fa6-4fda-91a1-ea186a4acc64-1430029237378-1.7-f-26-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "ec9e03c00e364f53f752056b59bffa4c88f623ed7be610e4a005fb89555186b2",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-03",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/06c4cfa2-7fa6-4fda-91a1-ea186a4acc64-1430029246453-1.7-f-26-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "a0601af12f438695a349d56ee35b5d58a67f87d1404c56b5d0e8d66d74f9236d",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-04",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/1309B82C-F146-46F0-A723-45345AFA6EA8-1430059864-1.0-f-04-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "e98d3a13c0dec515bb85594b8db4165d810165f135a60a56488c744d6d4fba4f",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-05",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/1309B82C-F146-46F0-A723-45345AFA6EA8-1431172241-1.0-f-48-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "d3a33f656458599ff8214ac8c2e8a80ca6c506cf0b041ac72835defce2e03d0f",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-06",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/5B416CE8-2591-4531-9ADC-86D085B5D48B-1430144827-1.0-m-48-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "32f91825b7ce0c72887fef39f3ac936ff886219d54633525dac510dbb0d9c772",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-07",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/79FF400A-97E2-4701-987D-C7C850D5523C-1430089487-1.0-f-48-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "b7e667e4b2ef26737d8da96cd3fb51eec2ca25d1e313752e49a8b30e910281b1",
+      "source": "donateacry",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-08",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/7A22229D-06C2-4AAA-9674-DE5DF1906B3A-1436891944-1.1-m-72-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "14f998e7239b0ec9f449a69c7fcaced83702734b803729bcbb541a0d6f7e72f4",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-09",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/7A22229D-06C2-4AAA-9674-DE5DF1906B3A-1436891957-1.1-m-72-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "3cf8d7f33c8f177641f2ed857bab84375cadf76f96b12406ed90319913244551",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-10",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/B2AABCE0-1F62-4B57-B58A-308959ABDFE7-1437188751-1.1-m-26-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "e70c1dab166ec0e90322e2431e5cc5c77243e5a9be4b7f13d2a8bdd494fb3211",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "donateacry-corpus (github.com/gveres/donateacry-corpus)",
+      "clip_id": "cry-tired-11",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://raw.githubusercontent.com/gveres/donateacry-corpus/6baf5aca0460964ad072653585837f968a87c2af/donateacry_corpus_cleaned_and_updated_data/tired/B2AABCE0-1F62-4B57-B58A-308959ABDFE7-1437188766-1.1-m-26-ti.wav"
+      },
+      "labels": ["cry", "tired"],
+      "license": "ODbL-1.0",
+      "role": "fg_cry",
+      "sha256": "0bbec319d2931c45adb0a14a0a95e02b6dc973947f194d044890fedf812cdd28",
+      "source": "donateacry",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100426",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-100426",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/100426.wav"
+      },
+      "labels": [
+        "speech",
+        "Chuckle_and_chortle",
+        "Female_speech_and_woman_speaking",
+        "Giggle",
+        "Human_voice",
+        "Laughter",
+        "Speech"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "250298dccd21aa0556be0530bf374b332a5c734c6b035d5045fc56b67d65b4cf",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100904",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-100904",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/100904.wav"
+      },
+      "labels": [
+        "speech",
+        "Applause",
+        "Chatter",
+        "Cheering",
+        "Clapping",
+        "Hands",
+        "Human_group_actions",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Screaming",
+        "Shout",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "d1e78b14a04f4ec6a852318821bd41cd87ac8f01d709dcf02de0548d1f3da787",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101797",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-101797",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/101797.wav"
+      },
+      "labels": [
+        "speech",
+        "Human_voice",
+        "Male_singing",
+        "Male_speech_and_man_speaking",
+        "Singing",
+        "Speech"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "8ca00cedf962b9c243b76bcddf3d1d58188eb19e332fb6ce7e71a03cd015faa2",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 102308",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-102308",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/102308.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech", "Whispering"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "e380a22cbee9cbe07015d408ddbd9d5a990f8eb1b7f0c2257896a89df97f6806",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 102965",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-102965",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/102965.wav"
+      },
+      "labels": ["speech", "Child_speech_and_kid_speaking", "Human_voice", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ab861b4561ec8aed42bebcc00bba984e159edb0b1b5243a725f00040c5a5bc36",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104420",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-104420",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104420.wav"
+      },
+      "labels": [
+        "speech",
+        "Alarm",
+        "Bus",
+        "Engine",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Motor_vehicle_(road)",
+        "Speech",
+        "Vehicle"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "60cf202c5780ca7afb27e11c46983fafa06276a5ea28fd75685289a5042772aa",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105276",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-105276",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105276.wav"
+      },
+      "labels": [
+        "speech",
+        "Applause",
+        "Cheering",
+        "Clapping",
+        "Hands",
+        "Human_group_actions",
+        "Human_voice",
+        "Music",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "f2aeb7fa716335b15b74e1b4fd5b597034959658ecf8030555e8c6084f9735f3",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105277",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-105277",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105277.wav"
+      },
+      "labels": [
+        "speech",
+        "Applause",
+        "Cheering",
+        "Clapping",
+        "Crowd",
+        "Female_speech_and_woman_speaking",
+        "Hands",
+        "Human_group_actions",
+        "Human_voice",
+        "Music",
+        "Shout",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "621371005540d45c48316277eb97aae08211bf6445a896d215cef49ce5b64890",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 107331",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-107331",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/107331.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "17c4b98d79be24e9437d01297d714b7b711a4401d267c9ddef710e198016c482",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 108284",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-108284",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/108284.wav"
+      },
+      "labels": ["speech", "Child_speech_and_kid_speaking", "Human_voice", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "a9edebfc877224e99a89f5f6358c29abe207e11735d71a615965b43c572fdaa5",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110006",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-110006",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/110006.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "593cea3a0f66bad273ed2111d11ce637ff030d15af4273d7782be6b83152e4f9",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 112337",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-112337",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/112337.wav"
+      },
+      "labels": [
+        "speech",
+        "Female_speech_and_woman_speaking",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Rail_transport",
+        "Speech",
+        "Subway_and_metro_and_underground",
+        "Vehicle"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "264f03ffcfd8112eb0211932ac8099ac3292a2e02340481d30423da0981e5f56",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 112519",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-112519",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/112519.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "450cfe8fae1780c68618cee2f293f830d6f5343207731b6cbbda583728cbee72",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 112630",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-112630",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/112630.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ed3261e85dc1651475c9e2c26759a1d55650c2eed45f4ead021c2c753378203d",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 112632",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-112632",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/112632.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "686652285cff2b6286920f79f3dd93424e5b7391b4ff02bfa999721ca02d6d8e",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 113648",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-113648",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/113648.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech", "Whispering"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "dbbf5003a5f12a12bb82438bbcc7378b7127b7e1fb387670cc7c59fdfc132e17",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114407",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114407",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114407.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "10dbc19ccd735a9b9fcf247b5230654b7366db2503c870c5a03a17d9a8f029d4",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114413",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114413",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114413.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "3ff66b648aa1da8dd94fb11d77a23cdcb254fe769cdaea8ecd46f93855a63e98",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114419",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114419",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114419.wav"
+      },
+      "labels": [
+        "speech",
+        "Animal",
+        "Buzz",
+        "Human_voice",
+        "Insect",
+        "Male_speech_and_man_speaking",
+        "Speech",
+        "Wild_animals"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "250601ec4e82f05f42ad435f2ea609f0abe761c77766f69088e50353417e37b6",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114425",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114425",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114425.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "15dbe443c111a2ba8eb0975c49598219add0b938fafd45fb14d04d32003d5eb2",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114427",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114427",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114427.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "de6d9a3f7764512d8f78578521e42a85037bb3a65ee9562927b68685bc13104a",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114428",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114428",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114428.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "60e17963b1497724ae0923dc46ef24afbd79c228f340b629a3f32bab0255f852",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114429",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114429",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114429.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "935520427831becd974f098cc2c3eb794641fef4875dc1a0420d8c0219a2feca",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114430",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-114430",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/114430.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech", "Tick"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "e7dc9c73fb1d746a4254bf643f92ee2dfcdf7e9416549be1f7d576d86dc4fe19",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115234",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-115234",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115234.wav"
+      },
+      "labels": [
+        "speech",
+        "Applause",
+        "Chatter",
+        "Clapping",
+        "Hands",
+        "Human_group_actions",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "dd570ae0775eec9f9d1013bb5e802338b0e51f9c14f0d6fc3db05f539743b602",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115378",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-115378",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115378.wav"
+      },
+      "labels": [
+        "speech",
+        "Child_speech_and_kid_speaking",
+        "Human_voice",
+        "Speech",
+        "Speech_synthesizer"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "6172476075d558d4d23761a6c85ff960a9f18c56e24dbe2a0f5d3443477542f9",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115536",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-115536",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115536.wav"
+      },
+      "labels": [
+        "speech",
+        "Animal",
+        "Bark",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "2970540694a38c57e5e653dfd556a4e80925e34b2f0ec25a0f64d90c4ff1c46f",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115537",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-115537",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115537.wav"
+      },
+      "labels": [
+        "speech",
+        "Animal",
+        "Bark",
+        "Buzz",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Insect",
+        "Male_speech_and_man_speaking",
+        "Speech",
+        "Wild_animals"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "d2119a12253f03df48f774fd58dadc36b7cfd955dcfeb29d31ab03496128e052",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115611",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-115611",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115611.wav"
+      },
+      "labels": ["speech", "Child_speech_and_kid_speaking", "Human_voice", "Speech"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "719e0bf6adc28b7778bfe54eed32b7df8799510bb203d1811a35732c5ba8ff82",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115869",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-115869",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115869.wav"
+      },
+      "labels": [
+        "speech",
+        "Alarm",
+        "Bell",
+        "Domestic_sounds_and_home_sounds",
+        "Door",
+        "Female_speech_and_woman_speaking",
+        "Hiss",
+        "Human_voice",
+        "Rail_transport",
+        "Slam",
+        "Sliding_door",
+        "Speech",
+        "Subway_and_metro_and_underground",
+        "Vehicle"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "1cf6310d85a1673d3b13aa48d9b502198fd067a367f31f907059c5fdd33ddd08",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 116163",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-116163",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/116163.wav"
+      },
+      "labels": [
+        "speech",
+        "Animal",
+        "Bark",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Shout",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "3268aa1bf3307755d6ad4917d0f77b380d88c11495c0a001cd0dbee67ee96f69",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 116166",
+      "category": "speech",
+      "clip_id": "fsd-speech-eval-116166",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/116166.wav"
+      },
+      "labels": ["speech", "Human_voice", "Male_speech_and_man_speaking", "Speech", "Whispering"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "01f01653f881d68fd912c9b6ccaca6339845c6d9376ee42543090659aee59842",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101762",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-101762",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/101762.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Drum",
+        "Keyboard_(musical)",
+        "Music",
+        "Musical_instrument",
+        "Percussion"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "b51ce64b0f0b82a8d9ae2da8313b47222fcd49dae9bf6ee6200f90d853348727",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101765",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-101765",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/101765.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Keyboard_(musical)",
+        "Mallet_percussion",
+        "Marimba_and_xylophone",
+        "Music",
+        "Musical_instrument",
+        "Percussion"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "9ada8afdc354a8fdab5cb52a9c419aad0ab9dcea4c7ead55cfdfbfeec8383f80",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 102780",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-102780",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/102780.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "24236310bba81f548d20c02776b920850b8ef1d237a9b281082132f68f57903c",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 102789",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-102789",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/102789.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "731dc7e87629053ff3f1507bc8303f1ff3af2f8ba35a76ae6ab06de650b3dfa1",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104209",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104209",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104209.wav"
+      },
+      "labels": ["music_tv", "Crash_cymbal", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "4596f96b8499a1575c71c0e6532fe0b464893adfe8528f0e6271cedea6c9d9e2",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104210",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104210",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104210.wav"
+      },
+      "labels": ["music_tv", "Crash_cymbal", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "d5e7a8922322ea833245628c51b57989c58d0a69327076a352df63e2de70b1d2",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104212",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104212",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104212.wav"
+      },
+      "labels": ["music_tv", "Crash_cymbal", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "964f76c7774d97f983f5d7eb7188efdcabe00db5c92694b828454fafa92768a3",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104214",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104214",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104214.wav"
+      },
+      "labels": ["music_tv", "Crash_cymbal", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "bef043596a8d13112edab7cf574d695a0c88cb89bc5ebd4dd80a3017290e796b",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104218",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104218",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104218.wav"
+      },
+      "labels": ["music_tv", "Crash_cymbal", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "c44d64a0706ee689930b16a3489c47a59ee2d5d2480a171e98c216acafd38114",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104222",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104222",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104222.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "2231ad917158a9fddb1a20b44c9f16650e1a2e6edfb6856a038ebcd7bc4fd048",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104224",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104224",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104224.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "15ad6bc1b2ebe1891f2417822173cdc85fc69b8957e5df0a4ac93525a02d9365",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104225",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104225",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104225.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "6464a6f5db9a06960f67f87743236a559e19cf30820bdb935764a1594bad21d9",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104228",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104228",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104228.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0f1650b0dec74419e7e4c5eb32439daf7f25cf5df957c63f47087ff7128bf79d",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104229",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104229",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104229.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "ed9b92d429550deda96f6ef08ff5e2eb555a1332ce3f439338255ce1ad05afd6",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104231",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104231",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104231.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Hi-hat", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "8f9b9e181b9dffdfb08950203927864f81c3ec7ace1cae3f4838e7119188e8d8",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104235",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104235",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104235.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "de2b25a92e457c6234dde002ff212605bd73e98788f102993cbcababa26f1494",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104243",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104243",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104243.wav"
+      },
+      "labels": ["music_tv", "Drum", "Music", "Musical_instrument", "Percussion", "Snare_drum"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "6206fa9562b0c5f7133d386681e9fb0c2b726b8ca513f7f2b14f697bb1dfb685",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104244",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104244",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104244.wav"
+      },
+      "labels": ["music_tv", "Drum", "Music", "Musical_instrument", "Percussion", "Snare_drum"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "cdbef500be6bd31899f136b364a721d5f8e88020be272062e360f432eb972ccd",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104248",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104248",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104248.wav"
+      },
+      "labels": ["music_tv", "Drum", "Music", "Musical_instrument", "Percussion", "Snare_drum"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "db6f0fe25822172161057583d1fa430aec61d00893867b14f875667a595c4974",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104251",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104251",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104251.wav"
+      },
+      "labels": ["music_tv", "Cymbal", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "4b6d1fa37196616c3a9e526c89197a6fa7565538b678b782f508cfab9e48f6eb",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104588",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104588",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104588.wav"
+      },
+      "labels": ["music_tv", "Harp", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "1ed4a64d79dcce7e14cad333f87bb5646bc00180e57199a22264decadd52c4e2",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 104616",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-104616",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/104616.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Electric_guitar",
+        "Guitar",
+        "Music",
+        "Musical_instrument",
+        "Plucked_string_instrument"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "6d42d41bea16adb3f68d209dea71de7d5a9ebe49c8f90f98732b93b216f51030",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105091",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-105091",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105091.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_guitar",
+        "Guitar",
+        "Music",
+        "Musical_instrument",
+        "Plucked_string_instrument"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "d41bce4b4ad1d3823cbe7f3e3e26d2b27541077dce590b0aa586cb3ab4891ec9",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105092",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-105092",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105092.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_guitar",
+        "Guitar",
+        "Music",
+        "Musical_instrument",
+        "Plucked_string_instrument"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "4e26ef7b23f3c651cf5b2cf37149e18bb8d0a4170c7e3e3b12e2ff8d8e327bee",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105245",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-105245",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105245.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_drum",
+        "Cymbal",
+        "Drum",
+        "Hi-hat",
+        "Keyboard_(musical)",
+        "Music",
+        "Musical_instrument",
+        "Percussion",
+        "Snare_drum"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "9bd33e4e2b5b365d29158a00fccc4b143b0bf2bf236b948d0890a103bda1ac51",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105276",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-105276",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105276.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Applause",
+        "Cheering",
+        "Clapping",
+        "Hands",
+        "Human_group_actions",
+        "Human_voice",
+        "Music",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "f2aeb7fa716335b15b74e1b4fd5b597034959658ecf8030555e8c6084f9735f3",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 105277",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-105277",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/105277.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Applause",
+        "Cheering",
+        "Clapping",
+        "Crowd",
+        "Female_speech_and_woman_speaking",
+        "Hands",
+        "Human_group_actions",
+        "Human_voice",
+        "Music",
+        "Shout",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "621371005540d45c48316277eb97aae08211bf6445a896d215cef49ce5b64890",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 107054",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-107054",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/107054.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_drum",
+        "Cymbal",
+        "Drum",
+        "Hi-hat",
+        "Keyboard_(musical)",
+        "Music",
+        "Musical_instrument",
+        "Percussion",
+        "Scratching_(performance_technique)",
+        "Snare_drum"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "b492b58452cdff646612d0059b516911a13717ccf04ed2799cf3648b79ccf395",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 107055",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-107055",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/107055.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_drum",
+        "Drum",
+        "Keyboard_(musical)",
+        "Music",
+        "Musical_instrument",
+        "Percussion",
+        "Scratching_(performance_technique)",
+        "Snare_drum"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "348d8789b7eb15f3e83c78c62fd37bcd74f9cbcd59cd8c1c76f7fce0911e5d2c",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 108056",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-108056",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/108056.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_drum",
+        "Drum",
+        "Keyboard_(musical)",
+        "Music",
+        "Musical_instrument",
+        "Percussion"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "cbdf24954031a50c495131a4abb16d27bbf19f81109fcc845cd7b20820a7c31e",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 108248",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-108248",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/108248.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Gong",
+        "Music",
+        "Musical_instrument",
+        "Percussion",
+        "Plucked_string_instrument",
+        "Rattle_(instrument)"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "13382a00aec001bfe9ae8934a3022cee31285ad872bcd93d89bbf39fbc70ad07",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 109080",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-eval-109080",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/109080.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Bass_drum",
+        "Drum",
+        "Electric_guitar",
+        "Guitar",
+        "Keyboard_(musical)",
+        "Music",
+        "Musical_instrument",
+        "Percussion",
+        "Plucked_string_instrument",
+        "Snare_drum"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ebdb0a2bd66f524c7b04803e3e163e8806b15244d9110e199181e98833e22cea",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100030",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-100030",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/100030.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "1dba65c72bb5737fd74c922336ef0e568b32c67331089d452396e119ecb75d91",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100032",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-100032",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/100032.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "d09193eaf5533419a43ff47746285425363168133810e3c53c56edb7d61e062a",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 102547",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-102547",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/102547.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "c476f99f33d092458b50637dc6274a5c38600e769d9ba7bd0785747e608e5d88",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 102548",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-102548",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/102548.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "e60ef472ac3fa588991e07c1691c3b57023db4827f3b45548c41b429619e16a0",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 103076",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-103076",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/103076.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ba5e60e70f3360bbc6ab2cca58c4e4bcf814489098ab1dbc1cf66ed655a7ce00",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 106018",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-106018",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/106018.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "a0cb713ae836f80a1d37d95a73cd4156fa3555b97219c7c5ef4663fef98919d2",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 106245",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-106245",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/106245.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "25e47669303a095b1d00ebdfdce92ba93f0fe9731deb8939b347c6fde2f2cd41",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 107125",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-107125",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/107125.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "14ddebd8dd2668211353f8bd40296a8a7a73de64baf76532acd78f8c3ce083c0",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 107188",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-107188",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/107188.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "1a79596e706c26fc5df5a935f8b6b8201bba6aa8c671d05edf28da34f8e0cd23",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110388",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-110388",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/110388.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "169369b9a2bad6df17c37dea378b06b1ce7042738d79bd92880c60bf84982978",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110389",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-110389",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/110389.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "165f44acd87b1f836dd204f2820f89642fb63165a5e532eb4610c8845d8b0f4c",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 113785",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-113785",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/113785.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bark",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Drum",
+        "Music",
+        "Musical_instrument",
+        "Percussion"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "4735027c9e581e74a0c312d95a14b472340646bb600c079076105d7953d91555",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115534",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-115534",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115534.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Dishes_and_pots_and_pans",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Domestic_sounds_and_home_sounds",
+        "Liquid"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "8a5304db214a27ae04f083149e6b781c42b0051ee3d7806142a80f3d12fb90f8",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115535",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-115535",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115535.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "a94c713fe7a1e96a1016e46d153ae41a899919b04687d0e3087bb7075dfa4817",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115536",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-115536",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115536.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bark",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "2970540694a38c57e5e653dfd556a4e80925e34b2f0ec25a0f64d90c4ff1c46f",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115537",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-115537",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/115537.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bark",
+        "Buzz",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Insect",
+        "Male_speech_and_man_speaking",
+        "Speech",
+        "Wild_animals"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "d2119a12253f03df48f774fd58dadc36b7cfd955dcfeb29d31ab03496128e052",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 116163",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-116163",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/116163.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bark",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Shout",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "3268aa1bf3307755d6ad4917d0f77b380d88c11495c0a001cd0dbee67ee96f69",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 118072",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-118072",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/118072.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "96a3d187d715eac97814d56753144fd15677bf76f1675300c967620578c6cf1f",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 118101",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-118101",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/118101.wav"
+      },
+      "labels": [
+        "pets",
+        "Alarm",
+        "Animal",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Domestic_sounds_and_home_sounds",
+        "Door",
+        "Doorbell"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ef6ac9a948d3506437f2e6ac186eced3ca37a7bf93694ac2fcb6d6abca582995",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 118522",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-118522",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/118522.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "a763ac3ba2efe0c3c639e773efceec56176aacab07d0894d7ffc5be11069e2cd",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 118577",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-118577",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/118577.wav"
+      },
+      "labels": [
+        "pets",
+        "Alarm",
+        "Animal",
+        "Bark",
+        "Bird",
+        "Bird_vocalization_and_bird_call_and_bird_song",
+        "Car",
+        "Chirp_and_tweet",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Motor_vehicle_(road)",
+        "Traffic_noise_and_roadway_noise",
+        "Vehicle",
+        "Vehicle_horn_and_car_horn_and_honking",
+        "Wild_animals"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "53c786fcf67b816c47cb0d31fa7ead42f0f8e39a8b3d2d920cf0b4becb94bee0",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 118901",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-118901",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/118901.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bark",
+        "Bird",
+        "Bird_vocalization_and_bird_call_and_bird_song",
+        "Chirp_and_tweet",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Growling",
+        "Wild_animals"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "5415eb049d35f5f288d5cef77560081a004e03f69324b9e3c3d0ef6d47c9dc12",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 120017",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-120017",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/120017.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "2a1028a020b4fa0e8ce368a8ba7b39d89227edcb16c94dba2012f5d58c2fbfb6",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 121565",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-121565",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/121565.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets", "Growling"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "eb3d076bcad84c2157cbfe9b975d5f04dacef4795e254de02bb275f273562e0e",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 126037",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-126037",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/126037.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "9733628eefc435ce8e1c17e2936b4f29a838685a76d9606ae3baf86a99256a94",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 131199",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-131199",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/131199.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bark",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Male_speech_and_man_speaking",
+        "Speech"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "d147e3f0c352b941eb45715dc2214942b16956862bcfe68e9cb8068a6c79344f",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 131201",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-131201",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/131201.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "9ab3c5d2ea046f90b67040874edf2a2ce6b89ab9f446820718f60da4281c8c53",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 131595",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-131595",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/131595.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow", "Purr"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "586b22e7a2fe9efaa029eec223acd1fa325150c0f5318bd55c77f5d74b85b55b",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 133869",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-133869",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/133869.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "deb5eba008b50bcc5fbb36a780db2d05b5793c2d799db10a78c60769ca48e11b",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 135903",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-135903",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/135903.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "35dd68e9528842c1e494210ae886ba04bfb4afaa0b614de226d5160ec6c1ae2a",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 137758",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-137758",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/137758.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Bird",
+        "Bird_vocalization_and_bird_call_and_bird_song",
+        "Chirp_and_tweet",
+        "Dog",
+        "Domestic_animals_and_pets",
+        "Wild_animals"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0c454ec53307eca1208e593647eed3a02b887c83282817b302fb709893e7e821",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 137894",
+      "category": "pets",
+      "clip_id": "fsd-pets-eval-137894",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/eval/137894.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Cat",
+        "Chuckle_and_chortle",
+        "Domestic_animals_and_pets",
+        "Human_voice",
+        "Laughter",
+        "Purr"
+      ],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "604a75cc75105f3280f1ba602d2ad5f0e3c06fbbd2c5fbbdbffb1bb173eb7aa3",
+      "source": "fsd50k",
+      "split": "eval",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100912",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100912",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100912.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "8282a85da72d61fc3dc8bd8f0c66e0fde697e9c644ca30863f64327932cce5a4",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100914",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100914",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100914.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "9e4bfd305eee229509654a69e35db213e20183e69fdbfc24f6551ee201194a85",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100915",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100915",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100915.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "b191fa94c7c9b56869223634caaa95b1b26abca9612341988affb10087db7666",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100916",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100916",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100916.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "810c98ccbdc9afca861bb6f9c2754d65266b1ac80be326219daf2b6e9fea5536",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100923",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100923",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100923.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0e15db85e52154878cfc564babf90eaaa4d1658e7c63fb00ae2ed22d667296f1",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100926",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100926",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100926.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "2b6956bea177b7d2f74527549860d1c7c320a3475894695ce6c6115dd89616af",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100930",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100930",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100930.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "35b9c57f924e9abac95eddc7480af6fb0ea4a6a1db8b6ebdaad01ecfd730545e",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100934",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100934",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100934.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "37d09243a77ec960c593437ee4d1d86d6ca851ba2a32d535567fe488a90ccbdc",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100935",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100935",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100935.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "baa0441420fd3cc3f58a9f8fff1afee1e8599ca2ed83a37322b69513bf5844f0",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100940",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100940",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100940.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "e2d168363faa264dd0aaf20fd55cc2e18e3d3d8aa19a3b6633f0672d0d3b335c",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100943",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100943",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100943.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0e5fc65ca4d6ec16e27836fa1c7669859bdf6e0dc2de91621dbd25a81dd4fd36",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100944",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100944",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100944.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "5ffcebe3522e6cc206d487835320a4c72f227c0f1476e189c9abd437579530e6",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100945",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100945",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100945.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "d6b77019647f08285df38af606db5a77a1a3f7a03346c3e4d61f0a5130ea9ca0",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100946",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100946",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100946.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0c976040c16fc04bd1416339b9118b90b5a61642d7f23facb1964da06cc64e96",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100949",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100949",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100949.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "7ca951f07381d02d1dd5ec800478fc836ed3e48af851f1ae909beeb6131c9904",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100952",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100952",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100952.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "43fbf212206af91e054ae757a34c77495e34062cccf976d6867285ae1e03b5a6",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100956",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100956",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100956.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "6c7a99af9f3d0c97e2da8f8122a6e160500376040fe1c2920f4f38130324f3e8",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100963",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100963",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100963.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0fa4b00315b24b864adba4d19439d39da0e60551221440ce4f0ccee6958472d3",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100965",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100965",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100965.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "dda7d00fecc4bc796bd24194209eed694008e5347c9f15d0e88c9110395deda3",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100966",
+      "category": "speech",
+      "clip_id": "fsd-speech-dev-100966",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100966.wav"
+      },
+      "labels": ["speech", "Human_voice", "Speech"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "933ab6a6ab232e92cae0b423dc5613d79323861b9c981e3704429bb8022edabc",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100005",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-100005",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100005.wav"
+      },
+      "labels": ["music_tv", "Music", "Musical_instrument", "Percussion", "Rattle_(instrument)"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "2854d67f79ef44911db9b41fce8c4f8bc4b9b92ea1be09fb489ba31016c50e36",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100006",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-100006",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100006.wav"
+      },
+      "labels": ["music_tv", "Music", "Musical_instrument", "Percussion", "Rattle_(instrument)"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "3a287170e08b8338dafd5c22f0ce637f009d6970efae0638233d5423965dc94f",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100007",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-100007",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100007.wav"
+      },
+      "labels": ["music_tv", "Music", "Musical_instrument", "Percussion", "Rattle_(instrument)"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "014044242dd043f8c684d17fa38967b8ac9bcb52c84dc2b424843aba2c9c90c3",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100476",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-100476",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100476.wav"
+      },
+      "labels": [
+        "music_tv",
+        "Music",
+        "Musical_instrument",
+        "Wind_instrument_and_woodwind_instrument"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "0ae229894af32dfd47be12bb00537c5c3b31caa480c7f490b26046d898f7a2f3",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100762",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-100762",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100762.wav"
+      },
+      "labels": ["music_tv", "Guitar", "Music", "Musical_instrument", "Plucked_string_instrument"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "d56e91d15b296dd8fe315fdc73c072efacbbcf0c724c3ad60512efdd7a7be6d7",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101135",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101135",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101135.wav"
+      },
+      "labels": ["music_tv", "Keyboard_(musical)", "Music", "Musical_instrument", "Organ"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "b9f44ea28fb3015b305b50c20ead7721dc7b3202f9849ecdd28a67d63f645ee2",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101136",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101136",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101136.wav"
+      },
+      "labels": ["music_tv", "Keyboard_(musical)", "Music", "Musical_instrument", "Organ"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "df7a3a8bf9629b1149f61e11846e161f6f132be2377232a478020e2ea4b5f41b",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101137",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101137",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101137.wav"
+      },
+      "labels": ["music_tv", "Keyboard_(musical)", "Music", "Musical_instrument", "Organ"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "34e57a91a16ea3533f0660419107946529a478013986418424e70abee4b5f812",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101383",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101383",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101383.wav"
+      },
+      "labels": ["music_tv", "Keyboard_(musical)", "Music", "Musical_instrument", "Piano"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "df2d945e3e2f2053333e238990cf64dd360d09409da1fbbcc095d094ab005a48",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101696",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101696",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101696.wav"
+      },
+      "labels": ["music_tv", "Guitar", "Music", "Musical_instrument", "Plucked_string_instrument"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "092253a77ade5903c66271580a206da0fce2cf70bf49fc58c5ca471f851bece2",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101697",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101697",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101697.wav"
+      },
+      "labels": ["music_tv", "Guitar", "Music", "Musical_instrument", "Plucked_string_instrument"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "26c23c79812314c4886f81266211726c7faea69276c6f62c8b288afcb43ffa1b",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101714",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101714",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101714.wav"
+      },
+      "labels": ["music_tv", "Drum", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "74e1bee2cd4bb864152941b4e6d85d94d7306178a1d26f6e19855d63b2d935c3",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101894",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101894",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101894.wav"
+      },
+      "labels": ["music_tv", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "9a6b81fd7931e8c32235e8ee03ee13c355609166ad1a03c6b316cc0d5dcb284f",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101900",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101900",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101900.wav"
+      },
+      "labels": ["music_tv", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "9d62009ceef18d96f92677d29e4fc46656f2e796ce8ce78b9525bc37ab89452f",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101901",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101901",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101901.wav"
+      },
+      "labels": ["music_tv", "Drum", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "e1e10fb099a1c66d078fcc8e62e085d5b2e6f5d337cfc2c7626d561b1e070dfa",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101902",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101902",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101902.wav"
+      },
+      "labels": ["music_tv", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "858ce3476f28c68947da65ac458310af12be3a2ddc81c9cfc8527978923ef5ba",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101903",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101903",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101903.wav"
+      },
+      "labels": ["music_tv", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "4dbc923f61fddcc88d6dc18ee001e83fbb3d9c61f1e7bc17a178dc021bd47796",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101904",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101904",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101904.wav"
+      },
+      "labels": ["music_tv", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "789d968e26cf061a570917bc70786182fb363d99139a195a58e1efcc14d089dd",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101905",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101905",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101905.wav"
+      },
+      "labels": ["music_tv", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "328f537499a84f200e90862529825add442134d382fd14af0ca92ada57888d98",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 101906",
+      "category": "music_tv",
+      "clip_id": "fsd-music_tv-dev-101906",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/101906.wav"
+      },
+      "labels": ["music_tv", "Drum", "Drum_kit", "Music", "Musical_instrument", "Percussion"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "f9c42cf686f3b7e3f75f03cc5846d8acdb18d908612a3cd04726195b6eb16a75",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100114",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-100114",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100114.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "400b469ba563f94da2fae2cc903387f5d269d2edde25c0794416d8ee0608e657",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100124",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-100124",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100124.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "f98d52c16930fd7ad3f7fbd8f1f4fce2a6201af655eb0d875d09ad655bc5de50",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 100795",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-100795",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/100795.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "74913013c0abdcac87e9f27a8157b56bc0c38bb440b25b38878c3c75a253fc19",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 10380",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-10380",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/10380.wav"
+      },
+      "labels": ["pets", "Animal", "Growling"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "75379c95fe207a3e06c78ec0081a89e5535c9ed2f498441ed0ea746c56c9c99a",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 10381",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-10381",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/10381.wav"
+      },
+      "labels": ["pets", "Animal", "Growling"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "179b27c4713cedb7feaa98937e2a37bb6688b5a161ed4c27780159da875f4668",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 106730",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-106730",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/106730.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "336ed3ef2ac290ed1894376c6cae2c80273bc4a91373ec7874be96ad610e287a",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 106731",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-106731",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/106731.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "e773863c60974cd1f3d3969aba2fb5b4628940a447011b887a9872617e28274e",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 107190",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-107190",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/107190.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ea6db12ea16d5670ed4ec62440ccc4026fe182b65bf76c29dc52febd95ce5072",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 108843",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-108843",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/108843.wav"
+      },
+      "labels": [
+        "pets",
+        "Animal",
+        "Cat",
+        "Domestic_animals_and_pets",
+        "Meow",
+        "Walk_and_footsteps"
+      ],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "9968b7eed2d2d19cc779835afa3c221e108f9dc33673e2beb810aaeb176302a2",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110010",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-110010",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/110010.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "5a482ad7f78e20d33716de5b32b8522c20c6e59a644724d19024cfa580cf8a16",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110011",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-110011",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/110011.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "2a4a06e7dc01067a8ba66cf44c6e506da4c2d56ad1a96f638547cd2490df8d5e",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110134",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-110134",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/110134.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "716411eab82f7a93ddc4a69c91408e6d4e6c3d043840a4f3db307d8dc1c9ed24",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 110371",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-110371",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/110371.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "9f008b0272f643f23d09cb415af547b08b0a956ad20c1750743a3394fa519cb5",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 111138",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-111138",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/111138.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Meow"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "ef43fc708e10e25c549d3bf903dd3e4f3abd5141ea605d42c4406e7ee470841e",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 114280",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-114280",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/114280.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "7c4e82dc39e114facdff99e3daa1678c90e6362582c09ac99e2af07bedae8aac",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115357",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-115357",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/115357.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "13bad9cac3316ccf5de8199bd88bcb0ac296f1f657e8dda61ec090f67a514678",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 115423",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-115423",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/115423.wav"
+      },
+      "labels": ["pets", "Animal", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "3739c32668fc4c0d1e60bc8c21268356fd05a8e879a4656dac7a0e43fecf1c47",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 116400",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-116400",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/116400.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC-BY-3.0",
+      "role": "confuser",
+      "sha256": "bafd9bba1ae82c2a569de5a6f3c16436a39b5d8d97f2d3be5062f5e61421a54a",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 117271",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-117271",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/117271.wav"
+      },
+      "labels": ["pets", "Animal", "Bark", "Dog", "Domestic_animals_and_pets"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "06b290b051dc163fc6a2c3d00b942923079b83967e1c023dc18dea1c65f7a3a8",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "FSD50K / Freesound id 118959",
+      "category": "pets",
+      "clip_id": "fsd-pets-dev-118959",
+      "fetch": {
+        "mode": "direct",
+        "url": "https://huggingface.co/datasets/sumin0223/FSD50k/resolve/a8a1536a2704b517b5cc623af64d5b0e1506faa9/clips/dev/118959.wav"
+      },
+      "labels": ["pets", "Animal", "Cat", "Domestic_animals_and_pets", "Purr"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "8a0ec5f824c524f62466e8ab556b14462209760176a8c9b43389be01dc6c5c99",
+      "source": "fsd50k",
+      "split": "dev",
+      "verification_status": "pending"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-eval-00",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 0
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "931b505181fe0ac2c3986f6c389ab6c6aa14002b8bae7cd873607abae009ff4a",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-eval-00",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 100
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "7bd1c118b643e16fff1ece573177ac92e2b822511a106c0ef11bbe91f74e59d5",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-eval-01",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 1
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "fb9fc05117c5751898dfe263861ca01f478d705945182cde699bac49378f79d3",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-eval-01",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 101
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "f77eb8095b16227d9cd22e3f189760e56895897c09fca115e735291a44dac4a7",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-eval-02",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 2
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "1a7f7e0013415658323eb9b64bc6b4cb2724f86d59b75771639acd968358d267",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-eval-02",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 102
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "5c2ce3930ef87d7705babc81208c2aca77d1f61c8afaf2f55bc98be6f2dd66ef",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-eval-03",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 3
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "b9b2599db40edcb003a7a009d89ddc782151b51a7c04cd2629d134ddb8f15a88",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-eval-03",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 103
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "06b275b933f79fe286534984ca670014e9cf4180484dfedc98827361f511a329",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-eval-04",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 4
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "7676350d3d8d01bece36c7e1c22cfcd78084fad831095bf1adcb280fd363f88b",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-eval-04",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 104
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "6205cd3fe8e594411d5fdb6843732e82cd61646a85f68fc96efff3043afb46d5",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-eval-05",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 5
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "8ffa3c87f95fc4550c6a50c3f72887e505fff1d351291012aba9aebf574d74f1",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-eval-05",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 105
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "868d10025048f15b45e28b336b2ec0928b68d9b85674355fd4a9a0ec82e530ae",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "clip_id": "nursery-eval-00",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 5.0,
+        "kind": "nursery_floor",
+        "level": 0.03,
+        "seed": 900
+      },
+      "generated": true,
+      "labels": ["nursery"],
+      "license": "CC0-1.0",
+      "role": "bg_floor",
+      "sha256": "1c6ccc7e2c03032e75294299b73243b21f4ec18b0e653914c5ab19ac5e5cccdf",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "clip_id": "nursery-eval-01",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 5.0,
+        "kind": "nursery_floor",
+        "level": 0.03,
+        "seed": 901
+      },
+      "generated": true,
+      "labels": ["nursery"],
+      "license": "CC0-1.0",
+      "role": "bg_floor",
+      "sha256": "d936d1f16cd7ded5d984223cb405641ff8f22dd609b4107ef80a10c537ed129d",
+      "source": "eeper-generated",
+      "split": "eval",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-dev-00",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 500
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "f9a574377cebc312484293ccea8ae8f31ca02102f5f5f120a6a6e83d9cb18a68",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-dev-00",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 600
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "363cf64a496850d7be4012b5bc81f4fb1d700db0629b5ebdfe0912ab181657a0",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-dev-01",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 501
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "6ac4ad99d72c82b81923fc99b4fad27218cdbc5b078fd5289ced747a57a342d0",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-dev-01",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 601
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "c5bd4daab05e85c03853b60014aa8c693bbb063f98a342f313a2b5ec6ef4a904",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-dev-02",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 502
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "dc5d39c74e6b79450c2ebc0f3ea86c90d6e571d3539da95abe6d7cb3d759bc3d",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-dev-02",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 602
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "93706c5f14d6f54e369f0340f494e89f3fc69f71527b5c7c6a54597c1634492c",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "wn-dev-03",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "white_noise",
+        "level": 0.2,
+        "seed": 503
+      },
+      "generated": true,
+      "labels": ["white_noise"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "90fd809c2404cdf009e50f0ccfff504abb54cead156f2b656434b77391ae64ed",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "category": "whitenoise_lullaby",
+      "clip_id": "lull-dev-03",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 3.0,
+        "kind": "lullaby",
+        "level": 0.2,
+        "seed": 603
+      },
+      "generated": true,
+      "labels": ["lullaby"],
+      "license": "CC0-1.0",
+      "role": "confuser",
+      "sha256": "a78ad2ce12b2350d452ed05be9e21e6b3d5a12017efbaa6307e4048e0ed21977",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "clip_id": "nursery-dev-00",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 5.0,
+        "kind": "nursery_floor",
+        "level": 0.03,
+        "seed": 1400
+      },
+      "generated": true,
+      "labels": ["nursery"],
+      "license": "CC0-1.0",
+      "role": "bg_floor",
+      "sha256": "8891b84291c2a447bf798c67927f68fde1088a7cce81f3da9a6580de256fdba7",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    },
+    {
+      "attribution": "eeper generated (CC0)",
+      "clip_id": "nursery-dev-01",
+      "fetch": {
+        "mode": "",
+        "url": ""
+      },
+      "gen": {
+        "duration": 5.0,
+        "kind": "nursery_floor",
+        "level": 0.03,
+        "seed": 1401
+      },
+      "generated": true,
+      "labels": ["nursery"],
+      "license": "CC0-1.0",
+      "role": "bg_floor",
+      "sha256": "8b206bf24218dff37181fadf194a4fc4538f6b6eb5b1f36d26423ec3652ec6d4",
+      "source": "eeper-generated",
+      "split": "dev",
+      "verification_status": "verified"
+    }
+  ],
+  "fixture_version": "fixtures-v1",
+  "schema_version": 1
+}

@@ -17,6 +17,9 @@ from eeper_fixtures.manifest import CONFUSER_CATEGORIES, Manifest
 MIN_CRY_SCENES = 100
 MIN_CONFUSER_SCENES = 300
 MIN_PER_CONFUSER_CATEGORY = 30
+# Minimum DISTINCT foreground source clips behind each category's eval scenes — so
+# the floor can't be met by multiplying 1-2 clips into many near-duplicate scenes.
+MIN_DISTINCT_SOURCES = 8
 
 
 @dataclass(frozen=True)
@@ -28,6 +31,7 @@ class Scene:
     duration: float
     events: tuple[tuple[float, float, str], ...]  # (onset, offset, label)
     source_clip_ids: tuple[str, ...]
+    fg_source_clip_ids: tuple[str, ...] = ()  # the foreground event's source(s)
 
 
 def load_scenes(index_path: Path) -> list[Scene]:
@@ -41,6 +45,7 @@ def load_scenes(index_path: Path) -> list[Scene]:
             duration=float(s["duration"]),
             events=tuple((float(o), float(f), lab) for o, f, lab in s["events"]),
             source_clip_ids=tuple(s.get("source_clip_ids", ())),
+            fg_source_clip_ids=tuple(s.get("fg_source_clip_ids", ())),
         )
         for s in data["scenes"]
     ]
@@ -86,14 +91,29 @@ def check_floor(scenes: list[Scene]) -> list[str]:
     if len(confusers) < MIN_CONFUSER_SCENES:
         errors.append(f"eval confuser scenes {len(confusers)} < {MIN_CONFUSER_SCENES}")
     per_category: dict[str, int] = dict.fromkeys(CONFUSER_CATEGORIES, 0)
+    distinct: dict[str, set[str]] = {c: set() for c in CONFUSER_CATEGORIES}
     for scene in confusers:
         if scene.category in per_category:
             per_category[scene.category] += 1
+            distinct[scene.category].update(scene.fg_source_clip_ids)
     for category, count in sorted(per_category.items()):
         if count < MIN_PER_CONFUSER_CATEGORY:
             errors.append(
                 f"eval confuser category {category!r} {count} < {MIN_PER_CONFUSER_CATEGORY}"
             )
+        if len(distinct[category]) < MIN_DISTINCT_SOURCES:
+            errors.append(
+                f"eval confuser category {category!r} has {len(distinct[category])} distinct "
+                f"source clips < {MIN_DISTINCT_SOURCES} (scenes would be near-duplicates)"
+            )
+    cry_sources: set[str] = set()
+    for scene in evals:
+        if scene.is_cry:
+            cry_sources.update(scene.fg_source_clip_ids)
+    if len(cry_sources) < MIN_DISTINCT_SOURCES:
+        errors.append(
+            f"eval cry scenes have {len(cry_sources)} distinct sources < {MIN_DISTINCT_SOURCES}"
+        )
     return errors
 
 

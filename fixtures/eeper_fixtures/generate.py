@@ -17,14 +17,16 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import soundfile as sf
 
 from eeper_fixtures.manifest import Gen
 
 SR = 16000
+_F64 = npt.NDArray[np.float64]
 
 
-def _to_wav_bytes(samples: np.ndarray) -> bytes:
+def _to_wav_bytes(samples: _F64) -> bytes:
     buf = io.BytesIO()
     sf.write(
         buf, np.clip(samples, -1.0, 1.0).astype(np.float32), SR, format="WAV", subtype="PCM_16"
@@ -32,11 +34,11 @@ def _to_wav_bytes(samples: np.ndarray) -> bytes:
     return buf.getvalue()
 
 
-def _white_noise(rng: np.random.Generator, n: int, level: float) -> np.ndarray:
+def _white_noise(rng: np.random.Generator, n: int, level: float) -> _F64:
     return level * rng.standard_normal(n)
 
 
-def _lullaby(rng: np.random.Generator, n: int, level: float) -> np.ndarray:
+def _lullaby(rng: np.random.Generator, n: int, level: float) -> _F64:
     # A simple music-box-ish pentatonic melody of decaying sine tones — reads as
     # "music", never "cry", to YAMNet.
     scale = np.array([261.63, 293.66, 329.63, 392.0, 440.0])  # C D E G A
@@ -54,7 +56,7 @@ def _lullaby(rng: np.random.Generator, n: int, level: float) -> np.ndarray:
     return out
 
 
-def _nursery_floor(rng: np.random.Generator, n: int, level: float) -> np.ndarray:
+def _nursery_floor(rng: np.random.Generator, n: int, level: float) -> _F64:
     # A quiet broadband bed for scene backgrounds.
     return level * rng.standard_normal(n)
 

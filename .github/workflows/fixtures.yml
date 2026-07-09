@@ -1,0 +1,65 @@
+name: fixtures
+
+# M2.0 labeled audio fixture library. CI-only (no stack): validate the manifest,
+# prove the Scaper build is bit-identical, and enforce the split/floor/annotation
+# gates. Runs inside a digest-pinned base image so the audio backend
+# (numpy/scipy/soundfile/soxbindings + SoX/ffmpeg/libsndfile) is fixed — the
+# precondition for reproducible builds.
+on:
+  pull_request:
+    paths: ['fixtures/**', '.github/workflows/fixtures.yml']
+  push:
+    branches: [main]
+    paths: ['fixtures/**', '.github/workflows/fixtures.yml']
+
+jobs:
+  fixtures:
+    name: Audio fixture library (build + gates)
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim@sha256:423ed6ab25b1921a477529254bfeeabf5855151dc2c3141699a1bfc852199fbf
+    steps:
+      # git first: actions/checkout needs it, and the slim base image has none.
+      - name: Install audio backend + git (pinned by the base-image digest)
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends \
+            git build-essential libsox-dev sox ffmpeg libsndfile1
+      - uses: actions/checkout@v4
+      - name: Install locked deps
+        working-directory: fixtures
+        run: |
+          pip install --no-cache-dir -r requirements.lock
+          pip install --no-cache-dir "ruff>=0.6,<1.0" "mypy>=1.11,<2.0" "pytest>=8.0,<9.0"
+
+      - name: Lint, typecheck, unit tests (crit 1, 3 at unit level)
+        working-directory: fixtures
+        env:
+          PYTHONPATH: .
+        run: |
+          ruff check eeper_fixtures/ tests/ tools/
+          ruff format --check eeper_fixtures/ tests/ tools/
+          mypy eeper_fixtures/
+          pytest tests/test_manifest.py tests/test_fetch.py tests/test_checks.py -v
+
+      # Criterion 1 (manifest integrity + allowed-license) + 4 (source-split disjoint).
+      - name: Manifest verify
+        working-directory: fixtures
+        env: { PYTHONPATH: . }
+        run: python -m eeper_fixtures.cli --manifest manifest.json verify
+
+      # Criterion 2: two independent clean builds must be byte-identical. (Criterion
+      # 3 is exercised here too — a wrong-sha256 source aborts the build.)
+      - name: Reproducible build (two clean caches must be bit-identical)
+        working-directory: fixtures
+        env: { PYTHONPATH: . }
+        run: |
+          python -m eeper_fixtures.cli --manifest manifest.json build --out /tmp/A --cache /tmp/cacheA
+          python -m eeper_fixtures.cli --manifest manifest.json build --out /tmp/B --cache /tmp/cacheB
+          python -m eeper_fixtures.cli repro --a /tmp/A --b /tmp/B
+
+      # Criterion 5 (statistical floor) + 6 (annotation sanity) + 4 (scene-level split).
+      - name: Floor + annotation + split gates
+        working-directory: fixtures
+        env: { PYTHONPATH: . }
+        run: python -m eeper_fixtures.cli --manifest manifest.json check --out /tmp/A

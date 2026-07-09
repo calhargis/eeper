@@ -96,11 +96,15 @@ def _scene_from_jams(scene_id: str, split: str, label: str, jams_path: Path) -> 
     ann = jam.search(namespace="scaper")[0]
     events: list[tuple[float, float, str]] = []
     sources: set[str] = set()
+    fg_sources: set[str] = set()  # the foreground (cry/confuser) event's source, not the bg floor
     for obs in ann.data:
         events.append((float(obs.time), float(obs.time + obs.duration), obs.value["label"]))
         source_file = obs.value.get("source_file")
         if source_file:
-            sources.add(Path(source_file).stem)
+            stem = Path(source_file).stem
+            sources.add(stem)
+            if obs.value.get("label") == label:
+                fg_sources.add(stem)
     is_cry = label == "cry"
     return {
         "scene_id": scene_id,
@@ -110,6 +114,7 @@ def _scene_from_jams(scene_id: str, split: str, label: str, jams_path: Path) -> 
         "duration": SCENE_DURATION,
         "events": sorted(events),
         "source_clip_ids": sorted(sources),
+        "fg_source_clip_ids": sorted(fg_sources),
     }
 
 

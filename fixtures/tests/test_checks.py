@@ -45,13 +45,25 @@ def test_same_source_in_both_splits_fails() -> None:
 
 
 def _scenes(cry: int, per_category: dict[str, int], split: str = "eval") -> list[Scene]:
+    # Each scene gets a distinct foreground source so the distinct-source floor is met.
     scenes: list[Scene] = []
     for i in range(cry):
-        scenes.append(Scene(f"cry{i}", split, True, None, 5.0, ((1.0, 2.0, "cry"),), (f"src{i}",)))
+        scenes.append(
+            Scene(f"cry{i}", split, True, None, 5.0, ((1.0, 2.0, "cry"),), (f"c{i}",), (f"c{i}",))
+        )
     for cat, n in per_category.items():
         for i in range(n):
             scenes.append(
-                Scene(f"{cat}{i}", split, False, cat, 5.0, ((0.0, 5.0, cat),), (f"s{cat}{i}",))
+                Scene(
+                    f"{cat}{i}",
+                    split,
+                    False,
+                    cat,
+                    5.0,
+                    ((0.0, 5.0, cat),),
+                    (f"s{cat}{i}",),
+                    (f"s{cat}{i}",),
+                )
             )
     return scenes
 
@@ -73,6 +85,20 @@ def test_floor_fails_when_a_category_short() -> None:
     per["pets"] = MIN_PER_CONFUSER_CATEGORY - 1
     errors = check_floor(_scenes(MIN_CRY_SCENES, per))
     assert any("pets" in e for e in errors)
+
+
+def test_floor_fails_when_sources_not_distinct() -> None:
+    # Enough scenes, but a whole category built from ONE source clip (near-duplicates).
+    from eeper_fixtures.checks import Scene as S
+
+    scenes = _scenes(MIN_CRY_SCENES, dict.fromkeys(_CATEGORIES, 80))
+    scenes = [s for s in scenes if s.category != "pets"]
+    scenes += [
+        S(f"pets{i}", "eval", False, "pets", 5.0, ((0.0, 5.0, "dog"),), ("only",), ("only",))
+        for i in range(80)
+    ]
+    errors = check_floor(scenes)
+    assert any("distinct source" in e and "pets" in e for e in errors)
 
 
 def test_annotation_bounds_and_cry_event() -> None:
