@@ -1,0 +1,24 @@
+# Pinned build environment for reproducible (bit-identical) fixture builds (M2.0
+# criterion 2). Regenerate with `pip freeze` inside the pinned base image
+# (python:3.12-slim@sha256:423ed6ab…) after changing a dependency, and re-baseline
+# the fixtures if the audio backend (numpy/scipy/soundfile/soxbindings/scaper)
+# changes. The SoX/ffmpeg/libsndfile binaries are pinned by the base-image digest.
+attrs==26.1.0
+cffi==2.1.0
+decorator==5.3.1
+jams==0.3.5
+jsonschema==4.26.0
+mir_eval==0.8.2
+numpy==1.26.4
+pandas==3.0.3
+pycparser==3.0
+python-dateutil==2.9.0.post0
+referencing==0.37.0
+rpds-py==2026.6.3
+scaper==1.6.5
+scipy==1.17.1
+six==1.17.0
+sortedcontainers==2.4.0
+soundfile==0.14.0
+sox==1.4.0
+soxbindings==1.2.3

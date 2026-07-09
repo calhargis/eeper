@@ -51,3 +51,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# M2.0 fixtures tooling: fetched-clip cache + build output (never committed)
+fixtures/cache/
+fixtures/library/
+*.egg-info/

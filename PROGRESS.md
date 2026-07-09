@@ -23,9 +23,9 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
 
-**Currently working on:** M2.2 (insight engine core + motion) in review; next up M2.3 (cry detection)
+**Currently working on:** M2.0 (labeled audio fixture library) in review; M2.3 (cry detection) infra on a branch, awaiting fixtures-v1
 **Blockers:** none
-**Labeled audio fixture library:** now tracked as its own milestone **M2.0** (see Phase 2 below) — long-lead; blocks the M2.3 quality gate and feeds M3.3's full-night traces — ⬜ not started
+**Labeled audio fixture library:** milestone **M2.0** — 🔨 implemented (in review): the `fixtures/` tooling + a real `fixtures-v1` manifest (236 source clips → 630 scenes, all AUTO gates green); [M] two-person verification + realism spot-check pending. sibling/other-child confuser deferred to fixtures-v1.1 (see M2.0).
 
 ---
 
@@ -220,22 +220,30 @@ playback).
 
 ## Phase 2 — Audio & First Insights
 
-### M2.0 — Labeled audio fixture library — ⬜
-- [ ] [A] Manifest integrity: required fields + allowed-license enforcement
-- [ ] [A] Reproducible build: bit-identical output across clean CI runs
-- [ ] [A] Tampered source file fails the build
-- [ ] [A] Eval/dev splits disjoint at source-clip level
-- [ ] [A] Statistical floor: ≥100 cry / ≥300 confuser scenes, ≥30 per confuser category
-- [ ] [A] Annotation sanity: bounds + ≥1 cry event per cry scene
+### M2.0 — Labeled audio fixture library — 🔨 implemented (in review; CI: `fixtures` job)
+- [x] [A] Manifest integrity: required fields + allowed-license enforcement (NC denylist)
+- [x] [A] Reproducible build: bit-identical output across two clean builds (pinned container)
+- [x] [A] Tampered source file fails the build (SHA-256 verify on fetch)
+- [x] [A] Eval/dev splits disjoint at source-clip level (by content sha256 + scene sources)
+- [x] [A] Statistical floor: ≥100 cry / ≥300 confuser scenes, ≥30 per confuser category
+- [x] [A] Annotation sanity: bounds + ≥1 cry event per cry scene
 - [ ] [M] Two-person verification pass complete, recorded in manifest — ______
 - [ ] [M] Realism spot-check of synthesized scenes — ______
 
-> Long-lead item; can start any time after M0.1 (needs only CI, not the stack).
-> Produces the frozen, versioned `fixtures-v1` eval split that M2.3's quality gate
-> pins to, plus a disjoint dev split for threshold tuning. No third-party audio is
-> committed — a per-clip manifest (source, license, sha256, labels) + a deterministic
-> Scaper build reproduce the library. NC-licensed sources (e.g. ESC-50) are excluded
-> by policy; cry positives come from donateacry-corpus (ODbL) + CC0/CC-BY FSD50K.
+> The `fixtures/` CI-only package (own deps, `numpy<2` for Scaper): a per-clip
+> `manifest.json` (source URL, license, sha256, labels, split, verification status)
+> + `fixtures verify|build|check|repro|provenance`. `build` fetches + checksum-verifies
+> each source clip and synthesizes nursery scenes with Scaper (event over the nursery
+> floor, swept SNR, light reverb), deterministically. No third-party audio is committed.
+> Sources (NC excluded by policy): cry = donateacry-corpus (ODbL, pinned commit);
+> speech/music-TV/pets = FSD50K via a pinned CC0/CC-BY mirror (by-nc + sampling+ dropped);
+> white-noise/lullaby/nursery-floor = generated (CC0). The real fixtures-v1 manifest is
+> 236 source clips → a 630-scene library (built + all gates green locally in ~2m40s).
+>
+> **fixtures-v1 scope (approved):** confuser categories speech / music_tv / pets /
+> whitenoise_lullaby. The **sibling/other-child** category + richer pets-dev are deferred
+> to **fixtures-v1.1** — no clean fetchable child-speech source exists (Common Voice gated,
+> FSD50K child-speech sparse); the tooling ingests `eeper-recorded` clips when recorded.
 
 ### M2.1 — Audio pipeline — 🔨 implemented (in review; CI: `stack`/`recorder`+`e2e-live`+`video` jobs)
 - [x] [A] Known audio track arrives as 16 kHz mono PCM windows, verified vs a fixture
@@ -379,3 +387,5 @@ playback).
 | 2026-07-08 | M1.4 (recorder): dedicated recorder container (`record` profile, reuses the api image) — one `ffmpeg -c copy` child per camera writing MPEG-TS segments + a quota/retention task; filesystem-is-index crash-safe design (kill loses at most the active segment, proven vs `libavformat/segment.c` + a live docker-kill test); admin clip promotion (concat covering finalized segments → faststart H.264 MP4 in `/media/clips`, exempt from eviction) + authed household-scoped Range playback (`FileResponse`); `Clip` model; Starlette floored ≥0.49.1 (CVE-2025-62727). New `media-data` volume; `recorder` CI job (7-test suite + system-Chrome clip playback). Closes Phase 1. 24h/CPU exit = [M] bench. Design-workflow-driven. |
 | 2026-07-08 | M2.1 (audio pipeline): new insight-engine service (`insight` profile, reuses the api image) — per-camera ffmpeg audio decode to 16 kHz mono s16le, framed into 1.0s windows in an in-process ring (+ a test WAV tap), verified as the synthetic camera's 1 kHz tone via a stdlib Goertzel dominance check against a committed fixture (robust to ffmpeg drift). Listen-in: camera registration adds a second on-demand go2rtc `ffmpeg:...#audio=opus` source so WebRTC carries an audio track (aiortc `m=audio opus` guard + a muted browser packets-flowing assertion). Audio suite folds into the `recorder` CI job. Phase 1 done. Design-workflow + live Opus spike. |
 | 2026-07-08 | M2.2 (insight engine core + motion): the insight supervisor gains a per-camera video path — ffmpeg gray-frame decode (160×120@5fps) into a latest-wins `FrameRing`, a pure-Python normalized frame-diff motion score (no numpy), EWMA smoothing, and a low/medium/high hysteresis state machine (dual enter/exit bands + post-transition-only min-dwell). Transitions write new `state_history`/`events` TimescaleDB hypertables (composite `(ts,id)` PK — partition column required in every unique index) then publish over MQTT (retained `eeper/insight/state`, per-tick `.../motion`) to a new internal-only mosquitto broker (no host port; TLS/ACLs are M3.1). Backpressure = ring drops the backlog (bounded memory, freshest pair scored); graceful degradation = audio child spawned only when the source has audio, per-stream reap keeps listen-in alive through a video hiccup. New `cam-motion` (8 s still↔moving) + `cam-noaudio` synthetic sources; motion + backpressure suites fold into the `recorder` CI job. Adversarial design workflow (3 proposals → critique → synthesis) + live calibration. |
+| 2026-07-08 | M2.0 (labeled audio fixture library, planning): added the M2.0 milestone to the plan; pinned M2.3's quality gate to the frozen `fixtures-v1` eval split. Merged in PR #11. |
+| 2026-07-08 | M2.0 (implementation): the `fixtures/` CI-only package — per-clip `manifest.json` (source/license/sha256/labels/split/verification) + `fixtures verify\|build\|check\|repro\|provenance`; content-addressed fetch with SHA-256 tamper-reject (+ archive-member mode); deterministic CC0 generators (white-noise/lullaby/nursery-floor); seeded Scaper scene synthesis emitting bit-identical WAV + path-free `.txt` annotations; split/floor/annotation gates. Real fixtures-v1 = 236 pinned source clips (donateacry ODbL + FSD50K CC0/CC-BY, NC dropped) → 630 scenes; all 6 AUTO gates green locally + a new digest-pinned `fixtures` CI workflow. sibling/other-child confuser + the two [M] listening passes deferred (v1.1 / bench). Research + engine de-risk (Scaper bit-identity, arch-stable generators) drove it. |
