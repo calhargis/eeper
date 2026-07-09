@@ -28,6 +28,7 @@ ADMIN, PASSWORD = "admin", "correct horse battery staple"
 
 MOTION_SOURCE = "rtsp://synthetic-camera:8554/cam-motion"
 NOAUDIO_SOURCE = "rtsp://synthetic-camera:8554/cam-noaudio"
+SOUND_SOURCE = "rtsp://synthetic-camera:8554/cam-sound"
 
 COMPOSE = [
     "docker",
@@ -87,11 +88,17 @@ class Stack:
         except json.JSONDecodeError:
             return None
 
-    def latest_state(self, camera_id: int) -> tuple[float, str] | None:
-        """Newest state_history row for a camera as (ts_epoch, value), or None."""
+    def latest_state(
+        self, camera_id: int, state_type: str | None = None
+    ) -> tuple[float, str] | None:
+        """Newest state_history row for a camera as (ts_epoch, value), or None.
+        Optionally filtered to one state_type (movement_level / sound_level / cry)."""
+        where = f"camera_id = {camera_id}"
+        if state_type is not None:
+            where += f" AND state_type = '{state_type}'"
         sql = (
             "SELECT extract(epoch from ts), value FROM state_history "
-            f"WHERE camera_id = {camera_id} ORDER BY ts DESC LIMIT 1"
+            f"WHERE {where} ORDER BY ts DESC LIMIT 1"
         )
         result = subprocess.run(
             [
@@ -205,3 +212,8 @@ def motion_camera(admin: httpx.Client) -> dict:
 @pytest.fixture(scope="session")
 def noaudio_camera(admin: httpx.Client) -> dict:
     return _register(admin, "noaudio", NOAUDIO_SOURCE)
+
+
+@pytest.fixture(scope="session")
+def sound_camera(admin: httpx.Client) -> dict:
+    return _register(admin, "sound", SOUND_SOURCE)

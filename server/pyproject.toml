@@ -70,7 +70,7 @@ files = ["eeper", "tests"]
 
 [[tool.mypy.overrides]]
 # These libraries don't ship type information.
-module = ["pyotp.*", "testcontainers.*"]
+module = ["pyotp.*", "testcontainers.*", "onnxruntime.*"]
 ignore_missing_imports = true
 
 # ─── pytest ────────────────────────────────────────────────────────────────

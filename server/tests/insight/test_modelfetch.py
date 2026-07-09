@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -37,7 +38,7 @@ def _manifest(tmp: Path, sha: str) -> Path:
     return path
 
 
-def _opener(payload: bytes):
+def _opener(payload: bytes) -> Callable[[str], io.BytesIO]:
     def open_url(_url: str) -> io.BytesIO:
         return io.BytesIO(payload)
 

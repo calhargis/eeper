@@ -42,6 +42,24 @@ paths:
       -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam-motion
     runOnInitRestart: yes
 
+  # Sound-level source for the insight audio-nudge pipeline (M2.3): a quiet floor
+  # with a LOUD sustained burst for 20 s of every 40 s cycle (a 440 Hz tone gated
+  # from ~-55 dBFS to ~-29 dBFS — a ~26 dB elevation). The quiet->loud boundary is a
+  # real sound onset the detector fires on; the 40 s cycle repeats forever, so an
+  # onset is guaranteed inside any observation window. Model-free by design — the
+  # sound-level nudge does not classify, so a tone stands in for a cry.
+  cam-sound:
+    runOnInit: >
+      ffmpeg -re
+      -f lavfi -i testsrc2=size=640x480:rate=15
+      -f lavfi -i sine=frequency=440:sample_rate=16000
+      -filter_complex "[1:a]volume='0.02+0.4*lt(mod(t,40),20)':eval=frame[a]"
+      -map 0:v -map "[a]"
+      -c:v libx264 -profile:v baseline -pix_fmt yuv420p -g 15 -tune zerolatency
+      -c:a aac -ar 16000 -ac 1
+      -f rtsp -rtsp_transport tcp rtsp://localhost:8554/cam-sound
+    runOnInitRestart: yes
+
   # A video-only source (no audio track) for the graceful-degradation check: the
   # engine must run and derive motion with the audio branch absent.
   cam-noaudio:

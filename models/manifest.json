@@ -12,7 +12,7 @@
       "source": "github.com/tensorflow/models research/audioset/yamnet (converted; see models/convert_yamnet.py)",
       "input": "mel_patches float32 [num_patches, 96, 64] (eeper log-mel frontend version yamnet-logmel-1)",
       "output": "scores float32 [num_patches, 521]; infant-cry = class index 20",
-      "task": "cry detection (M2.3)"
+      "task": "experimental cry classification (M2.3; off by default — pretrained YAMNet can't carry it to a first-class bar, see M2.5 for the trained model)"
     }
   ]
 }

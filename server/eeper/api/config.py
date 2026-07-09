@@ -72,10 +72,28 @@ class Settings(BaseSettings):
     # internal-only (no host port); TLS + per-device ACLs land in M3.1.
     mqtt_host: str = ""
     mqtt_port: int = 1883
-    mqtt_node: str = "insight"  # the {node} segment in eeper/{node}/motion|state
+    mqtt_node: str = "insight"  # {node} in eeper/{node}/{motion,sound}|state/cam*/{state_type}
     # Artificial per-tick scorer slowdown (milliseconds) for the backpressure test;
     # 0 in production. Nonzero forces the frame-drop path without touching ffmpeg.
     insight_scorer_delay_ms: int = 0
+
+    # Insight engine (M2.3) — audio nudges.
+    # Sound level is eeper's v1 audio nudge (a classic audio-monitor heuristic):
+    # sustained loudness above the quiet nursery floor. Always on for audio cameras;
+    # no model. Sensitivity 0..1 (higher = smaller elevation margin = more sensitive).
+    sound_sensitivity: float = 0.5
+    # Cry classification is EXPERIMENTAL and OFF by default: pretrained YAMNet can't
+    # tell a cry from a bark / loud TV to a first-class bar (the trained model is
+    # M2.5). When enabled, the classifier ONNX is fetched + checksum-verified from the
+    # models manifest at first run; an empty manifest path disables it (graceful
+    # degradation — sound level still runs).
+    cry_detection_enabled: bool = False
+    cry_sensitivity: float = 0.5
+    # Path to the models manifest (models/manifest.json) and a writable cache for the
+    # fetched ONNX. Empty manifest => experimental cry stays off even if enabled
+    # (the image ships no model; an operator opting in mounts the manifest + a cache).
+    insight_models_manifest: str = ""
+    insight_models_cache: str = "/tmp/eeper-models"  # noqa: S108 (ephemeral cache; re-fetch on restart)
 
 
 @lru_cache(maxsize=1)

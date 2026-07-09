@@ -27,6 +27,51 @@ class StateWriter:
     def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]) -> None:
         self._sessionmaker = sessionmaker
 
+    async def write_state_change(
+        self,
+        *,
+        camera_id: int,
+        ts: datetime,
+        state_type: str,
+        event_type: str,
+        value: str,
+        previous: str | None,
+        confidence: float,
+        contributing: list[str],
+    ) -> bool:
+        """Write one state_history row + one events row for a transition. Returns
+        True on success, False if the write failed (already logged). Shared by every
+        insight signal — movement level, sound level, cry — so they all get the same
+        DB-first-then-publish ordering and timeout guard."""
+        try:
+            async with asyncio.timeout(_WRITE_TIMEOUT_SECONDS):
+                async with self._sessionmaker() as session:
+                    session.add(
+                        StateHistory(
+                            ts=ts,
+                            camera_id=camera_id,
+                            state_type=state_type,
+                            value=value,
+                            confidence=confidence,
+                            contributing_inputs=",".join(contributing),
+                        )
+                    )
+                    session.add(
+                        Event(
+                            ts=ts,
+                            camera_id=camera_id,
+                            type=event_type,
+                            value=value,
+                            previous_value=previous,
+                            confidence=confidence,
+                        )
+                    )
+                    await session.commit()
+            return True
+        except Exception:  # a DB blip (incl. a timed-out hang) must not stall the scorer
+            _log.exception("failed to write %s change for camera %s", state_type, camera_id)
+            return False
+
     async def write_movement_change(
         self,
         *,
@@ -37,33 +82,13 @@ class StateWriter:
         confidence: float,
         contributing: list[str],
     ) -> bool:
-        """Write one state_history row + one events row for a transition. Returns
-        True on success, False if the write failed (already logged)."""
-        try:
-            async with asyncio.timeout(_WRITE_TIMEOUT_SECONDS):
-                async with self._sessionmaker() as session:
-                    session.add(
-                        StateHistory(
-                            ts=ts,
-                            camera_id=camera_id,
-                            state_type="movement_level",
-                            value=level,
-                            confidence=confidence,
-                            contributing_inputs=",".join(contributing),
-                        )
-                    )
-                    session.add(
-                        Event(
-                            ts=ts,
-                            camera_id=camera_id,
-                            type="movement_level_change",
-                            value=level,
-                            previous_value=previous,
-                            confidence=confidence,
-                        )
-                    )
-                    await session.commit()
-            return True
-        except Exception:  # a DB blip (incl. a timed-out hang) must not stall the scorer
-            _log.exception("failed to write movement change for camera %s", camera_id)
-            return False
+        return await self.write_state_change(
+            camera_id=camera_id,
+            ts=ts,
+            state_type="movement_level",
+            event_type="movement_level_change",
+            value=level,
+            previous=previous,
+            confidence=confidence,
+            contributing=contributing,
+        )
