@@ -26,6 +26,7 @@ dependencies = [
   "paho-mqtt>=2.0,<3.0", # MQTT client for insight event publishing (M2.2)
   "numpy>=1.26,<3", # log-mel audio frontend for the cry classifier (M2.3)
   "onnxruntime>=1.19,<2", # CPU inference for the YAMNet-class cry model (M2.3)
+  "pywebpush>=2.0,<3", # VAPID Web Push for nudge notifications (M2.4)
 ]
 
 [project.optional-dependencies]
@@ -70,7 +71,7 @@ files = ["eeper", "tests"]
 
 [[tool.mypy.overrides]]
 # These libraries don't ship type information.
-module = ["pyotp.*", "testcontainers.*", "onnxruntime.*"]
+module = ["pyotp.*", "testcontainers.*", "onnxruntime.*", "pywebpush.*", "asyncpg.*"]
 ignore_missing_imports = true
 
 # ─── pytest ────────────────────────────────────────────────────────────────

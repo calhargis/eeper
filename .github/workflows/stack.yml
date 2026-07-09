@@ -397,6 +397,11 @@ jobs:
       - name: Sound pipeline suite
         run: pytest deploy/tests/insight/test_sound_pipeline.py -v
 
+      # M2.4: the sound_elevated nudge auto-promotes a pre/post-roll clip (the api-side
+      # worker), the events API returns it, and the clip is playable.
+      - name: Nudge pipeline suite (auto-clip)
+        run: pytest deploy/tests/insight/test_nudge_pipeline.py -v
+
       # M2.2 C4: slow the scorer (overlay) and confirm frames are DROPPED not queued
       # — freshness < 3s, fed >> scored. Recreate only the insight service.
       - name: Slow the scorer for the backpressure check

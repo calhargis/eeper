@@ -168,13 +168,14 @@ v1's audio nudge is **sustained sound level** — the robust, model-free behavio
 
 ## M2.4 — Events, clips, and nudges
 
-**Deliverables:** event records linked to auto-promoted clips (pre/post roll), Tonight view v0 (event list with tappable clips), Web Push notifications with per-user preferences and quiet-hours toggle, nudge copy per the safety stance.
+**Deliverables:** event records linked to auto-promoted clips (pre/post roll), Tonight view v0 (event list with tappable clips), Web Push notifications with per-user preferences and quiet-hours toggle, nudge copy per the safety stance. Delivery is a **DB-as-queue**: the insight engine writes a nudge event with its delivery channels `pending`, and an api-side worker (Postgres `LISTEN/NOTIFY` for low latency + a reconciliation poll as the never-lost safety net) does the side effects and marks them — so a crash mid-delivery resumes losslessly. Delivery policy (quiet hours, per-user prefs, rate-limit) lives in that worker, never in the detector.
 
 **Testing criteria:**
 - [AUTO] Integration: an audio nudge (the primary `sound_elevated` event in v1; `cry_detected` too once M2.5 makes cry first-class) auto-promotes a clip spanning the configured pre/post roll; the event API returns the clip reference; the clip is playable.
 - [AUTO] Playwright: the event appears in Tonight view without reload (WebSocket push) and its clip plays on tap.
 - [AUTO] Web Push: a subscribed test client (headless push service) receives the nudge; users with notifications off or in quiet hours do not (matrix test).
 - [AUTO] Copy lint: notification templates are checked against a denylist of clinical/alarm terms ("oxygen", "vital", "emergency", "apnea") — encoding the Section 2 stance as a test.
+- [AUTO] Crash safety (the queue's whole point): the worker killed between event insert and delivery still sends the nudge exactly once on restart; an event whose `NOTIFY` is dropped is still delivered by the reconciliation poll within its window; a rolled-back event insert produces no side effects (the transactional `NOTIFY` never fires for it).
 - [MANUAL] Push notifications arrive on physical iOS and Android with the PWA backgrounded and the phone locked. (OS push behavior is not reliably emulatable.)
 
 ## M2.5 — Trained cry model (first-class cry detection)

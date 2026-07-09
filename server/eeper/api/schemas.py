@@ -160,3 +160,51 @@ class ClipOut(BaseModel):
     size_bytes: int
     codec: str
     created_at: datetime
+
+
+class EventOut(BaseModel):
+    """An insight event for the Tonight view — nudge events carry a clip_id once the
+    worker has auto-promoted a clip (null until then)."""
+
+    id: int
+    ts: datetime
+    camera_id: int
+    type: str
+    value: str
+    previous_value: str | None
+    confidence: float
+    clip_id: int | None
+
+
+class PushKeys(BaseModel):
+    p256dh: str = Field(min_length=1, max_length=255)
+    auth: str = Field(min_length=1, max_length=255)
+
+
+class PushSubscriptionIn(BaseModel):
+    """The browser's ``PushSubscription.toJSON()`` shape."""
+
+    endpoint: str = Field(min_length=1, max_length=1000)
+    keys: PushKeys
+
+
+class VapidKeyOut(BaseModel):
+    public_key: str
+
+
+class NotificationPreferencesOut(BaseModel):
+    push_enabled: bool
+    quiet_hours_enabled: bool
+    quiet_hours_start: int
+    quiet_hours_end: int
+    timezone: str
+
+
+class NotificationPreferencesIn(BaseModel):
+    """Partial update — only the provided fields change. Minutes-of-day in [0, 1440)."""
+
+    push_enabled: bool | None = None
+    quiet_hours_enabled: bool | None = None
+    quiet_hours_start: int | None = Field(default=None, ge=0, le=1439)
+    quiet_hours_end: int | None = Field(default=None, ge=0, le=1439)
+    timezone: str | None = Field(default=None, min_length=1, max_length=64)
