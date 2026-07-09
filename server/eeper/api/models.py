@@ -144,9 +144,23 @@ class Event(Base):
     value: Mapped[str] = mapped_column(String(16))  # the new level
     previous_value: Mapped[str | None] = mapped_column(String(16), default=None)
     confidence: Mapped[float] = mapped_column(Float)
-    # Nullable link to a promoted clip; always NULL in M2.2 (clip auto-promotion
-    # arrives in M2.4). No FK for the same hypertable-friction reason.
+    # Nullable link to a promoted clip; NULL until the M2.4 nudge worker auto-promotes
+    # one. No FK for the same hypertable-friction reason.
     clip_id: Mapped[int | None] = mapped_column(BigInteger, default=None)
+
+    # Delivery state (M2.4). The events table is a DB-as-queue: the insight engine
+    # writes a nudge-worthy event with each channel "pending"; the api-side nudge
+    # worker (LISTEN/NOTIFY + reconciliation poll) does the side effects and marks
+    # them, so a crash mid-delivery resumes losslessly. Non-nudge events (movement,
+    # cleared edges) default to "skip" and the worker never touches them. Delivery
+    # POLICY (quiet hours, per-user prefs, rate-limit) lives in the worker, not here.
+    # clip_status: skip|pending|promoted|failed; nudge_status (push):
+    # skip|pending|sent|suppressed|failed; broadcast_status: skip|pending|sent.
+    clip_status: Mapped[str] = mapped_column(String(12), default="skip")
+    nudge_status: Mapped[str] = mapped_column(String(12), default="skip")
+    broadcast_status: Mapped[str] = mapped_column(String(12), default="skip")
+    delivery_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 class RefreshToken(Base):
@@ -179,3 +193,42 @@ class ApiToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class PushSubscription(Base):
+    """A browser Web Push subscription (M2.4): one row per (user, endpoint). The
+    endpoint URL + its p256dh/auth keys are what pywebpush encrypts a nudge to; a
+    subscription is removed when the browser unsubscribes or the push service reports
+    it gone (HTTP 404/410)."""
+
+    __tablename__ = "push_subscriptions"
+    __table_args__ = (UniqueConstraint("user_id", "endpoint", name="uq_push_user_endpoint"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    endpoint: Mapped[str] = mapped_column(String(1000))
+    p256dh: Mapped[str] = mapped_column(String(255))
+    auth: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class NotificationPreferences(Base):
+    """Per-user nudge policy (M2.4): a master push toggle plus optional quiet hours.
+    Quiet hours are minutes-of-day in [0, 1440) in the user's ``timezone``; the worker
+    handles the wrap-around case (start > end, e.g. 22:00 -> 07:00). Read by the nudge
+    worker at delivery time — the one place delivery policy lives."""
+
+    __tablename__ = "notification_preferences"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    push_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    quiet_hours_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    quiet_hours_start: Mapped[int] = mapped_column(Integer, default=0)  # minutes of day
+    quiet_hours_end: Mapped[int] = mapped_column(Integer, default=0)
+    timezone: Mapped[str] = mapped_column(String(64), default="UTC")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

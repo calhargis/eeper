@@ -38,11 +38,20 @@ class StateWriter:
         previous: str | None,
         confidence: float,
         contributing: list[str],
+        nudge: bool = False,
     ) -> bool:
         """Write one state_history row + one events row for a transition. Returns
         True on success, False if the write failed (already logged). Shared by every
         insight signal — movement level, sound level, cry — so they all get the same
-        DB-first-then-publish ordering and timeout guard."""
+        DB-first-then-publish ordering and timeout guard.
+
+        ``nudge`` marks a nudge-worthy event (a rising edge the parent should be told
+        about): its delivery channels start "pending" so the api-side nudge worker
+        picks it up (auto-clip + push + broadcast). Non-nudge events default to "skip"
+        and the worker never touches them. This is only classification by event type;
+        the delivery POLICY (quiet hours, per-user prefs, rate-limit) lives in the
+        worker."""
+        delivery = "pending" if nudge else "skip"
         try:
             async with asyncio.timeout(_WRITE_TIMEOUT_SECONDS):
                 async with self._sessionmaker() as session:
@@ -64,6 +73,9 @@ class StateWriter:
                             value=value,
                             previous_value=previous,
                             confidence=confidence,
+                            clip_status=delivery,
+                            nudge_status=delivery,
+                            broadcast_status=delivery,
                         )
                     )
                     await session.commit()

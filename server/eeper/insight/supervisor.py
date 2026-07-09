@@ -289,10 +289,12 @@ class InsightSupervisor:
         previous: str,
         confidence: float,
         contributing: list[str],
+        nudge: bool = False,
     ) -> bool:
         """Persist a transition (DB first) then publish it. Returns True on a durable
         write (caller keeps the in-memory transition), False so the caller reverts —
-        the DB and the published state never diverge, exactly as the motion path."""
+        the DB and the published state never diverge, exactly as the motion path.
+        ``nudge`` flags a rising edge the api-side worker should act on."""
         written = await self._writer.write_state_change(
             camera_id=camera_id,
             ts=wall,
@@ -302,6 +304,7 @@ class InsightSupervisor:
             previous=previous,
             confidence=confidence,
             contributing=contributing,
+            nudge=nudge,
         )
         if written:
             self._publisher.publish_state(
@@ -356,6 +359,7 @@ class InsightSupervisor:
                         previous=prev_state,
                         confidence=confidence,
                         contributing=_SOUND_CONTRIBUTING,
+                        nudge=transition == "elevated",  # the rising edge is the nudge
                     )
                     if not ok:
                         sound_det.revert(*snap)
@@ -378,6 +382,7 @@ class InsightSupervisor:
                             previous=cry_prev,
                             confidence=max(0.0, min(1.0, score)),
                             contributing=_CRY_CONTRIBUTING,
+                            nudge=cry_transition == "crying",  # the rising edge is the nudge
                         )
                         if not ok:
                             cry_det.revert(*cry_snap)

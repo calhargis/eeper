@@ -16,8 +16,10 @@ from eeper import __version__
 from eeper.api.camera_monitor import CameraMonitor
 from eeper.api.config import get_settings
 from eeper.api.db import create_schema_and_hypertables, get_sessionmaker
+from eeper.api.event_hub import EventHub
 from eeper.api.gateway import Go2rtcClient
-from eeper.api.routers import account, auth, cameras, clips, system, tokens, users
+from eeper.api.nudge_worker import NudgeWorker
+from eeper.api.routers import account, auth, cameras, clips, events, system, tokens, users
 
 
 @asynccontextmanager
@@ -26,12 +28,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     gateway = Go2rtcClient(settings.go2rtc_url)
     monitor = CameraMonitor(gateway, get_sessionmaker(), settings)
+    hub = EventHub()
+    worker = NudgeWorker(get_sessionmaker(), settings, hub)
     app.state.gateway = gateway
     app.state.monitor = monitor
+    app.state.hub = hub  # the /ws/events endpoint registers clients here
+    app.state.worker = worker
     await monitor.start()  # reconcile go2rtc + begin the health/keep-warm loop
+    await worker.start()  # LISTEN/NOTIFY + reconciliation poll for nudge delivery
     try:
         yield
     finally:
+        await worker.stop()
         await monitor.stop()
 
 
@@ -62,5 +70,6 @@ v1.include_router(users.router)
 v1.include_router(tokens.router)
 v1.include_router(cameras.router)
 v1.include_router(clips.router)
+v1.include_router(events.router)
 
 app.include_router(v1)

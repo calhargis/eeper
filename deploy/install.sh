@@ -48,6 +48,16 @@ if [ ! -f "$ENV_FILE" ]; then
   secret_key="$(openssl rand -hex 32)"
   [ "${#postgres_password}" -eq 48 ] || { err "failed to generate POSTGRES_PASSWORD"; exit 1; }
   [ "${#secret_key}" -eq 64 ] || { err "failed to generate EEPER_SECRET_KEY"; exit 1; }
+  # VAPID keypair for Web Push nudges (M2.4): a P-256 keypair, base64url-encoded. In a
+  # SEC1 P-256 DER the 7-byte header is followed by the 32-byte private scalar; the
+  # public key is the trailing 65-byte uncompressed point of the SPKI DER.
+  vapid_der="$(mktemp "${ENV_FILE}.vapidXXXXXX")"
+  openssl ecparam -name prime256v1 -genkey -noout -outform DER > "$vapid_der"
+  vapid_private="$(dd if="$vapid_der" bs=1 skip=7 count=32 2>/dev/null | base64 | tr '+/' '-_' | tr -d '=' | tr -d '\n')"
+  vapid_public="$(openssl ec -inform DER -in "$vapid_der" -pubout -outform DER 2>/dev/null | tail -c 65 | base64 | tr '+/' '-_' | tr -d '=' | tr -d '\n')"
+  rm -f "$vapid_der"
+  [ "${#vapid_private}" -eq 43 ] || { err "failed to generate EEPER_VAPID_PRIVATE_KEY"; exit 1; }
+  [ "${#vapid_public}" -eq 87 ] || { err "failed to generate EEPER_VAPID_PUBLIC_KEY"; exit 1; }
   # The host address a browser reaches go2rtc's WebRTC media port (8555) on. It is
   # published there and advertised as the ICE candidate (go2rtc excludes its own
   # Docker-bridge address, so this must be explicit). 127.0.0.1 works only on the
@@ -73,6 +83,9 @@ EEPER_HTTPS_PORT=${EEPER_HTTPS_PORT:-443}
 EEPER_GO2RTC_CANDIDATE=$go2rtc_candidate
 POSTGRES_PASSWORD=$postgres_password
 EEPER_SECRET_KEY=$secret_key
+EEPER_VAPID_PUBLIC_KEY=$vapid_public
+EEPER_VAPID_PRIVATE_KEY=$vapid_private
+EEPER_VAPID_SUBJECT=mailto:admin@${EEPER_DOMAIN:-localhost}
 EOF
   mv "$tmp_env" "$ENV_FILE"
   if [ "$go2rtc_candidate" = "127.0.0.1" ] && [ "$cand_domain" != "localhost" ]; then
