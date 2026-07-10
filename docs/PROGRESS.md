@@ -59,7 +59,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 - [x] [A] Only Caddy reachable from outside the Docker network
 - [x] [A] 401 on all non-auth endpoints pre-wizard and post-logout
 - [x] [A] Containers non-root with read-only root filesystems
-- [ ] [M] Local CA trusted on physical iOS + Android from docs alone — ______ (procedure: [docs/testing/m0.2-ca-trust.md](./docs/testing/m0.2-ca-trust.md))
+- [ ] [M] Local CA trusted on physical iOS + Android from docs alone — ______ (procedure: [docs/testing/m0.2-ca-trust.md](./testing/m0.2-ca-trust.md))
 
 > **Verification.** The full `core` stack (Caddy + FastAPI api + TimescaleDB +
 > static web) was brought up locally with `deploy/install.sh` and all five [A]
@@ -212,7 +212,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 > a design workflow (crash-safety proven against `libavformat/segment.c`).
 
 **Phase 1 exit:** the 24 h sustained-record + live-view CPU-budget check is a
-[MANUAL] bench item ([docs/ci.md](docs/ci.md)) — no self-hosted runner; met by
+[MANUAL] bench item ([docs/ci.md](ci.md)) — no self-hosted runner; met by
 construction (`-c copy` everywhere, `scandir`+`unlink` retention, `sendfile`
 playback).
 

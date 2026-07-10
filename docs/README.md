@@ -2,9 +2,9 @@
 
 Project documentation. Start with the top-level planning docs:
 
-- [Master Plan](../MASTER_PLAN.md) — the vision and architecture.
-- [Implementation Plan](../IMPLEMENTATION_PLAN.md) — milestones and testing criteria.
-- [Progress](../PROGRESS.md) — what's done.
+- [Master Plan](./MASTER_PLAN.md) — the vision and architecture.
+- [Implementation Plan](./IMPLEMENTATION_PLAN.md) — milestones and testing criteria.
+- [Progress](./PROGRESS.md) — what's done.
 
 In this directory:
 
