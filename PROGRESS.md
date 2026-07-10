@@ -18,7 +18,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Planning (master plan, implementation plan, README) | — | ✅ done |
 | Phase 0 — Skeleton | M0.1–M0.3 | ✅ done (merged; all [A] criteria green) |
 | Phase 1 — Video | M1.1–M1.4 | ✅ done (all merged; register → live → record → clip) |
-| Phase 2 — Audio & first insights | M2.0–M2.5 | 🔨 in progress (M2.1 merged; M2.2, M2.0, M2.3 in review; M2.5 promoted) |
+| Phase 2 — Audio & first insights | M2.0–M2.6 | 🔨 in progress (M2.0–M2.4 merged; M2.5 reframed to a cry ratchet after the de-risk; M2.6 = the cry-corpus unlock) |
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | ⬜ not started |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ⬜ not started |
 | Phase 5 — Hardening & release | M5.1–M5.2 | ⬜ not started |
@@ -292,7 +292,7 @@ Reframed after exhaustive measurement (in the PR): pretrained YAMNet can't carry
 *classification* to a first-class bar (sustained-episode recall for one infant caps
 ~0.70 at any false-nudge-safe point — correlated window errors). v1 nudge = **sound
 level** (robust, model-free); cry classification ships **experimental, off by
-default**, with window ratchet baselines; the trained model is **M2.5**.
+default**, with window ratchet baselines; the trained-model unlock is **M2.6** (M2.5 de-risked it — the corpus is the wall).
 - [x] [A] Model fetch: checksum verification, tampered file refused
 - [x] [A] Sound-level product gate on `fixtures-v1`: episode recall ≥ 0.90, latency ≤ 10 s, ≤ 1 false event / quiet 8 h night, continuous-noise absorbed (product-derived, in CI)
 - [x] [A] Cry-classifier window ratchet baselines (near + physically-based far-field recall/FPR) recorded + ratcheted (regression fails; not an absolute)
@@ -314,15 +314,33 @@ delivery policy (quiet hours, per-camera rate-limit) lives in the worker. Web: t
 - [x] [A] Playwright: event appears in Tonight view via WebSocket; clip plays on tap (`tonight` project, `recorder` job)
 - [ ] [M] Push arrives on physical iOS + Android, backgrounded + locked — ______
 
-### M2.5 — Trained cry model (first-class cry detection) — ⬜
-Promoted from M2.3: the trained-model unlock for cry classification. Starts from the
-M2.3 window ratchet baselines; lands after the Phase 2 demo (sound-level carries it).
+### M2.5 — Cry ratchet + honest reframe (first-class cry is corpus-gated) — 🔨 implemented
+A reproducible de-risk (in the PR) tested M2.3's premise — train a head to unlock cry —
+and found the wall is the **corpus, not the model**: a trained head (logistic + MLP, over
+the 521 AudioSet scores AND the 1024-d embeddings, balanced + near/far augmented) over
+FULL donateacry (457, split device-disjoint on the per-upload UUID) does NOT beat the
+pretrained scorer at any false-nudge-safe point (best trained near recall ~0.47 vs ~0.84
+pretrained on the same split; binding confuser cry-vs-animal; residual infant leakage would
+only flatter the trained head, which still lost). The pretrained model is already near the
+corpus ceiling (~0.80 near / ~0.76 far window recall, ~0.85 episode). So cry stays
+experimental + off by default; the window floors are ratcheted UP to the measured reality;
+the on-by-default flip + blocking gate move to M2.6.
+- [x] [A] Cry window ratchets raised on `fixtures-v1` (near recall 0.75→0.78 / FPR 0.12→0.08, far recall 0.55→0.72 / FPR 0.20→0.11), CI fails on regression
+- [x] [A] Sound-level product gate unchanged + green; ONNX CPU smoke amd64+arm64 unchanged
+- [x] [A] De-risk method + numbers + corrected corpus premise (no FSD50K cry positives; donateacry gives only a per-device UUID proxy) recorded in `cryeval.py` + plan
+
+### M2.6 — Cry corpus expansion (the first-class-cry prerequisite) — ⬜
+The real unlock: a corpus that doesn't yet exist. Source a larger + more diverse cry corpus
+with **guaranteed infant-level ids** (leakage-safe splits — donateacry gives only a
+per-device UUID proxy), the **FSD50K cry positives** the current corpus lacks, a **real-RIR**
+far-field corpus, and a **train split**; then re-run training.
 - [ ] [A] Reproducible training: artifact rebuilds from the corpus manifest (checksum), fetched + verified
-- [ ] [A] Quality gate ratcheted UP: near-field recall ≥ 0.9 / FPR ≤ 0.1 + far-field floor; episode recall ≥ 0.95 at ≤ 1 false cry-nudge / 8 h night
+- [ ] [A] Leakage-safe eval: eval split infant-disjoint from train (asserted)
+- [ ] [A] Quality gate ratcheted UP: near-field recall ≥ 0.9 / FPR ≤ 0.1 + far-field floor (real RIR); episode recall ≥ 0.95 at ≤ 1 false cry-nudge / 8 h night
 - [ ] [A] ONNX CPU inference smoke on amd64 + arm64
 - [ ] [M] Speaker cry raises a *cry* nudge; 30 min TV/pets does not — ______
 
-**Phase 2 exit:** ⬜ [M] speaker cry → phone nudge (sound-level in v1) → playable clip on bench — ______ (M2.5 upgrades the nudge to cry classification, can land after the demo)
+**Phase 2 exit:** ⬜ [M] speaker cry → phone nudge (sound-level in v1) → playable clip on bench — ______ (cry classification stays experimental until the M2.6 corpus lands)
 
 ---
 
@@ -397,6 +415,7 @@ M2.3 window ratchet baselines; lands after the Phase 2 demo (sound-level carries
 
 | Date | Change |
 |---|---|
+| 2026-07-09 | M2.5 reframed after a reproducible **de-risk** (in the PR): tested M2.3's premise that a *trained* model unlocks first-class cry — eeper's frozen frontend + YAMNet features, a trained head (logistic + MLP, over both the 521-class AudioSet scores and the 1024-d embeddings, balanced + near/far augmented) over the **full donateacry corpus** (457 clips), split device-disjoint on the per-upload UUID. Finding, one level up from M2.3's: **the wall is the corpus, not the model** — a trained head does NOT beat the pretrained hand-tuned scorer at any false-nudge-safe point (best trained near-field recall ~0.47 vs ~0.84 pretrained on the same device-disjoint split; binding confuser is cry-vs-animal, where the hand-tuned animal-band suppression is an inductive bias a naive head can't recover on held-out infants; residual infant leakage would only flatter the trained head, which still lost). donateacry is the only cry source (457, 84% one reason, near-field, only a **per-device UUID** → no *guaranteed* infant-disjoint split); FSD50K is confusers-only (**no "FSD50K cry positives"** — a corrected M2.5 premise); no real far-field. The pretrained model is already near this ceiling (~0.80 near / ~0.76 far window recall, ~0.85 episode; the far "collapse" was a shared-threshold artifact). So (M2.3 pattern — measure the truth, ratchet, name the gap, give it a milestone): cry stays experimental + off-by-default; the cry window ratchets are raised to the measured reality (near recall 0.75→0.78 / FPR 0.12→0.08, far recall 0.55→0.72 / FPR 0.20→0.11, CI fails on regression); the sound-level gate + multi-arch ONNX smoke are unchanged. First-class cry (on-by-default + blocking gate) is deferred to a new **M2.6 — cry corpus expansion** (infant-level ids for leakage-safe splits + real-RIR far-field + FSD50K cry positives + a train split). |
 | 2026-07-09 | M2.4 (web half): the **Tonight view** (`/tonight`) — the night's nudge events over a `/ws/events` WebSocket (live, no reload; new events prepend, an event's clip appears in place when the worker promotes it), each with a tappable in-browser clip. Web Push opt-in + quiet-hours settings (`push.ts` PushManager subscribe with the server VAPID key; `realtime.ts` WS client with capped-backoff reconnect). A service-worker push handler (`static/push-sw.js`, `importScripts`'d into the generated Workbox SW so precache/installability is untouched) shows the nudge keyed on the event-id collapse key and opens Tonight on tap. New Playwright `tonight` project (live event + clip playback in system Chrome) in the `recorder` job. svelte-check + eslint + build + prettier green. |
 | 2026-07-09 | M2.4 (events, clips, nudges — server half; web next). A **DB-as-queue** delivery pipeline: the insight engine writes a nudge event (`sound_elevated`/`cry_detected`) with its delivery channels `pending`; an api-side `NudgeWorker` (Postgres `LISTEN/NOTIFY` for low latency + a reconciliation poll as the never-lost safety net) runs three idempotent channels — WebSocket broadcast, Web Push (VAPID/`pywebpush`, per-user enable + quiet-hours + per-camera rate-limit), and post-roll clip auto-promotion (reusing the M1.4 cutter via a new `clip_service`, linked atomically). New `events` API + `/ws/events` (cookie-JWT) + push subscription/preferences endpoints; VAPID keypair generated by `install.sh`. Delivery state lives on the event row (a forward `ADD COLUMN IF NOT EXISTS` migration covers upgrades) → crash-safe, exactly-once. Verified against real Postgres: reconciliation-without-NOTIFY, exactly-once-across-restart, rollback-no-side-effects, push matrix + real VAPID send, upgrade migration (92 server tests). New `test_nudge_pipeline` end-to-end (sound → auto-clip → API → playable) in the `recorder` job. Adversarial review (4 dimensions) → fixed a critical upgrade-boot abort, push at-least-once dup (collapse key), event-time rate-limit anchor, transient-push retry. |
 | 2026-07-09 | M2.3 (audio nudges): reframed after exhaustive measurement — pretrained YAMNet can't carry cry *classification* to a first-class bar (sustained-episode recall for one infant caps ~0.70 at any false-nudge-safe operating point; window errors correlate in time, so temporal voting can't exceed the model's per-infant detectability). v1 ships **sound-level** nudges (per-window RMS/dBFS, adaptive quiet-only baseline, k-of-n sustained-elevation state machine → `sound_elevated`; model-free, on by default): episode recall 0.95, ~2 s latency, 0 false events on a quiet night. **Cry classification** ships experimental + off by default (frozen YAMNet + eeper NumPy log-mel frontend + pet-suppressed window scoring + k-of-n episode detector → `cry_detected`); its window-level accuracy (near-field + physically-based far-field, pyroomacoustics) is recorded as **ratchet baselines**. New `audio` CI workflow (product-derived sound gate + cry ratchets on the frozen eval split, deterministic; multi-arch ONNX CPU smoke); long-form scene synthesis added to the fixture tooling (episodes + nights, M3.3-ready); `cam-sound` synthetic source + sound pipeline suite in the `recorder` job. Per-signal-type MQTT state topics + generalized state writer. **M2.5** promoted (trained cry model); plan gains the meta-lesson that gate thresholds must trace to a product consequence. |
