@@ -19,4 +19,4 @@ npm run build    # static build to ./build
 Caddy). The image is built multi-arch (amd64 + arm64) and scanned in CI.
 
 Phase 0 ships only a placeholder shell; Live/Tonight/Trends/Devices/Settings
-views arrive per the [implementation plan](../IMPLEMENTATION_PLAN.md).
+views arrive per the [implementation plan](../docs/IMPLEMENTATION_PLAN.md).

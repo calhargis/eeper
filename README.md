@@ -55,7 +55,7 @@ sensor nodes (ESP32) ──► MQTT ──► insight engine ──► states, e
 
 eeper targets **protocols, not devices**. The server consumes standard RTSP/H.264 video and a small MQTT JSON contract for sensors, so it runs on any amd64/arm64 Linux box — a Raspberry Pi 4/5, a NAS, an old laptop, a mini-PC, or a VM. Hardware-specific code is confined to tiny optional adapter containers at the edge.
 
-Full details: [Master Plan](./MASTER_PLAN.md) · [Implementation Plan](./IMPLEMENTATION_PLAN.md)
+Full details: [Master Plan](./docs/MASTER_PLAN.md) · [Implementation Plan](./docs/IMPLEMENTATION_PLAN.md)
 
 ## Quick start
 
@@ -100,7 +100,7 @@ Nothing below is required — it's the tested reference set:
 Contributions are welcome once Phase 0 lands. Two things to know up front:
 
 1. **The safety boundary is non-negotiable.** PRs that add medical claims, clinical alarm language, or diagnostic features will be declined — this is encoded in the PR template and even enforced by CI (notification copy is linted against clinical terms).
-2. **Tests are the definition of done.** Every milestone ships with automated criteria (and labeled manual procedures where hardware/perception is involved). See the [Implementation Plan](./IMPLEMENTATION_PLAN.md).
+2. **Tests are the definition of done.** Every milestone ships with automated criteria (and labeled manual procedures where hardware/perception is involved). See the [Implementation Plan](./docs/IMPLEMENTATION_PLAN.md).
 
 Development uses conventional commits, mypy/TS strict typing, and multi-arch CI (amd64 + arm64).
 
@@ -110,7 +110,7 @@ All video, audio, and sensor data stays on your hardware. There is no telemetry,
 
 ## License
 
-To be finalized before first release — current target is AGPL-3.0 for the server and MIT for client libraries. See the open questions in the [Master Plan](./MASTER_PLAN.md).
+To be finalized before first release — current target is AGPL-3.0 for the server and MIT for client libraries. See the open questions in the [Master Plan](./docs/MASTER_PLAN.md).
 
 ---
 

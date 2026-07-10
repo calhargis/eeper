@@ -52,7 +52,7 @@ so the audio backend (numpy/scipy/soundfile/soxbindings + SoX/ffmpeg/libsndfile)
 fixed — the precondition for bit-identical output. CI (`.github/workflows/fixtures.yml`,
 x86_64) runs two clean builds and asserts byte-identity. Any change to a source clip,
 the generator, or the audio backend bumps the fixture version and re-baselines the
-M2.3 gate (recorded in `PROGRESS.md`).
+M2.3 gate (recorded in `docs/PROGRESS.md`).
 
 ## Regenerate the manifest
 

@@ -295,5 +295,5 @@ Remote-access roadmap: v1 ships WireGuard/Tailscale docs (household-only, near-z
 - **WebRTC through strict NATs** for remote users: VPN sidesteps it in v1; TURN is the v1.x answer.
 - **Pi availability/pricing volatility** (2026 RAM-driven price spikes): mitigated by the run-anywhere posture — the Pi is a reference target, not a requirement.
 - **Community scope creep toward medical claims:** mitigated by contribution guidelines and PR templates encoding Section 2.
-- **Open:** project name/trademark check; AGPL vs Apache-2.0 final call; whether ONVIF PTZ control makes v1; minimum supported browser set for WebRTC.
+- **Open:** trademark check on "eeper"; AGPL vs Apache-2.0 final call; whether ONVIF PTZ control makes v1; minimum supported browser set for WebRTC; post-v1 candidate inputs: thermal (low-res array, e.g. MLX90640, via the MQTT sensor contract as presence/trend features — surface temperature only, never temperature-as-vital-sign, per §2; see reference-builds/pi4-all-in-one.md) and access-point mode for networkless/travel use (idea credited to OpenBabyMonitor; see prior-art.md).
 

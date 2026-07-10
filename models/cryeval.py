@@ -96,7 +96,7 @@ SOUND_CONTINUOUS_NOISE_RAW_CEILING = 3.0
 # after the M2.5 de-risk: the far "collapse" was largely a shared-threshold artifact,
 # and — the de-risk's headline — a trained head does NOT beat this pretrained scorer on
 # the donateacry-only corpus, so first-class cry is gated on a corpus, not a model (see
-# the module docstring + M2.6 in IMPLEMENTATION_PLAN.md). Numbers are per gate run,
+# the module docstring + M2.6 in docs/IMPLEMENTATION_PLAN.md). Numbers are per gate run,
 # fully deterministic (PYTHONHASHSEED=0 + fixed seeds).
 K_WINDOW = 3
 _SNR_CRY = (5.0, 20.0)
