@@ -40,5 +40,14 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
+    {
+      // Tonight view (M2.4): a live nudge over WebSocket + its auto-promoted clip
+      // playing on tap. Also needs H.264 decode (system Chrome) and a core+video+record
+      // +insight stack with the cam-sound source.
+      name: 'tonight',
+      testMatch: /tonight\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    },
   ],
 });

@@ -46,6 +46,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        // Add the Web Push handler (M2.4) into the generated SW without disturbing the
+        // precache — a static same-origin script (static/push-sw.js -> /push-sw.js).
+        importScripts: ['/push-sw.js'],
       },
     }),
   ],

@@ -377,6 +377,14 @@ jobs:
           EEPER_TEST_ADMIN: admin
         run: npx playwright test --project=clips
 
+      # M2.4 (web): the Tonight view shows a live nudge over WebSocket and its
+      # auto-promoted clip plays on tap (a separate admin avoids the first-boot clash).
+      - name: Tonight view harness
+        working-directory: web
+        env:
+          EEPER_TEST_ADMIN: tonightadmin
+        run: npx playwright test --project=tonight
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
