@@ -73,6 +73,16 @@ class Settings(BaseSettings):
     mqtt_host: str = ""
     mqtt_port: int = 1883
     mqtt_node: str = "insight"  # {node} in eeper/{node}/{motion,sound}|state/cam*/{state_type}
+    # MQTT security (M3.1). When the broker is hardened, clients connect over TLS and
+    # authenticate with a per-service credential (the insight engine uses the
+    # `insight-publisher` account; the api uses `eeper-api`, which additionally holds
+    # dynsec-provisioning + device-ingestion rights). Empty username keeps the legacy
+    # anonymous/plaintext path (unit tests, pre-M3.1 stacks). mqtt_ca_cert is the MQTT
+    # CA that verifies the broker's server certificate; TLS is implied when it is set.
+    mqtt_tls_port: int = 8883
+    mqtt_ca_cert: str = ""  # path to the MQTT CA cert; when set, connect over TLS on mqtt_tls_port
+    mqtt_username: str = ""  # this service's dynsec client username ("" => anonymous)
+    mqtt_password: str = ""
     # Artificial per-tick scorer slowdown (milliseconds) for the backpressure test;
     # 0 in production. Nonzero forces the frame-drop path without touching ffmpeg.
     insight_scorer_delay_ms: int = 0

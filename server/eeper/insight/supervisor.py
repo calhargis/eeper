@@ -96,7 +96,14 @@ class InsightSupervisor:
         self._wav_tap = WavTap(settings.insight_tap_dir, self._audio_spec)
         self._motion_tap = MotionTap(settings.insight_tap_dir)
         self._publisher = publisher or MotionPublisher(
-            settings.mqtt_host, settings.mqtt_port, settings.mqtt_node
+            settings.mqtt_host,
+            # On a hardened broker (M3.1) connect over TLS on the TLS port + authenticate;
+            # an empty CA path keeps the legacy plaintext port (pre-M3.1 / unit stacks).
+            settings.mqtt_tls_port if settings.mqtt_ca_cert else settings.mqtt_port,
+            settings.mqtt_node,
+            tls_ca=settings.mqtt_ca_cert,
+            username=settings.mqtt_username,
+            password=settings.mqtt_password,
         )
         self._writer = writer or StateWriter(sessionmaker)
         self._video: dict[int, _Stream] = {}

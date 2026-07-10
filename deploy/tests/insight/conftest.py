@@ -30,6 +30,17 @@ MOTION_SOURCE = "rtsp://synthetic-camera:8554/cam-motion"
 NOAUDIO_SOURCE = "rtsp://synthetic-camera:8554/cam-noaudio"
 SOUND_SOURCE = "rtsp://synthetic-camera:8554/cam-sound"
 
+
+def _env_var(name: str) -> str:
+    """Read a value from deploy/.env (written by install.sh) — used to reach the
+    hardened MQTT broker with the trusted eeper-api credential."""
+    env = DEPLOY_DIR / ".env"
+    if env.exists():
+        for line in env.read_text().splitlines():
+            if line.startswith(f"{name}="):
+                return line.split("=", 1)[1].strip()
+    return ""
+
 COMPOSE = [
     "docker",
     "compose",
@@ -129,7 +140,11 @@ class Stack:
         return float(ts_str), value
 
     def mqtt_retained(self, topic: str, timeout_s: int = 3) -> dict | None:
-        """The retained message on a topic, read from inside the internal broker."""
+        """The retained message on a topic, read from inside the internal broker.
+
+        The broker is TLS-only with per-client auth (M3.1); we connect over 8883 with
+        the CA + the trusted ``eeper-api`` account (which may read the whole eeper tree).
+        """
         result = subprocess.run(
             [
                 *COMPOSE,
@@ -139,6 +154,14 @@ class Stack:
                 "mosquitto_sub",
                 "-h",
                 "127.0.0.1",
+                "-p",
+                "8883",
+                "--cafile",
+                "/mosquitto/certs/mqtt-ca.crt",
+                "-u",
+                "eeper-api",
+                "-P",
+                _env_var("EEPER_MQTT_API_PASSWORD"),
                 "-t",
                 topic,
                 "-C",
