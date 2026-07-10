@@ -60,9 +60,13 @@ insight_pw="$(openssl rand -hex 24)"
 hc_pw="$(openssl rand -hex 24)"
 
 log "Seeding the dynamic-security store (admin + service accounts)"
+# Run the helper containers as the invoking host user (not root) so the files they
+# write into the bind mount are host-owned — otherwise the chmod below fails on native
+# Linux, where a root-in-container write lands as a root-owned file on the host.
+runas="$(id -u):$(id -g)"
 # dynsec init writes the admin client; its password prompt reads stdin under `docker -i`.
 printf '%s\n%s\n' "$admin_pw" "$admin_pw" \
-  | docker run --rm -i -v "$SEC:/sec" "$MOSQ" \
+  | docker run --rm -i --user "$runas" -v "$SEC:/sec" "$MOSQ" \
       mosquitto_ctrl dynsec init /sec/dynamic-security.json admin >/dev/null
 
 # Add the service accounts via a throwaway broker (the plugin writes correct JSON;
@@ -76,7 +80,7 @@ persistence false
 log_dest none
 EOF
 docker rm -f eeper-mqtt-bootstrap >/dev/null 2>&1 || true
-docker run -d --name eeper-mqtt-bootstrap -u 0:0 -v "$SEC:/sec" "$MOSQ" \
+docker run -d --name eeper-mqtt-bootstrap --user "$runas" -v "$SEC:/sec" "$MOSQ" \
   mosquitto -c /sec/bootstrap.conf >/dev/null
 # Wait for the bootstrap broker to accept connections.
 for _ in $(seq 1 20); do
@@ -107,7 +111,10 @@ ctl addClientRole healthcheck healthcheck
 
 docker rm -f eeper-mqtt-bootstrap >/dev/null 2>&1 || true
 rm -f "$SEC/bootstrap.conf"
-chmod 660 "$DS"
+# World-readable: the broker reads this (mounted read-only) as uid 1883, which is
+# neither the file's owner nor group. It holds only PBKDF2 password hashes, and the
+# host is already the trust boundary — same posture as the certs above.
+chmod 644 "$DS"
 
 log "MQTT security generated"
 cat <<EOF
