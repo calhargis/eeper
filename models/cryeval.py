@@ -13,14 +13,29 @@ M2.3 ships two audio signals, and the gate reflects their honestly-measured stan
     - *continuous-noise absorption* — a white-noise machine (steady ambient) must be
       absorbed by the adaptive baseline, not nudge all night.
 
-* **Cry classification (experimental, ratcheted — not gated).** Pretrained YAMNet
-  can't tell a cry from a bark/loud-TV to a first-class bar (measured exhaustively:
-  at any false-nudge-safe operating point, episode recall caps ~0.70 — a cry the model
-  can't hear stays unheard for the whole episode). So it ships off by default, and its
-  window-level accuracy (near-field recall/FPR, far-field recall) is recorded as
-  RATCHET BASELINES: CI fails if a change regresses them, but they don't block on an
-  aspirational absolute. They are M2.5's starting line — the trained model is the
-  single upgrade path for cry accuracy, far-field placement, and latency.
+* **Cry classification (experimental, ratcheted — not gated).** Pretrained YAMNet can't
+  tell a cry from a bark/loud-TV to a first-class bar: on this split it reaches ~0.80
+  near-field / ~0.76 far-field window recall and ~0.85 near-field episode recall at a
+  false-nudge-safe point — real, but short of a first-class ~0.95. So it ships off by
+  default, and its window accuracy is recorded as RATCHET BASELINES: CI fails on a
+  regression, but they don't block on an aspirational absolute.
+
+  (The ~0.85 is the aggregate episode recall on the fixture episode mix — distinct from
+  M2.3's ~0.70 single-infant worst-case ceiling, where within-infant window errors
+  correlate.) M2.5 promoted "train a model to unlock first-class cry." A reproducible
+  de-risk (recorded in the M2.5 PR) tested exactly that and found the wall is the CORPUS,
+  not the model: a trained head (logistic + MLP, over both the 521-class AudioSet scores
+  and the 1024-d YAMNet embeddings, balanced + near/far augmented) over the FULL donateacry
+  corpus does NOT beat this pretrained scorer at any false-nudge-safe point (best trained
+  near-field recall ~0.47 vs ~0.84 pretrained on the same split) — the binding confuser is
+  cry-vs-animal, where the hand-tuned animal-band suppression is a strong inductive bias a
+  naive head can't recover on held-out infants. The split was device-disjoint on
+  donateacry's per-upload UUID (a reasonable but imperfect infant proxy); any residual
+  infant leakage would only flatter the trained head, which still lost. donateacry is the
+  only cry source (457 clips, one narrow near-field dataset, no guaranteed infant-level
+  id); FSD50K supplies confusers only. So first-class cry is gated on a bigger, more
+  diverse corpus — with guaranteed infant-disjoint splits and real far-field, the M2.6
+  milestone — not on a training trick. These floors are M2.6's starting line.
 
 Everything is seeded, deterministic, and pinned to the fixture version. Run
 ``python models/cryeval.py gate`` (assert) or ``calibrate`` (sweep). Needs the server
@@ -73,15 +88,24 @@ SOUND_QUIET_FALSE_CEILING = 1.0  # per 8 h, quiet nursery floor only (measured 0
 # rate — so this is a RAW per-night event count, not scaled (measured ~1).
 SOUND_CONTINUOUS_NOISE_RAW_CEILING = 3.0
 
-# ── cry-classifier window ratchet baselines (EXPERIMENTAL; raise as M2.5 improves) ──
+# ── cry-classifier window ratchet baselines (EXPERIMENTAL) ──────────────────────────
+# A ratchet, not a product bar: each floor sits just below the honestly-measured value
+# on this frozen deterministic split (a small headroom absorbs cross-version numeric
+# drift), so CI fails on a genuine regression and the floor only ever moves UP. These
+# were ratcheted up here from the M2.3 starting line (0.75/0.12 near, 0.55/0.20 far)
+# after the M2.5 de-risk: the far "collapse" was largely a shared-threshold artifact,
+# and — the de-risk's headline — a trained head does NOT beat this pretrained scorer on
+# the donateacry-only corpus, so first-class cry is gated on a corpus, not a model (see
+# the module docstring + M2.6 in IMPLEMENTATION_PLAN.md). Numbers are per gate run,
+# fully deterministic (PYTHONHASHSEED=0 + fixed seeds).
 K_WINDOW = 3
 _SNR_CRY = (5.0, 20.0)
 _SNR_CONFUSER = (0.0, 15.0)
 _MIN_SECONDS = 3.0
-NEARFIELD_WINDOW_RECALL_FLOOR = 0.75  # measured ~0.82
-NEARFIELD_WINDOW_MAXFPR_CEILING = 0.12  # measured ~0.03
-FARFIELD_WINDOW_RECALL_FLOOR = 0.55  # measured ~0.73
-FARFIELD_WINDOW_MAXFPR_CEILING = 0.20  # measured ~0.07
+NEARFIELD_WINDOW_RECALL_FLOOR = 0.78  # measured 0.800
+NEARFIELD_WINDOW_MAXFPR_CEILING = 0.08  # measured 0.052 (binding confuser: pets)
+FARFIELD_WINDOW_RECALL_FLOOR = 0.72  # measured 0.758
+FARFIELD_WINDOW_MAXFPR_CEILING = 0.11  # measured 0.083 (binding confuser: pets)
 
 
 def _load_16k_mono(data: bytes) -> npt.NDArray[np.float32]:
@@ -300,7 +324,7 @@ def gate(manifest: Path, cache_dir: Path) -> int:
     epi_bands = [(*patch_bands(w, clf), onset, len(w) / SAMPLE_RATE) for w, onset in episodes]
     cry_recall, cry_lat = cry_episode_metrics(epi_bands, cry.CONTEXT_SECONDS, ccfg)
     print(f"CRY episode (experimental, reported): recall={cry_recall:.3f} latency={cry_lat:.1f}s "
-          f"(< sound-level; why cry stays off-by-default -> M2.5)", flush=True)
+          f"(< sound-level; why cry stays off-by-default -> M2.6 corpus)", flush=True)
 
     if failures:
         print("\nQUALITY GATE FAILED:")

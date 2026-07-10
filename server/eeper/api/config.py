@@ -100,9 +100,10 @@ class Settings(BaseSettings):
     # no model. Sensitivity 0..1 (higher = smaller elevation margin = more sensitive).
     sound_sensitivity: float = 0.5
     # Cry classification is EXPERIMENTAL and OFF by default: pretrained YAMNet can't
-    # tell a cry from a bark / loud TV to a first-class bar (the trained model is
-    # M2.5). When enabled, the classifier ONNX is fetched + checksum-verified from the
-    # models manifest at first run; an empty manifest path disables it (graceful
+    # tell a cry from a bark / loud TV to a first-class bar, and M2.5's de-risk showed a
+    # trained model can't either on the current corpus (first-class cry is the M2.6
+    # corpus milestone). When enabled, the classifier ONNX is fetched + checksum-verified
+    # from the models manifest at first run; an empty manifest path disables it (graceful
     # degradation — sound level still runs).
     cry_detection_enabled: bool = False
     cry_sensitivity: float = 0.5

@@ -4,7 +4,8 @@ This is the robust, model-free heart of every classic audio baby monitor: in a q
 nursery, sustained sound above the ambient floor means the baby needs attention. It
 makes no claim to tell a cry from a bark or a loud TV — that is cry *classification*,
 which pretrained models can't yet carry to a first-class bar (experimental in
-:mod:`cry`; the trained model is M2.5). What it does do is dead reliable: a crying
+:mod:`cry`; M2.5's de-risk found a trained model can't either on the current corpus —
+first-class cry is the M2.6 corpus milestone). What it does do is dead reliable: a crying
 baby is unambiguously louder than the room's quiet floor, so this fires ~always,
 within seconds, with essentially no false alarms on a quiet night.
 

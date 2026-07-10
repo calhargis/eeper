@@ -26,9 +26,11 @@ Scope + honesty: validated for the near-field regime (a close/crib-mounted camer
 It detects sustained crying within seconds; a brief isolated whimper may not trigger a
 nudge (by design — that is not a wake-the-parent event), and cries from infants whose
 vocalizations are atypical to YAMNet can be missed. Reverberant far-field capture
-degrades it further; both are measured, named, and ratcheted in the gate, and the
-trained far-field model is M2.5. This is an awareness signal — "a cry was heard" —
-never a medical or distress readout.
+degrades it further; both are measured, named, and ratcheted in the gate. M2.5's de-risk
+showed a trained head can't lift this on the corpus that exists (it doesn't beat the
+pretrained scorer — the ceiling is the corpus, not the model), so cry stays experimental
++ off by default and first-class cry is gated on the M2.6 corpus expansion. This is an
+awareness signal — "a cry was heard" — never a medical or distress readout.
 """
 
 from __future__ import annotations
