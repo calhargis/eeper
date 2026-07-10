@@ -9,6 +9,12 @@ import { expect, test } from '@playwright/test';
 const ADMIN = process.env.EEPER_TEST_ADMIN ?? 'tonightadmin';
 const PASSWORD = 'correct horse battery staple';
 const SOUND_SOURCE = process.env.EEPER_TEST_SOUND ?? 'rtsp://synthetic-camera:8554/cam-sound';
+// The camera name is load-bearing, not cosmetic: a camera's source_url is unique, and
+// the insight suites that run after this harness in the same job register cam-sound as
+// "sound" and recover from the resulting 409 by looking the source up *by name*. Using
+// any other name here registers cam-sound first, so that name lookup finds nothing and
+// the downstream suites fail. Keep this the canonical "sound".
+const CAMERA = 'sound';
 
 test('a live nudge appears in Tonight and its clip plays', async ({ page }) => {
   test.setTimeout(180_000); // a real onset + post-roll + recorder finalization
@@ -17,7 +23,7 @@ test('a live nudge appears in Tonight and its clip plays', async ({ page }) => {
   // Authenticate in-browser (so the session cookie rides the WS + <video>) and make
   // sure the sound camera is registered.
   const ok = await page.evaluate(
-    async ({ ADMIN, PASSWORD, SOUND_SOURCE }) => {
+    async ({ ADMIN, PASSWORD, SOUND_SOURCE, CAMERA }) => {
       let res = await fetch('/api/v1/system/first-boot', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -34,19 +40,19 @@ test('a live nudge appears in Tonight and its clip plays', async ({ page }) => {
       const cams = (await (await fetch('/api/v1/cameras')).json()) as {
         name: string;
       }[];
-      if (!cams.some((c) => c.name === 'sound-nursery')) {
+      if (!cams.some((c) => c.name === CAMERA)) {
         await fetch('/api/v1/cameras', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            name: 'sound-nursery',
+            name: CAMERA,
             source_url: SOUND_SOURCE,
           }),
         });
       }
       return true;
     },
-    { ADMIN, PASSWORD, SOUND_SOURCE },
+    { ADMIN, PASSWORD, SOUND_SOURCE, CAMERA },
   );
   expect(ok, 'authenticated + camera registered').toBeTruthy();
 
