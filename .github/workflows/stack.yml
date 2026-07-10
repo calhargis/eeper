@@ -378,11 +378,14 @@ jobs:
         run: npx playwright test --project=clips
 
       # M2.4 (web): the Tonight view shows a live nudge over WebSocket and its
-      # auto-promoted clip plays on tap (a separate admin avoids the first-boot clash).
+      # auto-promoted clip plays on tap. first-boot is single-admin and single-shot,
+      # so this reuses the admin the clip harness already created (same pattern as the
+      # USB adapter browser harness) — a fresh username would 409 on first-boot and
+      # then fail to log in as an account that was never created.
       - name: Tonight view harness
         working-directory: web
         env:
-          EEPER_TEST_ADMIN: tonightadmin
+          EEPER_TEST_ADMIN: admin
         run: npx playwright test --project=tonight
 
       - name: Upload Playwright report on failure
