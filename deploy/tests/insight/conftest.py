@@ -198,8 +198,18 @@ def admin() -> httpx.Client:
 def _register(admin: httpx.Client, name: str, source: str) -> dict:
     created = admin.post("/api/v1/cameras", json={"name": name, "source_url": source})
     if created.status_code == 409:
+        # 409 == the source_url is already registered (it's unique). We can only recover
+        # by name, since CameraOut omits source_url (it embeds credentials) — so a source
+        # registered under a *different* name is unrecoverable. Fail loudly with the
+        # listing rather than an opaque StopIteration if that ever happens.
         listing = admin.get("/api/v1/cameras").json()
-        return next(c for c in listing if c["name"] == name)
+        existing = next((c for c in listing if c["name"] == name), None)
+        assert existing is not None, (
+            f"409 registering {name!r} ({source}) but no camera is named {name!r}; "
+            f"the source is likely registered under another name. Cameras: "
+            f"{[c['name'] for c in listing]}"
+        )
+        return existing
     assert created.status_code == 201, created.text
     return created.json()
 

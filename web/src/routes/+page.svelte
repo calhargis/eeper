@@ -215,6 +215,7 @@
     <h2>Signed in</h2>
     <p>You are signed in as <strong>{user.username}</strong> ({user.role}).</p>
     <a class="cta" href="/live">Open live view</a>
+    <a class="cta secondary" href="/tonight">Tonight</a>
     <button type="button" onclick={logout}>Sign out</button>
   {/if}
 
@@ -278,6 +279,12 @@
     border-radius: 0.4rem;
     text-decoration: none;
     font-weight: 600;
+  }
+  .cta.secondary {
+    margin-top: 0;
+    background: #17233c;
+    color: #e8ecf5;
+    border: 1px solid #26314a;
   }
   .muted {
     color: #8a93a6;
