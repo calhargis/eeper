@@ -31,7 +31,16 @@ _MAX_QUEUED = 1000  # bounded backlog while the broker is unreachable
 
 
 class MotionPublisher:
-    def __init__(self, host: str, port: int, node: str) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        node: str,
+        *,
+        tls_ca: str = "",
+        username: str = "",
+        password: str = "",
+    ) -> None:
         self._node = node
         self._client: mqtt.Client | None = None
         if not host:
@@ -40,6 +49,12 @@ class MotionPublisher:
         client.reconnect_delay_set(min_delay=1, max_delay=30)
         client.max_queued_messages_set(_MAX_QUEUED)
         client.on_disconnect = self._on_disconnect
+        # M3.1: on a hardened broker, authenticate and verify the broker's TLS cert
+        # against the MQTT CA. Set before connect so the first (async) connect uses them.
+        if username:
+            client.username_pw_set(username, password)
+        if tls_ca:
+            client.tls_set(ca_certs=tls_ca)
         # connect_async + loop_start never block the event loop and never raise if
         # the broker is down; the background thread keeps retrying.
         client.connect_async(host, port, keepalive=30)

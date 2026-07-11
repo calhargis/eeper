@@ -58,6 +58,12 @@ if [ ! -f "$ENV_FILE" ]; then
   rm -f "$vapid_der"
   [ "${#vapid_private}" -eq 43 ] || { err "failed to generate EEPER_VAPID_PRIVATE_KEY"; exit 1; }
   [ "${#vapid_public}" -eq 87 ] || { err "failed to generate EEPER_VAPID_PUBLIC_KEY"; exit 1; }
+  # Hardened MQTT broker (M3.1): generate its TLS material + the dynamic-security seed
+  # and capture the per-service passwords (KEY=VALUE lines) to fold into .env below.
+  log "Generating the MQTT broker TLS material + service credentials"
+  mqtt_creds="$(bash "$SCRIPT_DIR/gen-mqtt-security.sh" "$SCRIPT_DIR/mosquitto")"
+  printf '%s' "$mqtt_creds" | grep -q '^EEPER_MQTT_INSIGHT_PASSWORD=..' \
+    || { err "failed to generate MQTT credentials"; exit 1; }
   # The host address a browser reaches go2rtc's WebRTC media port (8555) on. It is
   # published there and advertised as the ICE candidate (go2rtc excludes its own
   # Docker-bridge address, so this must be explicit). 127.0.0.1 works only on the
@@ -86,6 +92,7 @@ EEPER_SECRET_KEY=$secret_key
 EEPER_VAPID_PUBLIC_KEY=$vapid_public
 EEPER_VAPID_PRIVATE_KEY=$vapid_private
 EEPER_VAPID_SUBJECT=mailto:admin@${EEPER_DOMAIN:-localhost}
+$mqtt_creds
 EOF
   mv "$tmp_env" "$ENV_FILE"
   if [ "$go2rtc_candidate" = "127.0.0.1" ] && [ "$cand_domain" != "localhost" ]; then

@@ -58,6 +58,25 @@ def test_mqtt_broker_has_no_host_port(stack) -> None:
     assert "HostPort" not in ports, f"mqtt broker exposes a host port: {ports}"
 
 
+def test_mqtt_broker_refuses_plaintext_and_anonymous(stack) -> None:
+    # M3.1 TLS enforcement. There is no plaintext listener, so a plaintext connection
+    # to the TLS port is refused; and with anonymous access off, even a valid TLS
+    # connection without credentials is rejected. Both must fail (non-zero exit).
+    cid = stack.container_id("mqtt")
+
+    def _pub(*extra: str) -> int:
+        return subprocess.run(
+            ["docker", "exec", cid, "mosquitto_pub", "-h", "127.0.0.1", "-p", "8883",
+             *extra, "-t", "probe", "-m", "x"],
+            capture_output=True, text=True, check=False,
+        ).returncode
+
+    assert _pub() != 0, "broker accepted a plaintext connection on the TLS port"
+    assert _pub("--cafile", "/mosquitto/certs/mqtt-ca.crt") != 0, (
+        "broker accepted an anonymous TLS connection (allow_anonymous should be off)"
+    )
+
+
 def _await_onset(stack, camera_id: int, deadline: float) -> float:
     """Wait for a still stretch then the next still->moving onset; return the motion
     tap's ts (insight-internal epoch) at the onset."""
