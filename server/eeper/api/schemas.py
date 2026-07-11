@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import AwareDatetime, BaseModel, Field, ValidationInfo, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 Role = Literal["admin", "viewer"]
 
@@ -208,3 +208,47 @@ class NotificationPreferencesIn(BaseModel):
     quiet_hours_start: int | None = Field(default=None, ge=0, le=1439)
     quiet_hours_end: int | None = Field(default=None, ge=0, le=1439)
     timezone: str | None = Field(default=None, min_length=1, max_length=64)
+
+
+# ── devices + the MQTT sensor contract (M3.1) ────────────────────────────────
+
+DeviceKind = Literal["mmwave", "pir", "other"]
+
+
+class SensorMessage(BaseModel):
+    """The MQTT sensor-node wire contract. A node publishes this JSON to
+    ``eeper/dev/{id}/{metric}``. ``extra='forbid'`` rejects unknown fields; the
+    ingestion service also caps the raw byte size before parsing, so a malformed or
+    oversized message is dropped and logged — never crashing or slowing ingestion."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ts: float = Field(gt=0)  # node event time (unix seconds)
+    type: str = Field(min_length=1, max_length=32)  # metric: "movement" | "presence" | …
+    value: float
+    unit: str = Field(min_length=1, max_length=16)
+    quality: float = Field(ge=0.0, le=1.0)
+
+
+class DeviceCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    kind: DeviceKind = "other"
+
+
+class DeviceOut(BaseModel):
+    id: int
+    name: str
+    kind: str
+    enabled: bool
+    # Derived from last_seen_at vs the heartbeat window; None until the first reading.
+    online: bool | None = None
+    last_seen_at: datetime | None = None
+
+
+class DevicePaired(DeviceOut):
+    """Returned ONCE, at pairing — the node's MQTT identity (username + password) and
+    its topic prefix. The password is never stored server-side or echoed again."""
+
+    mqtt_username: str
+    mqtt_password: str
+    topic_prefix: str  # eeper/dev/{id}/

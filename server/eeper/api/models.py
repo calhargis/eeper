@@ -232,3 +232,49 @@ class NotificationPreferences(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class Device(Base):
+    """A registered sensor node (mmWave/PIR/…) that publishes readings over the
+    hardened MQTT bus (M3.1). Pairing mints a per-device MQTT credential and a
+    dynamic-security ACL scoped to ``eeper/dev/{id}/#`` — only the credential's
+    username is kept here (the password is returned once at pairing and never stored).
+    An input node, never a medical/vital-sign device."""
+
+    __tablename__ = "devices"
+    __table_args__ = (UniqueConstraint("household_id", "name", name="uq_device_name"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    name: Mapped[str] = mapped_column(String(150))
+    kind: Mapped[str] = mapped_column(String(32))  # "mmwave" | "pir" | ...
+    # The dynsec client username the node authenticates with (derived from the id at
+    # pairing, e.g. "dev-7"); its topic subtree is eeper/dev/{id}/#.
+    mqtt_username: Mapped[str] = mapped_column(String(64), default="")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Last time a valid reading arrived — drives the online/offline health signal.
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+
+class SensorReading(Base):
+    """Time series of sensor-node readings (a TimescaleDB hypertable keyed on ``ts``),
+    written by the MQTT ingestion service (M3.1). Columns follow the Master Plan schema
+    ``(device_id, ts, metric, value, quality)``. ``ts`` is the node's own event time.
+
+    This is an insight/awareness signal, never a medical or vital-sign readout.
+
+    Composite PK ``(ts, id)`` for the same reason as ``state_history``: a hypertable
+    needs its partitioning column in every unique index. ``device_id`` is a logical
+    reference (no FK to/from a hypertable)."""
+
+    __tablename__ = "sensor_readings"
+    __table_args__ = (Index("ix_sensor_readings_device_ts", "device_id", "ts"),)
+
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    device_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    metric: Mapped[str] = mapped_column(String(32))  # e.g. "movement" | "presence"
+    value: Mapped[float] = mapped_column(Float)
+    quality: Mapped[float] = mapped_column(Float)  # 0..1
