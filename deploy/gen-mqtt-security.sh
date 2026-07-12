@@ -111,10 +111,11 @@ ctl addClientRole healthcheck healthcheck
 
 docker rm -f eeper-mqtt-bootstrap >/dev/null 2>&1 || true
 rm -f "$SEC/bootstrap.conf"
-# World-readable: the broker reads this (mounted read-only) as uid 1883, which is
-# neither the file's owner nor group. It holds only PBKDF2 password hashes, and the
-# host is already the trust boundary — same posture as the certs above.
-chmod 644 "$DS"
+# World read+write: the broker (uid 1883, neither owner nor group) both reads this and
+# PERSISTS device provisioning back to it at pair time, so it must be broker-writable.
+# It holds only PBKDF2 password hashes, and the host is already the trust boundary —
+# the same posture as the certs above.
+chmod 666 "$DS"
 
 log "MQTT security generated"
 cat <<EOF
