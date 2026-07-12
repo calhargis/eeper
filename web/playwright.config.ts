@@ -49,5 +49,14 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
+    {
+      // Devices view (M3.1): pair a sensor node through the UI, publish AS it over the
+      // hardened MQTT broker (from inside the broker container), and watch its health
+      // flip online. Needs only the core stack (db + api + broker) — no video/H.264.
+      name: 'devices',
+      testMatch: /devices\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 });

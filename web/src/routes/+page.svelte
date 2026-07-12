@@ -216,6 +216,7 @@
     <p>You are signed in as <strong>{user.username}</strong> ({user.role}).</p>
     <a class="cta" href="/live">Open live view</a>
     <a class="cta secondary" href="/tonight">Tonight</a>
+    <a class="cta secondary" href="/devices">Devices</a>
     <button type="button" onclick={logout}>Sign out</button>
   {/if}
 
