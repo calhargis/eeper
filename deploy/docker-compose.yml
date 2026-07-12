@@ -52,6 +52,15 @@ services:
       EEPER_VAPID_PUBLIC_KEY: ${EEPER_VAPID_PUBLIC_KEY:-}
       EEPER_VAPID_PRIVATE_KEY: ${EEPER_VAPID_PRIVATE_KEY:-}
       EEPER_VAPID_SUBJECT: ${EEPER_VAPID_SUBJECT:-mailto:admin@localhost}
+      # Hardened MQTT bus (M3.1): the api provisions per-device credentials + ingests
+      # sensor readings as eeper-api over TLS. If the broker isn't running (a core-only
+      # bring-up without the mqtt broker), the ingestor retries harmlessly and pairing
+      # returns 503/502 — the rest of the api is unaffected.
+      EEPER_MQTT_HOST: mqtt
+      EEPER_MQTT_TLS_PORT: '8883'
+      EEPER_MQTT_CA_CERT: /run/mqtt/mqtt-ca.crt
+      EEPER_MQTT_USERNAME: eeper-api
+      EEPER_MQTT_PASSWORD: ${EEPER_MQTT_API_PASSWORD:?run deploy/install.sh}
     tmpfs:
       - /tmp
     # The shared media volume: the recorder writes segments here; the api reads
@@ -59,6 +68,7 @@ services:
     # read-only rootfs because it's a mounted named volume.
     volumes:
       - media-data:/media
+      - ./mosquitto/certs/mqtt-ca.crt:/run/mqtt/mqtt-ca.crt:ro
     networks: [edge, internal]
     depends_on:
       db:
@@ -206,7 +216,9 @@ services:
   mqtt:
     <<: *hardening
     image: eclipse-mosquitto:2.0.22@sha256:212f89e1eaeb2c322d6441b64396e3346026674db8fa9c27beac293405c32b3c
-    profiles: [insight]
+    # Core infrastructure now (M3.1): the api provisions + ingests devices here, so the
+    # broker comes up with the core stack, not only with the insight engine.
+    profiles: [core, insight]
     user: '1883:1883'
     command: ['mosquitto', '-c', '/mosquitto/config/mosquitto.conf']
     environment:
@@ -214,9 +226,10 @@ services:
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./mosquitto/certs:/mosquitto/certs:ro
-      # The dynamic-security seed (admin + service accounts). Read-only in slice 1;
-      # per-device provisioning (which the plugin persists) arrives with the pairing API.
-      - ./mosquitto/security/dynamic-security.json:/mosquitto/data/dynamic-security.json:ro
+      # The dynamic-security store (admin + service accounts, plus per-device accounts
+      # the pairing API mints at runtime). Writable — the plugin persists provisioning
+      # changes back to it.
+      - ./mosquitto/security/dynamic-security.json:/mosquitto/data/dynamic-security.json
     tmpfs:
       - /mosquitto/log
     networks: [internal]
