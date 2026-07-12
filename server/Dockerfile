@@ -20,8 +20,14 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
     HOME=/tmp \
     TMPDIR=/tmp
+# Cache-bust for the apt layer: bump this date when a base package gets a CVE fix but
+# the pinned base digest hasn't rotated, so the gha build cache rebuilds this layer and
+# pulls the patched package instead of reusing a stale one (e.g. libgbm1 CVE-2026-40393,
+# fixed in +deb12u2, reached via a fresh apt on the same base).
+ARG APT_SECURITY_EPOCH=2026-07-12
 # ffprobe validates camera streams against the RTSP contract (codec + resolution).
-RUN apt-get update \
+RUN echo "apt security epoch ${APT_SECURITY_EPOCH}" \
+  && apt-get update \
   && apt-get install -y --no-install-recommends ffmpeg \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system app && useradd --system --gid app --uid 10001 app \
