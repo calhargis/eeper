@@ -111,3 +111,41 @@ export async function updatePreferences(
   if (!res.ok) throw new Error(`could not save preferences (${res.status})`);
   return (await res.json()) as NotificationPreferences;
 }
+
+// ── M3.1: sensor devices ──────────────────────────────────────────────────────
+
+export type DeviceKind = 'mmwave' | 'pir' | 'other';
+
+export type Device = {
+  id: number;
+  name: string;
+  kind: string;
+  enabled: boolean;
+  online: boolean | null; // null until the node's first reading arrives
+  last_seen_at: string | null;
+};
+
+// The pairing response — the node's MQTT identity, returned ONCE. The password is
+// never stored server-side or echoed again, so the UI must surface it immediately.
+export type PairedDevice = Device & {
+  mqtt_username: string;
+  mqtt_password: string;
+  topic_prefix: string;
+};
+
+export async function fetchDevices(): Promise<Device[]> {
+  const res = await api('/devices');
+  if (!res.ok) throw new Error(`could not load devices (${res.status})`);
+  return (await res.json()) as Device[];
+}
+
+export async function pairDevice(name: string, kind: DeviceKind): Promise<PairedDevice> {
+  const res = await api('/devices', { method: 'POST', body: JSON.stringify({ name, kind }) });
+  if (!res.ok) throw new Error(await detail(res, 'Could not pair the device.'));
+  return (await res.json()) as PairedDevice;
+}
+
+export async function unpairDevice(id: number): Promise<void> {
+  const res = await api(`/devices/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(await detail(res, 'Could not unpair the device.'));
+}
