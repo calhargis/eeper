@@ -21,7 +21,13 @@ RUN apt-get update \
 
 # ── runtime ───────────────────────────────────────────────────────────────────
 FROM debian:bookworm-slim@sha256:60eac759739651111db372c07be67863818726f754804b8707c90979bda511df
-RUN apt-get update \
+# Cache-bust for the apt layer: bump this date when a base package gets a CVE fix but
+# the pinned base digest hasn't rotated, so the gha build cache rebuilds this layer and
+# pulls the patched package instead of reusing a stale one (e.g. libgbm1 CVE-2026-40393,
+# fixed in +deb12u2, reached via a fresh apt on the same base).
+ARG APT_SECURITY_EPOCH=2026-07-12
+RUN echo "apt security epoch ${APT_SECURITY_EPOCH}" \
+ && apt-get update \
  && apt-get install -y --no-install-recommends ffmpeg \
  && rm -rf /var/lib/apt/lists/* \
  && groupadd --system app && useradd --system --gid app --uid 10001 app
