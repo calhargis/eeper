@@ -306,3 +306,31 @@ class FusedState(Base):
     confidence: Mapped[float] = mapped_column(Float)  # 0..1
     # Sorted CSV of the extractors that corroborated this state, e.g. "camera,sensor".
     contributing_inputs: Mapped[str] = mapped_column(String(255), default="")
+
+
+class SleepSessionRecord(Base):
+    """Materialized consolidated sleep sessions (M4.1) — a TimescaleDB hypertable keyed
+    on ``started_at`` that is the source for the Trends continuous aggregates. The fusion
+    worker writes a row as each session *closes* (the still-open session is derived on
+    read from ``fused_states``, never stored), with per-session metrics computed from the
+    fused-state timeline. Idempotent: ``(household_id, started_at)`` is unique, so
+    re-materializing the same session is a no-op.
+
+    Awareness signal only — sleep durations and wake counts, never a medical or
+    vital-sign readout. Composite ``(started_at, id)`` PK for the hypertable reason as
+    the other time-series tables (the partition column is in every unique index)."""
+
+    __tablename__ = "sleep_sessions"
+    __table_args__ = (
+        UniqueConstraint("household_id", "started_at", name="uq_sleep_sessions_hh_start"),
+        Index("ix_sleep_sessions_hh_start", "household_id", "started_at"),
+    )
+
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    ended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    total_sleep_s: Mapped[float] = mapped_column(Float)  # time actually asleep in the session
+    wake_count: Mapped[int] = mapped_column(Integer)  # intra-session awakenings
+    longest_stretch_s: Mapped[float] = mapped_column(Float)  # longest unbroken sleep span
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

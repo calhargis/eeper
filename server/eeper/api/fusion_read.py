@@ -12,9 +12,10 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from eeper.api.models import FusedState
+from eeper.api.models import FusedState, SleepSessionRecord
 from eeper.fusion.model import DEFAULT_PARAMS, EPOCH_SECONDS, Arousal, FusionParams, Sleep
 from eeper.fusion.sessions import extract_sessions
 
@@ -119,6 +120,53 @@ async def _sleep_timeline(
             ti += 1
         out.append(cur)
     return out
+
+
+def session_metrics(segments: list[StateSegment]) -> tuple[float, int, float]:
+    """Per-session Trends metrics from its fused-state segments: total time asleep, the
+    number of intra-session awakenings (bridged brief wakes), and the longest unbroken
+    sleep span (all seconds)."""
+    total_sleep = 0.0
+    longest = 0.0
+    wakes = 0
+    for seg in segments:
+        dur = (seg.end - seg.start).total_seconds()
+        if seg.sleep is Sleep.SLEEP:
+            total_sleep += dur
+            longest = max(longest, dur)
+        else:
+            wakes += 1
+    return total_sleep, wakes, longest
+
+
+async def materialize_closed_sessions(
+    session: AsyncSession, household: str, start: datetime, end: datetime
+) -> int:
+    """Write a ``sleep_sessions`` row for each CLOSED session in ``[start, end)`` (the
+    still-open one is left to be derived on read). Idempotent via
+    ``ON CONFLICT (household_id, started_at) DO NOTHING``, so every cycle can re-run over
+    the same lookback harmlessly. Returns the number of rows inserted."""
+    written = 0
+    for s in await sleep_sessions(session, household, start, end):
+        if s.ended_at is None:
+            continue  # open session — not materialized until it closes
+        segments = await timeline_segments(session, household, s.started_at, s.ended_at)
+        total_sleep_s, wake_count, longest_stretch_s = session_metrics(segments)
+        result = await session.execute(
+            insert(SleepSessionRecord)
+            .values(
+                started_at=s.started_at,
+                household_id=household,
+                ended_at=s.ended_at,
+                total_sleep_s=total_sleep_s,
+                wake_count=wake_count,
+                longest_stretch_s=longest_stretch_s,
+            )
+            .on_conflict_do_nothing(index_elements=["household_id", "started_at"])
+            .returning(SleepSessionRecord.id)
+        )
+        written += len(result.scalars().all())  # empty on a conflict (already materialized)
+    return written
 
 
 async def sleep_sessions(

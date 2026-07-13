@@ -133,6 +133,9 @@ class Settings(BaseSettings):
     # The window re-run each cycle. Must be >> the state machine's sustain so the state
     # converges deterministically; also caps how far a cold start looks back.
     fusion_warmup_minutes: int = 45
+    # Each cycle also materializes closed sleep sessions (the Trends source, M4.1) over
+    # this lookback — long enough to catch a session that just closed, re-run idempotently.
+    fusion_materialize_lookback_hours: int = 26
 
 
 @lru_cache(maxsize=1)

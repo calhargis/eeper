@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from eeper.api.config import Settings
+from eeper.api.fusion_read import materialize_closed_sessions
 from eeper.api.fusion_signals import active_households, load_epoch_features
 from eeper.api.models import FusedState
 from eeper.fusion.model import DEFAULT_PARAMS, EPOCH_SECONDS, Arousal, Sleep
@@ -72,9 +73,12 @@ class FusionWorker:
         deterministically without the loop."""
         n_epochs = max(1, self._settings.fusion_warmup_minutes * 60 // EPOCH_SECONDS)
         window_start = now - timedelta(seconds=n_epochs * EPOCH_SECONDS)
+        materialize_start = now - timedelta(hours=self._settings.fusion_materialize_lookback_hours)
         async with self._sessionmaker() as session:
             for household in await active_households(session, window_start):
                 await self._fuse(session, household, window_start, n_epochs, now)
+                # Persist any session that has closed since last cycle (the Trends source).
+                await materialize_closed_sessions(session, household, materialize_start, now)
             await session.commit()
 
     async def _fuse(
