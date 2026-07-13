@@ -58,5 +58,14 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // Tonight timeline (M3.3): renders a replayed night's fused sleep/wake +
+      // distressed state and scrubs to a nudge's clip. Runs after `tonight` on the same
+      // core+video+record+insight stack (needs a promoted clip → system Chrome for H.264).
+      name: 'timeline',
+      testMatch: /timeline\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    },
   ],
 });

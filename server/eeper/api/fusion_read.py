@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from eeper.api.models import FusedState
-from eeper.fusion.model import DEFAULT_PARAMS, EPOCH_SECONDS, FusionParams, Sleep
+from eeper.fusion.model import DEFAULT_PARAMS, EPOCH_SECONDS, Arousal, FusionParams, Sleep
 from eeper.fusion.sessions import extract_sessions
 
 
@@ -26,6 +26,55 @@ class SleepInterval:
 
     started_at: datetime
     ended_at: datetime | None
+
+
+@dataclass(frozen=True)
+class StateSegment:
+    """A span of constant fused state, for the Tonight timeline track. ``is_open`` marks
+    the still-ongoing final segment (its ``end`` is the query end, not a transition)."""
+
+    start: datetime
+    end: datetime
+    sleep: Sleep
+    arousal: Arousal
+    is_open: bool
+
+
+async def timeline_segments(
+    session: AsyncSession, household: str, start: datetime, end: datetime
+) -> list[StateSegment]:
+    """The fused-state timeline over ``[start, end)`` as contiguous segments — the state
+    that held at ``start`` (from the last transition at or before it), then one segment
+    per transition, the last extending to ``end``."""
+    if end <= start:
+        return []
+    seed = (
+        await session.execute(
+            select(FusedState.sleep, FusedState.arousal)
+            .where(FusedState.household_id == household, FusedState.ts <= start)
+            .order_by(FusedState.ts.desc(), FusedState.id.desc())
+            .limit(1)
+        )
+    ).first()
+    win = await session.execute(
+        select(FusedState.ts, FusedState.sleep, FusedState.arousal)
+        .where(
+            FusedState.household_id == household,
+            FusedState.ts > start,
+            FusedState.ts < end,
+        )
+        .order_by(FusedState.ts, FusedState.id)
+    )
+    cur_sleep = Sleep(seed.sleep) if seed is not None else Sleep.WAKE
+    cur_arousal = Arousal(seed.arousal) if seed is not None else Arousal.CALM
+    seg_start = start
+    segments: list[StateSegment] = []
+    for ts, sleep, arousal in win:
+        segments.append(StateSegment(seg_start, ts, cur_sleep, cur_arousal, is_open=False))
+        cur_sleep, cur_arousal = Sleep(sleep), Arousal(arousal)
+        seg_start = ts
+    segments.append(StateSegment(seg_start, end, cur_sleep, cur_arousal, is_open=True))
+    return segments
 
 
 async def _sleep_timeline(

@@ -11,10 +11,12 @@
     fetchEvents,
     fetchPreferences,
     fetchSession,
+    fetchTimeline,
     updatePreferences,
     type Camera,
     type EventItem,
     type NotificationPreferences,
+    type TonightTimeline,
     type User,
   } from '$lib/api';
   import { subscribeToEvents, type EventStream } from '$lib/realtime';
@@ -25,6 +27,7 @@
   let events = $state<EventItem[]>([]);
   let cameraNames = $state<Record<number, string>>({});
   let expandedId = $state<number | null>(null);
+  let timeline = $state<TonightTimeline | null>(null);
   let prefs = $state<NotificationPreferences | null>(null);
   let pushActive = $state(false);
   let pushBusy = $state(false);
@@ -59,6 +62,37 @@
   function toggleClip(e: EventItem): void {
     if (e.clip_id === null) return;
     expandedId = expandedId === e.id ? null : e.id;
+  }
+
+  // ── timeline geometry ──
+  // Position a timestamp as a 0–100% offset across the timeline's window.
+  function pct(iso: string): number {
+    if (!timeline) return 0;
+    const s = Date.parse(timeline.start);
+    const span = Date.parse(timeline.end) - s || 1;
+    return Math.max(0, Math.min(100, ((Date.parse(iso) - s) / span) * 100));
+  }
+  const segWidth = (seg: { start: string; end: string }): number =>
+    Math.max(0.2, pct(seg.end) - pct(seg.start));
+  // Events that fall within the timeline window, overlaid as markers.
+  const timelineEvents = $derived(
+    timeline
+      ? events.filter((e) => {
+          const t = Date.parse(e.ts);
+          return t >= Date.parse(timeline!.start) && t <= Date.parse(timeline!.end);
+        })
+      : [],
+  );
+  const fmtClock = (iso: string): string =>
+    new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+  // Scrub to an event: open its clip and bring the event card into view.
+  function scrubTo(e: EventItem): void {
+    if (e.clip_id === null) return;
+    expandedId = e.id;
+    document
+      .querySelector(`[data-event-id="${e.id}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // ── notifications ──
@@ -111,14 +145,16 @@
       // aren't lost; mergeEvent dedups the overlap by id.
       stream = subscribeToEvents(mergeEvent);
       try {
-        const [evts, cams, p] = await Promise.all([
+        const [evts, cams, p, tl] = await Promise.all([
           fetchEvents(),
           fetchCameras().catch(() => [] as Camera[]),
           fetchPreferences().catch(() => null),
+          fetchTimeline().catch(() => null),
         ]);
         for (const e of [...evts].reverse()) mergeEvent(e); // baseline, ending newest-first
         cameraNames = Object.fromEntries(cams.map((c) => [c.id, c.name]));
         prefs = p;
+        timeline = tl;
       } catch (err) {
         errorMsg = err instanceof Error ? err.message : 'could not load tonight';
       }
@@ -142,6 +178,50 @@
     <span class="title">Tonight</span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
+
+  {#if timeline && timeline.segments.length > 0}
+    <section class="timeline" data-testid="timeline">
+      <div class="tl-head">
+        <span>Tonight's sleep</span>
+        <span class="tl-range">{fmtClock(timeline.start)} – {fmtClock(timeline.end)}</span>
+      </div>
+      <div class="track" data-testid="timeline-track">
+        {#each timeline.segments as seg (seg.start)}
+          <div
+            class="seg"
+            class:asleep={seg.sleep === 'sleep'}
+            class:distressed={seg.arousal === 'distressed'}
+            data-testid="timeline-segment"
+            data-sleep={seg.sleep}
+            data-arousal={seg.arousal}
+            style="left:{pct(seg.start)}%; width:{segWidth(seg)}%"
+            title="{seg.sleep === 'sleep' ? 'Asleep' : 'Awake'}{seg.arousal === 'distressed'
+              ? ' · distressed'
+              : ''}"
+          ></div>
+        {/each}
+        {#each timelineEvents as e (e.id)}
+          <button
+            type="button"
+            class="marker"
+            class:has-clip={e.clip_id !== null}
+            data-testid="timeline-event"
+            data-event-id={e.id}
+            style="left:{pct(e.ts)}%"
+            title="{label(e.type)} · {fmtClock(e.ts)}"
+            aria-label="{label(e.type)} at {fmtClock(e.ts)}"
+            onclick={() => scrubTo(e)}
+          ></button>
+        {/each}
+      </div>
+      <div class="legend">
+        <span><i class="sw asleep"></i> asleep</span>
+        <span><i class="sw awake"></i> awake</span>
+        <span><i class="sw distressed"></i> distressed</span>
+        <span><i class="sw dot"></i> nudge</span>
+      </div>
+    </section>
+  {/if}
 
   <section class="notify" data-testid="notify-settings">
     <div class="row">
@@ -228,6 +308,88 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 1rem;
+  }
+  .timeline {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+  .tl-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #cbd5ea;
+    margin-bottom: 0.4rem;
+  }
+  .tl-range {
+    color: #8a93a6;
+  }
+  .track {
+    position: relative;
+    height: 2.25rem;
+    background: #17233c; /* awake = the track base */
+    border: 1px solid #26314a;
+    border-radius: 0.4rem;
+    overflow: hidden;
+  }
+  .seg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    min-width: 1px;
+  }
+  .seg.asleep {
+    background: #1f6f4a; /* asleep band */
+  }
+  .seg.distressed {
+    background: repeating-linear-gradient(45deg, #7a2530, #7a2530 5px, #93313d 5px, #93313d 10px);
+  }
+  .marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    border: 2px solid #0b1220;
+    background: #8a93a6;
+    cursor: default;
+    padding: 0;
+  }
+  .marker.has-clip {
+    background: #f2c14e;
+    cursor: pointer;
+  }
+  .legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: #8a93a6;
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .legend .sw {
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 0.2rem;
+    display: inline-block;
+  }
+  .legend .sw.asleep {
+    background: #1f6f4a;
+  }
+  .legend .sw.awake {
+    background: #17233c;
+    border: 1px solid #26314a;
+  }
+  .legend .sw.distressed {
+    background: #93313d;
+  }
+  .legend .sw.dot {
+    background: #f2c14e;
+    border-radius: 50%;
   }
   .back {
     color: #e8ecf5;

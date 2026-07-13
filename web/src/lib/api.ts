@@ -149,3 +149,28 @@ export async function unpairDevice(id: number): Promise<void> {
   const res = await api(`/devices/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(await detail(res, 'Could not unpair the device.'));
 }
+
+// ── M3.3: fused sleep/wake timeline (the Tonight scrubbable track) ─────────────
+
+export type FusedSegment = {
+  start: string;
+  end: string;
+  sleep: 'sleep' | 'wake';
+  arousal: 'calm' | 'distressed';
+  is_open: boolean;
+};
+
+export type SleepSession = { started_at: string; ended_at: string | null };
+
+export type TonightTimeline = {
+  start: string;
+  end: string;
+  segments: FusedSegment[];
+  sessions: SleepSession[];
+};
+
+export async function fetchTimeline(): Promise<TonightTimeline> {
+  const res = await api('/fusion/timeline');
+  if (!res.ok) throw new Error(`could not load the timeline (${res.status})`);
+  return (await res.json()) as TonightTimeline;
+}
