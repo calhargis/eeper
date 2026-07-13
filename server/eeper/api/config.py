@@ -137,6 +137,12 @@ class Settings(BaseSettings):
     # this lookback — long enough to catch a session that just closed, re-run idempotently.
     fusion_materialize_lookback_hours: int = 26
 
+    # Pulse-oximetry (M4.2) is OPTIONAL and INSIGHTS-ONLY, and off by default. This flag
+    # is the "profile enabled" half of the gate — the `pulseox` Compose profile sets it
+    # true. Pulse-ox stays fully inert unless it is true AND an admin has acknowledged the
+    # disclaimer (see eeper.api.pulseox_copy). eeper is never a vital-sign monitor.
+    pulseox_profile_enabled: bool = False
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
