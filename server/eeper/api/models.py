@@ -278,3 +278,31 @@ class SensorReading(Base):
     metric: Mapped[str] = mapped_column(String(32))  # e.g. "movement" | "presence"
     value: Mapped[float] = mapped_column(Float)
     quality: Mapped[float] = mapped_column(Float)  # 0..1
+
+
+class FusedState(Base):
+    """Fused sleep/wake + calm/distressed state transitions (M3.3), a TimescaleDB
+    hypertable keyed on ``ts``. One row marks the moment a household's fused state
+    *changed*; the state at any instant is the last row at or before it (carry-forward).
+    The fusion worker derives these from every extractor's signals (camera motion,
+    mmWave/PIR movement + presence, sound, cry). This transition log is the durable
+    source of truth — sleep sessions are a query over it, and a worker restart re-derives
+    the current state from the persisted signals, so nothing is lost.
+
+    Awareness states only — sleep/wake and calm/distressed — never a medical, diagnostic,
+    or vital-sign readout. Composite ``(ts, id)`` PK for the hypertable reason as the
+    other time-series tables; ``household_id`` scopes it (no per-camera column — fusion
+    is a whole-nursery signal)."""
+
+    __tablename__ = "fused_states"
+    __table_args__ = (Index("ix_fused_states_hh_ts", "household_id", "ts"),)
+
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    sleep: Mapped[str] = mapped_column(String(8))  # "sleep" | "wake"
+    arousal: Mapped[str] = mapped_column(String(12))  # "calm" | "distressed"
+    activity: Mapped[float] = mapped_column(Float)  # 0..1 smoothed activity behind it
+    confidence: Mapped[float] = mapped_column(Float)  # 0..1
+    # Sorted CSV of the extractors that corroborated this state, e.g. "camera,sensor".
+    contributing_inputs: Mapped[str] = mapped_column(String(255), default="")

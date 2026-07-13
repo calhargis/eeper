@@ -17,6 +17,7 @@ from eeper.api.camera_monitor import CameraMonitor
 from eeper.api.config import get_settings
 from eeper.api.db import create_schema_and_hypertables, get_sessionmaker
 from eeper.api.event_hub import EventHub
+from eeper.api.fusion_worker import FusionWorker
 from eeper.api.gateway import Go2rtcClient
 from eeper.api.ingestion import SensorIngestor
 from eeper.api.nudge_worker import NudgeWorker
@@ -42,17 +43,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     hub = EventHub()
     worker = NudgeWorker(get_sessionmaker(), settings, hub)
     ingestor = SensorIngestor(get_sessionmaker(), settings)  # M3.1: MQTT sensor readings
+    fusion = FusionWorker(get_sessionmaker(), settings)  # M3.3: sleep/wake + distress fusion
     app.state.gateway = gateway
     app.state.monitor = monitor
     app.state.hub = hub  # the /ws/events endpoint registers clients here
     app.state.worker = worker
     app.state.ingestor = ingestor
+    app.state.fusion = fusion
     await monitor.start()  # reconcile go2rtc + begin the health/keep-warm loop
     await worker.start()  # LISTEN/NOTIFY + reconciliation poll for nudge delivery
     await ingestor.start()  # subscribe eeper/dev/# -> validate -> sensor_readings
+    await fusion.start()  # per-epoch fuse of every extractor -> fused_states transitions
     try:
         yield
     finally:
+        await fusion.stop()
         await ingestor.stop()
         await worker.stop()
         await monitor.stop()

@@ -123,6 +123,17 @@ class Settings(BaseSettings):
     insight_models_manifest: str = ""
     insight_models_cache: str = "/tmp/eeper-models"  # noqa: S108 (ephemeral cache; re-fetch on restart)
 
+    # Fusion worker (M3.3). The api-side worker derives sleep/wake + calm/distressed
+    # from every extractor's persisted signals and writes fused_states transitions. It is
+    # STATELESS: each cycle it re-runs the fusion over a warmup window (seeded from the
+    # last persisted state), so a restart re-derives the current state from the durable
+    # signals + transitions and sessions survive. Empty/false disables it entirely.
+    fusion_enabled: bool = True
+    fusion_interval_seconds: float = 30.0  # cycle cadence (one epoch)
+    # The window re-run each cycle. Must be >> the state machine's sustain so the state
+    # converges deterministically; also caps how far a cold start looks back.
+    fusion_warmup_minutes: int = 45
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
