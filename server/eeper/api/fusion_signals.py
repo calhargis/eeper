@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from eeper.api.models import SensorReading, StateHistory
+from eeper.api.models import PulseOxReading, SensorReading, StateHistory
 from eeper.fusion.model import EpochFeatures
 
 # state_history level → 0..1 scalar per fusion field.
@@ -144,6 +144,21 @@ async def load_epoch_features(
             continue
         (move_bins if metric == "movement" else presence_bins)[idx].append(value)
 
+    # ── pulse-ox HR (M4.2), mean per epoch — the table holds ONLY quality-gated samples,
+    # so fusion consumes HR only when quality-gated pulse-ox exists. Absent otherwise. ──
+    hr_rows = await session.execute(
+        select(PulseOxReading.ts, PulseOxReading.hr).where(
+            PulseOxReading.household_id == household_id,
+            PulseOxReading.ts >= window_start,
+            PulseOxReading.ts < window_end,
+        )
+    )
+    hr_bins: list[list[float]] = [[] for _ in range(n_epochs)]
+    for ts, hr in hr_rows:
+        idx = int(offset(ts) // epoch_seconds)
+        if 0 <= idx < n_epochs:
+            hr_bins[idx].append(hr)
+
     features: list[EpochFeatures] = []
     for i in range(n_epochs):
         motion = field_epochs["motion"][i]
@@ -151,11 +166,14 @@ async def load_epoch_features(
         cry = field_epochs["cry"][i]
         radar = sum(move_bins[i]) / len(move_bins[i]) if move_bins[i] else None
         presence = max(presence_bins[i]) if presence_bins[i] else None
+        hr = sum(hr_bins[i]) / len(hr_bins[i]) if hr_bins[i] else None
         inputs = []
         if motion is not None or sound is not None or cry is not None:
             inputs.append("camera")
         if radar is not None or presence is not None:
             inputs.append("sensor")
+        if hr is not None:
+            inputs.append("pulseox")
         features.append(
             EpochFeatures(
                 motion=motion,
@@ -163,6 +181,7 @@ async def load_epoch_features(
                 presence=presence,
                 sound=sound,
                 cry=cry,
+                hr=hr,
                 inputs=tuple(inputs),
             )
         )

@@ -226,6 +226,32 @@ class TrendWeek(BaseModel):
     longest_stretch_s: float
 
 
+class PulseOxMessage(BaseModel):
+    """The pulse-ox node wire contract (M4.2), published to ``eeper/dev/{id}/pulseox``.
+    ``quality`` is mandatory — ingestion discards low-confidence samples rather than
+    storing misleading data. Insights-only: these feed trends + fusion features, never a
+    vital-sign readout. ``extra='forbid'`` + a byte cap make a malformed message a
+    logged drop, never a crash."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ts: float = Field(gt=0)  # node event time (unix seconds)
+    hr: float = Field(ge=0, le=350)  # heart rate, bpm
+    spo2: float = Field(ge=0, le=100)  # blood-oxygen estimate, %
+    perfusion: float = Field(ge=0, le=100)  # perfusion index, %
+    quality: float = Field(ge=0.0, le=1.0)  # sample confidence (mandatory)
+
+
+class PulseOxDeviceHealth(BaseModel):
+    """Per-device pulse-ox ingest stats (M4.2) so the quality-gate discard rate is
+    observable. Counts are for the current run."""
+
+    device_id: int
+    accepted: int
+    discarded: int
+    discard_rate: float
+
+
 class PulseOxStatus(BaseModel):
     """The pulse-ox gate state (M4.2). ``enabled`` is the AND of the profile being on and
     an admin having acknowledged the current disclaimer — pulse-ox is inert otherwise."""

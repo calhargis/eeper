@@ -90,6 +90,8 @@ class SensorIngestor:
                 _log.warning("dropping sensor message on unexpected topic %s", msg.topic)
                 return
             device_id, metric = int(parts[2]), parts[3]
+            if metric == "pulseox":
+                return  # richer contract, quality-gated by the PulseOxIngestor (M4.2)
             reading = SensorMessage.model_validate_json(msg.payload)
             ts = datetime.fromtimestamp(reading.ts, tz=UTC)
             self._queue.put_nowait((device_id, metric, reading.value, reading.quality, ts))

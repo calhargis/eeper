@@ -30,13 +30,16 @@ class EpochFeatures:
 
     ``motion`` = camera movement intensity; ``radar_move`` = mmWave/PIR movement;
     ``presence`` = occupancy (0/1); ``sound`` = audio level; ``cry`` = cry indicator
-    (0/1). ``inputs`` lists the extractor names that contributed (for provenance)."""
+    (0/1); ``hr`` = heart rate (bpm) from quality-gated pulse-ox, an insights-only
+    arousal feature (None unless pulse-ox is enabled + has quality-gated samples — so it
+    only ever *adds* signal, never gates sleep/wake). ``inputs`` lists the contributors."""
 
     motion: float | None = None
     radar_move: float | None = None
     presence: float | None = None
     sound: float | None = None
     cry: float | None = None
+    hr: float | None = None  # bpm; a pulse-ox arousal feature, not a vital-sign readout
     inputs: tuple[str, ...] = ()
 
 
@@ -89,6 +92,10 @@ class FusionParams:
     sound_threshold: float = 0.6
     radar_threshold: float = 0.6
     motion_threshold: float = 0.6
+    # An elevated heart rate (from quality-gated pulse-ox) is one more arousal signal —
+    # never sufficient alone (min_corroborators still applies), and absent unless pulse-ox
+    # is enabled, so it only ever strengthens a corroborated distress state.
+    hr_threshold_bpm: float = 160.0
     min_corroborators: int = 2
 
     # A wake this long (epochs) ends a sleep session; shorter awakenings stay within it.

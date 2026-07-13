@@ -62,6 +62,11 @@ class FusionStateMachine:
             votes.append("radar")
         if f.motion is not None and f.motion >= p.motion_threshold:
             votes.append("motion")
+        # Pulse-ox HR is an optional arousal signal — only present (and thus only ever
+        # counted) when pulse-ox is enabled with quality-gated samples, so it never
+        # affects a no-pulse-ox night. Never a vital-sign readout.
+        if f.hr is not None and f.hr >= p.hr_threshold_bpm:
+            votes.append("hr")
         return tuple(votes)
 
     def _confidence(self, activity: float) -> float:
