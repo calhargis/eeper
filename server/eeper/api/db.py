@@ -35,7 +35,7 @@ def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
 # Tables that must become TimescaleDB hypertables, partitioned on their ``ts``
 # column (M2.2). Fixed literals — never user input — so the create_hypertable call
 # below builds a safe SQL string.
-_HYPERTABLES = ("state_history", "events", "sensor_readings")
+_HYPERTABLES = ("state_history", "events", "sensor_readings", "fused_states")
 
 # A lightweight forward migration (M2.4) for deployments whose `events` table predates
 # the delivery-state columns: create_all only CREATEs missing tables, never ALTERs an
