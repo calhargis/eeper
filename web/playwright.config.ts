@@ -67,5 +67,13 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
+    {
+      // Trends (M4.1): sleep-duration/wake-count charts + CSV export over the TimescaleDB
+      // continuous aggregate. Needs only the core stack (db is TimescaleDB) — no video.
+      name: 'trends',
+      testMatch: /trends\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 });
