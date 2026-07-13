@@ -226,6 +226,30 @@ class TrendWeek(BaseModel):
     longest_stretch_s: float
 
 
+class PulseOxStatus(BaseModel):
+    """The pulse-ox gate state (M4.2). ``enabled`` is the AND of the profile being on and
+    an admin having acknowledged the current disclaimer — pulse-ox is inert otherwise."""
+
+    profile_enabled: bool
+    acknowledged: bool
+    enabled: bool
+    disclaimer_version: str
+
+
+class PulseOxDisclaimer(BaseModel):
+    version: str
+    text: str
+    accuracy_caveat: str
+    safe_sleep_url: str
+
+
+class PulseOxAcknowledge(BaseModel):
+    """An admin confirming they read the current disclaimer. ``version`` must match the
+    current one, so an acknowledgment can't silently apply to text the admin didn't see."""
+
+    version: str = Field(min_length=1, max_length=16)
+
+
 class PushKeys(BaseModel):
     p256dh: str = Field(min_length=1, max_length=255)
     auth: str = Field(min_length=1, max_length=255)

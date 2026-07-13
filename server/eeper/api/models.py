@@ -334,3 +334,21 @@ class SleepSessionRecord(Base):
     wake_count: Mapped[int] = mapped_column(Integer)  # intra-session awakenings
     longest_stretch_s: Mapped[float] = mapped_column(Float)  # longest unbroken sleep span
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PulseOxConsent(Base):
+    """An admin's acknowledgment of the pulse-ox disclaimer for a household (M4.2).
+
+    Pulse-oximetry stays fully inert until BOTH the `pulseox` profile is enabled AND a row
+    here exists at the *current* disclaimer version. Bumping the disclaimer text
+    (``DISCLAIMER_VERSION``) invalidates an older acknowledgment, so an admin must read and
+    re-acknowledge. This is an insights-only opt-in — never a medical consent."""
+
+    __tablename__ = "pulseox_consent"
+
+    household_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    disclaimer_version: Mapped[str] = mapped_column(String(16))
+    acknowledged_by: Mapped[int] = mapped_column(BigInteger)  # the admin user's id
+    acknowledged_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

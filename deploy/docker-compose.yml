@@ -61,6 +61,10 @@ services:
       EEPER_MQTT_CA_CERT: /run/mqtt/mqtt-ca.crt
       EEPER_MQTT_USERNAME: eeper-api
       EEPER_MQTT_PASSWORD: ${EEPER_MQTT_API_PASSWORD:?run deploy/install.sh}
+      # Pulse-oximetry (M4.2) is OPTIONAL, INSIGHTS-ONLY, and OFF by default. Enabling it
+      # takes two deliberate steps: set this true (the `pulseox` profile does so) AND have
+      # an admin acknowledge the disclaimer in the app. eeper is never a vital-sign monitor.
+      EEPER_PULSEOX_PROFILE_ENABLED: ${EEPER_PULSEOX_PROFILE_ENABLED:-false}
     tmpfs:
       - /tmp
     # The shared media volume: the recorder writes segments here; the api reads

@@ -76,6 +76,19 @@ jobs:
       - name: pytest
         run: pytest
 
+  copy-lint:
+    name: Clinical-terms copy lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Enforces the safety boundary in CI: user-facing copy must make no medical /
+      # diagnostic / vital-sign / alarm claims (CONTRIBUTING.md). Pure stdlib, no install.
+      - name: Clinical-terms lint
+        run: python server/scripts/clinical_terms_lint.py
+
   web:
     name: Web (eslint, svelte-check)
     runs-on: ubuntu-latest
