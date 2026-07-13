@@ -176,6 +176,34 @@ class EventOut(BaseModel):
     clip_id: int | None
 
 
+class FusedSegmentOut(BaseModel):
+    """One span of constant fused state on the Tonight timeline. ``is_open`` marks the
+    still-ongoing segment. Awareness states only — sleep/wake, calm/distressed."""
+
+    start: datetime
+    end: datetime
+    sleep: str  # "sleep" | "wake"
+    arousal: str  # "calm" | "distressed"
+    is_open: bool
+
+
+class SleepSessionOut(BaseModel):
+    """A consolidated sleep period; ``ended_at`` is null while still in progress."""
+
+    started_at: datetime
+    ended_at: datetime | None
+
+
+class TonightTimelineOut(BaseModel):
+    """The M3.3 Tonight timeline: fused-state segments + sleep sessions over a window
+    (events come from ``GET /events`` and are overlaid client-side)."""
+
+    start: datetime
+    end: datetime
+    segments: list[FusedSegmentOut]
+    sessions: list[SleepSessionOut]
+
+
 class PushKeys(BaseModel):
     p256dh: str = Field(min_length=1, max_length=255)
     auth: str = Field(min_length=1, max_length=255)

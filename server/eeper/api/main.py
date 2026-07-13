@@ -28,6 +28,7 @@ from eeper.api.routers import (
     clips,
     devices,
     events,
+    fusion,
     system,
     tokens,
     users,
@@ -92,5 +93,6 @@ v1.include_router(cameras.router)
 v1.include_router(clips.router)
 v1.include_router(devices.router)
 v1.include_router(events.router)
+v1.include_router(fusion.router)
 
 app.include_router(v1)

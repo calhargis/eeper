@@ -466,6 +466,15 @@ jobs:
           EEPER_TEST_ADMIN: admin
         run: npx playwright test --project=tonight
 
+      # M3.3 slice 3: the Tonight timeline renders a replayed night (seeded fused_states)
+      # and scrubbing to a nudge marker plays its clip. Reuses the admin + promoted clip
+      # the tonight harness just produced on this same stack.
+      - name: Tonight timeline harness
+        working-directory: web
+        env:
+          EEPER_TEST_ADMIN: admin
+        run: npx playwright test --project=timeline
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
