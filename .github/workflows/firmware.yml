@@ -1,0 +1,85 @@
+name: firmware
+
+# Reference sensor-node firmware (M3.2). Path-filtered like audio.yml — the ESPHome
+# compile pulls a multi-GB esp-idf toolchain, so it only runs when firmware changes.
+on:
+  pull_request:
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+  push:
+    branches: [main]
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+
+permissions:
+  contents: read
+
+# Pin ESPHome so the compile is reproducible and the toolchain cache key is stable.
+env:
+  ESPHOME_VERSION: 2026.6.5
+
+jobs:
+  contract:
+    name: Firmware contract + config lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install tools
+        run: pip install "pydantic>=2,<3" pyyaml pytest "esphome==${ESPHOME_VERSION}"
+
+      # A MicroPython template isn't compiled — syntax-check it so a typo can't ship.
+      - name: MicroPython template syntax
+        run: python -m py_compile firmware/micropython/eeper_node.py
+
+      # Golden payloads validate against the server's SensorMessage contract; the
+      # ESPHome configs keep their safe-citizen invariants (TLS/ACL/discovery/clock).
+      - name: Contract + config-structure tests
+        run: pytest firmware/tests -q
+
+      # Full ESPHome validation (substitutions resolve, components + pins valid).
+      - name: Validate ESPHome configs
+        run: |
+          cp firmware/esphome/secrets.yaml.example firmware/esphome/secrets.yaml
+          for f in firmware/esphome/eeper-*.yaml; do
+            echo "::group::esphome config $f"
+            esphome config "$f"
+            echo "::endgroup::"
+          done
+
+  compile:
+    name: ESPHome compile (reference nodes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The esp-idf/PlatformIO toolchain is large and identical across runs — cache it
+      # so only the first build pays the multi-minute download.
+      - name: Cache PlatformIO toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          # Keyed on the ESPHome version only — the toolchain doesn't depend on our
+          # configs, so a config edit reuses the same multi-GB cache entry.
+          key: pio-${{ runner.os }}-esphome${{ env.ESPHOME_VERSION }}
+          restore-keys: |
+            pio-${{ runner.os }}-esphome
+
+      - name: Install ESPHome
+        run: pip install "esphome==${ESPHOME_VERSION}"
+
+      - name: Provide CI secrets (dummy WiFi/password + example CA)
+        run: cp firmware/esphome/secrets.yaml.example firmware/esphome/secrets.yaml
+
+      # Both reference targets share the toolchain, so compile them in one job to pull
+      # it once. A bad lambda or pin that `esphome config` can't catch fails here.
+      - name: Compile reference nodes
+        run: |
+          esphome compile firmware/esphome/eeper-mmwave.yaml
+          esphome compile firmware/esphome/eeper-pir.yaml

@@ -1,0 +1,93 @@
+# eeper ESPHome base package — shared by every reference sensor node.
+#
+# This encodes the non-obvious wiring a node needs to be a well-behaved citizen on
+# eeper's hardened MQTT bus. Include it from a device config with:
+#
+#   packages:
+#     eeper: !include common/eeper-base.yaml
+#
+# then call the `eeper_publish` script to emit a reading. The per-node values
+# (device_id, broker host, MQTT username) come from the pairing screen in the eeper
+# web UI and are set as substitutions in the device config; the WiFi credentials, the
+# MQTT password, and the broker's CA certificate live in secrets.yaml.
+
+substitutions:
+  # Overridden per node in the device config (defaults keep `esphome config`/`compile`
+  # resolvable in CI without operator input).
+  device_id: '0' # the numeric id the eeper UI assigned at pairing
+  mqtt_host: eeper.local # the eeper host reachable from the sensor's WiFi
+  mqtt_user: dev-0 # the per-device username from pairing (always dev-{device_id})
+  board: esp32dev
+
+esp32:
+  board: ${board}
+  framework:
+    # MQTT-over-TLS with a custom CA (certificate_authority, below) requires the
+    # esp-idf framework — the Arduino framework's MQTT client can't verify our CA.
+    type: esp-idf
+
+logger:
+  level: INFO # over USB serial, for provisioning; MQTT logging is disabled (see log_topic)
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+time:
+  # The contract's `ts` is unix seconds, and eeper derives BOTH the reading timestamp
+  # and the device's online/offline health from it — so a node with no clock reads as
+  # permanently offline. `eeper_publish` refuses to publish until the clock is valid.
+  - platform: sntp
+    id: eeper_time
+
+mqtt:
+  broker: ${mqtt_host}
+  port: 8883
+  username: ${mqtt_user}
+  password: !secret eeper_mqtt_password
+  # The eeper deployment's internal MQTT CA (deploy/mosquitto/certs/mqtt-ca.crt),
+  # pasted into secrets.yaml as `eeper_mqtt_ca`. The broker is TLS-only.
+  certificate_authority: !secret eeper_mqtt_ca
+  # The per-device ACL permits publishing ONLY under eeper/dev/{id}/#. Two consequences
+  # this config must respect or the broker will disconnect the node:
+  #   1. Home Assistant discovery targets homeassistant/# — forbidden — so it is OFF.
+  #   2. ESPHome's own housekeeping (birth/will/log) must stay inside the subtree. We
+  #      nest it one level deeper, under .../node/, so eeper's ingestion (which reads
+  #      the 4-segment eeper/dev/+/+ metric space) ignores it instead of trying to
+  #      parse "online"/log lines as readings.
+  discovery: false
+  topic_prefix: eeper/dev/${device_id}/node
+  birth_message:
+    topic: eeper/dev/${device_id}/node/status
+    payload: online
+  will_message:
+    topic: eeper/dev/${device_id}/node/status
+    payload: offline
+  # Don't stream logs over MQTT — it wastes the node's uplink and spams the bus.
+  log_topic:
+
+script:
+  # The single place the wire contract is built. Call it with a metric name, value,
+  # unit, and a 0..1 quality; it stamps the current unix time and publishes the
+  # SensorMessage JSON to eeper/dev/{id}/{metric}. No-op until the clock is valid.
+  - id: eeper_publish
+    parameters:
+      metric: string
+      value: float
+      unit: string
+      quality: float
+    then:
+      - if:
+          condition:
+            lambda: 'return id(eeper_time).now().is_valid();'
+          then:
+            - mqtt.publish:
+                topic: !lambda 'return std::string("eeper/dev/${device_id}/") + metric;'
+                qos: 1
+                payload: !lambda |-
+                  char buf[192];
+                  int n = snprintf(buf, sizeof(buf),
+                    "{\"ts\":%ld,\"type\":\"%s\",\"value\":%.3f,\"unit\":\"%s\",\"quality\":%.2f}",
+                    (long) id(eeper_time).now().timestamp,
+                    metric.c_str(), value, unit.c_str(), quality);
+                  return std::string(buf, (n > 0 && n < (int) sizeof(buf)) ? n : 0);

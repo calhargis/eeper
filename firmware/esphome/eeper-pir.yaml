@@ -1,0 +1,46 @@
+# eeper reference node — passive-infrared (PIR) gross-motion sensor.
+#
+# A cheap fallback when a mmWave radar isn't available: a PIR (e.g. AM312/HC-SR501)
+# detects gross motion but not fine movement or still presence. Publishes `movement`
+# (0/1) on every state change AND on a 15 s heartbeat (which also keeps the node's
+# online health fresh). Fill the substitutions from the eeper Devices screen; WiFi +
+# MQTT password + broker CA go in secrets.yaml. Flash: `esphome run eeper-pir.yaml`.
+
+substitutions:
+  device_id: '0' # ← from the eeper Devices screen
+  mqtt_host: eeper.local # ← the eeper host on your network
+  mqtt_user: dev-0 # ← shown at pairing (always dev-{device_id})
+  board: esp32dev
+  pir_pin: GPIO23 # ← the PIR's OUT pin
+
+esphome:
+  name: eeper-pir-${device_id}
+
+packages:
+  eeper: !include common/eeper-base.yaml
+
+binary_sensor:
+  - platform: gpio
+    pin: ${pir_pin}
+    id: motion
+    internal: true # only eeper_publish emits to the bus — no redundant ESPHome state topic
+    on_state:
+      # Publish immediately on any edge so a wake is caught without waiting for the tick.
+      - script.execute:
+          id: eeper_publish
+          metric: movement
+          value: !lambda 'return id(motion).state ? 1.0 : 0.0;'
+          unit: bool
+          quality: 0.8
+
+interval:
+  - interval: 15s
+    then:
+      # Heartbeat: re-assert the current motion state so `last_seen` stays fresh even
+      # during long still periods (a PIR is otherwise silent between edges).
+      - script.execute:
+          id: eeper_publish
+          metric: movement
+          value: !lambda 'return id(motion).state ? 1.0 : 0.0;'
+          unit: bool
+          quality: 0.8

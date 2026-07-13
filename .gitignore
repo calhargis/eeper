@@ -40,6 +40,11 @@ deploy/secrets/
 # holds credential hashes). Generated per-install by deploy/gen-mqtt-security.sh.
 deploy/mosquitto/certs/
 deploy/mosquitto/security/
+# ESPHome node secrets (WiFi + per-device MQTT password + broker CA) and build output.
+# Only secrets.yaml.example is tracked.
+firmware/esphome/secrets.yaml
+firmware/**/.esphome/
+firmware/esphome/.esphome/
 
 # ─── ML model artifacts (fetched at first run, never committed) ────────────
 models/cache/

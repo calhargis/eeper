@@ -1,0 +1,65 @@
+# eeper reference node — 24 GHz mmWave presence radar (HLK-LD2410).
+#
+# Publishes two metrics to the eeper bus every 15 s: `presence` (0/1 occupancy) and
+# `movement` (a 0..100 motion-energy index). Fill the four substitutions below from the
+# eeper web UI's Devices → Pair screen, put your WiFi + MQTT password + broker CA in
+# secrets.yaml (see secrets.yaml.example), then: `esphome run eeper-mmwave.yaml`.
+#
+# The LD2410's TX/RX go to GPIO17/GPIO16; adjust for your board. Respiration/breathing
+# estimation is NOT provided here — the LD2410 doesn't expose it; a dedicated 60 GHz
+# radar (e.g. a breathing-capable module) would publish a `respiration` metric through
+# the same eeper_publish script.
+
+substitutions:
+  device_id: '0' # ← from the eeper Devices screen
+  mqtt_host: eeper.local # ← the eeper host on your network
+  mqtt_user: dev-0 # ← shown at pairing (always dev-{device_id})
+  board: esp32dev
+
+esphome:
+  name: eeper-mmwave-${device_id}
+
+packages:
+  eeper: !include common/eeper-base.yaml
+
+uart:
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+ld2410:
+
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      id: presence
+
+sensor:
+  - platform: ld2410
+    moving_distance:
+      id: moving_distance
+    detection_distance:
+      id: detection_distance
+    g0:
+      move_energy:
+        id: move_energy # 0..100 movement-energy index at the nearest gate
+
+interval:
+  - interval: 15s
+    then:
+      # Occupancy: presence with high confidence; radar has no "maybe" here.
+      - script.execute:
+          id: eeper_publish
+          metric: presence
+          value: !lambda 'return id(presence).state ? 1.0 : 0.0;'
+          unit: bool
+          quality: 0.95
+      # Movement index: the gate-0 motion energy, lower-confidence when unoccupied.
+      - script.execute:
+          id: eeper_publish
+          metric: movement
+          value: !lambda 'return id(move_energy).has_state() ? id(move_energy).state : 0.0;'
+          unit: index
+          quality: !lambda 'return id(presence).state ? 0.9 : 0.6;'
