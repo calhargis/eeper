@@ -31,6 +31,7 @@ from eeper.api.routers import (
     fusion,
     system,
     tokens,
+    trends,
     users,
 )
 
@@ -94,5 +95,6 @@ v1.include_router(clips.router)
 v1.include_router(devices.router)
 v1.include_router(events.router)
 v1.include_router(fusion.router)
+v1.include_router(trends.router)
 
 app.include_router(v1)

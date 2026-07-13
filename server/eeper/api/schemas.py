@@ -204,6 +204,28 @@ class TonightTimelineOut(BaseModel):
     sessions: list[SleepSessionOut]
 
 
+class TrendNight(BaseModel):
+    """One night's sleep rollup (M4.1). Durations in seconds; the UI formats to hours.
+    Awareness metrics only — never a medical or vital-sign readout."""
+
+    night: datetime
+    sessions: int
+    total_sleep_s: float
+    wakes: int
+    longest_stretch_s: float
+
+
+class TrendWeek(BaseModel):
+    """A week's rollup for the week-over-week view (M4.1)."""
+
+    week: datetime
+    nights: int
+    total_sleep_s: float
+    avg_sleep_s: float
+    wakes: int
+    longest_stretch_s: float
+
+
 class PushKeys(BaseModel):
     p256dh: str = Field(min_length=1, max_length=255)
     auth: str = Field(min_length=1, max_length=255)
