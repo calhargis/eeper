@@ -17,10 +17,10 @@ async def _first_boot(api) -> None:  # type: ignore[no-untyped-def]
     assert r.status_code == 201, r.text
 
 
-async def _status(api):  # type: ignore[no-untyped-def]
+async def _status(api) -> dict[str, object]:  # type: ignore[no-untyped-def]
     r = await api.client.get("/api/v1/pulseox/status")
     assert r.status_code == 200, r.text
-    return r.json()
+    return r.json()  # type: ignore[no-any-return]
 
 
 async def test_inert_when_profile_disabled(api) -> None:  # type: ignore[no-untyped-def]
