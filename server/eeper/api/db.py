@@ -116,6 +116,63 @@ async def create_schema_and_hypertables() -> None:
         for stmt in _EVENT_NOTIFY_SQL:
             await conn.exec_driver_sql(stmt)
 
+    await _create_trends_objects()
+
+
+# Trends (M4.1): the sleep_sessions hypertable + a nightly continuous aggregate +
+# compression. TimescaleDB-only, and idempotent (every clause is if-not-exists), so a
+# reboot re-applies them safely. The continuous-aggregate DDL cannot run inside a
+# transaction, so these run on a separate AUTOCOMMIT connection (unlike the schema above,
+# which is one advisory-locked transaction). `sleep_sessions` is keyed on `started_at`,
+# not `ts`, so it's created here rather than in the `_HYPERTABLES` loop.
+_TRENDS_DDL = (
+    "SELECT create_hypertable('sleep_sessions', 'started_at', "
+    "if_not_exists => TRUE, migrate_data => TRUE)",
+    # A night can hold multiple sessions (a nap + the night); the nightly rollup sums
+    # them. Real-time by default, so a query includes not-yet-materialized recent rows.
+    """
+    CREATE MATERIALIZED VIEW IF NOT EXISTS trends_nightly
+      WITH (timescaledb.continuous) AS
+      SELECT time_bucket('1 day', started_at) AS night,
+             household_id,
+             count(*)               AS sessions,
+             sum(total_sleep_s)     AS total_sleep_s,
+             sum(wake_count)        AS wakes,
+             max(longest_stretch_s) AS longest_stretch_s
+      FROM sleep_sessions
+      GROUP BY night, household_id
+      WITH NO DATA
+    """,
+    "SELECT add_continuous_aggregate_policy('trends_nightly', "
+    "start_offset => INTERVAL '30 days', end_offset => INTERVAL '1 hour', "
+    "schedule_interval => INTERVAL '1 hour', if_not_exists => TRUE)",
+    "ALTER TABLE sleep_sessions SET (timescaledb.compress, "
+    "timescaledb.compress_segmentby = 'household_id', "
+    "timescaledb.compress_orderby = 'started_at DESC, id')",
+    "SELECT add_compression_policy('sleep_sessions', INTERVAL '7 days', if_not_exists => TRUE)",
+    # Materialize the recent window on boot so Trends has data immediately (the hourly
+    # policy keeps it current after; real-time aggregation covers the last hour). A no-op
+    # on a fresh install. Kept last so a failure here can't block the DDL above.
+    "CALL refresh_continuous_aggregate('trends_nightly', now() - INTERVAL '30 days', NULL)",
+)
+
+
+async def _create_trends_objects() -> None:
+    """Create the Trends hypertable + continuous aggregate + compression (TimescaleDB
+    only; a no-op on plain Postgres). Runs on an AUTOCOMMIT connection."""
+    autocommit_engine = get_engine().execution_options(isolation_level="AUTOCOMMIT")
+    async with autocommit_engine.connect() as conn:
+        ext = await conn.exec_driver_sql("SELECT 1 FROM pg_extension WHERE extname = 'timescaledb'")
+        if ext.first() is None:
+            return
+        # Serialize concurrent boots (advisory lock, session-level in autocommit).
+        await conn.exec_driver_sql("SELECT pg_advisory_lock(hashtext('eeper_trends'))")
+        try:
+            for stmt in _TRENDS_DDL:
+                await conn.exec_driver_sql(stmt)
+        finally:
+            await conn.exec_driver_sql("SELECT pg_advisory_unlock(hashtext('eeper_trends'))")
+
 
 async def get_session() -> AsyncIterator[AsyncSession]:
     async with get_sessionmaker()() as session:
