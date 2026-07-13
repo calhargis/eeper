@@ -174,3 +174,34 @@ export async function fetchTimeline(): Promise<TonightTimeline> {
   if (!res.ok) throw new Error(`could not load the timeline (${res.status})`);
   return (await res.json()) as TonightTimeline;
 }
+
+// ── M4.1: sleep trends ────────────────────────────────────────────────────────
+
+export type TrendNight = {
+  night: string;
+  sessions: number;
+  total_sleep_s: number;
+  wakes: number;
+  longest_stretch_s: number;
+};
+
+export type TrendWeek = {
+  week: string;
+  nights: number;
+  total_sleep_s: number;
+  avg_sleep_s: number;
+  wakes: number;
+  longest_stretch_s: number;
+};
+
+export async function fetchTrendsNightly(): Promise<TrendNight[]> {
+  const res = await api('/trends/nightly');
+  if (!res.ok) throw new Error(`could not load nightly trends (${res.status})`);
+  return (await res.json()) as TrendNight[];
+}
+
+export async function fetchTrendsWeekly(): Promise<TrendWeek[]> {
+  const res = await api('/trends/weekly');
+  if (!res.ok) throw new Error(`could not load weekly trends (${res.status})`);
+  return (await res.json()) as TrendWeek[];
+}
