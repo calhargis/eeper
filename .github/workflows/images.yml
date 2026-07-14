@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*'] # release tags publish an additional :vX.Y.Z tag (also signed)
 
 # Least privilege at the workflow level; the build job opts into packages:write.
 permissions:
@@ -55,6 +56,7 @@ jobs:
     permissions:
       contents: read
       packages: write # only this job pushes to GHCR, and only on main
+      id-token: write # keyless cosign signing via GitHub OIDC (push events only)
     strategy:
       fail-fast: false
       matrix:
@@ -126,15 +128,35 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push (each targeted arch)
+        id: build
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           platforms: ${{ matrix.platforms }}
           push: true
+          # On a release tag, also publish the immutable :vX.Y.Z tag (the blank line on a
+          # branch push is ignored). SBOM + max provenance attestations ride along.
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:${{ github.sha }}
+            ${{ github.ref_type == 'tag' && format('{0}/{1}:{2}', env.IMAGE_PREFIX, matrix.name, github.ref_name) || '' }}
+          sbom: true
+          provenance: mode=max
           cache-from: |
             type=gha,scope=${{ matrix.name }}-amd64
             type=gha,scope=${{ matrix.name }}-arm64
+
+      # Sign the pushed manifest by digest with keyless cosign (Sigstore Fulcio + the
+      # public Rekor transparency log), using the job's GitHub OIDC identity — no
+      # long-lived keys. Verifiable against the workflow identity; see
+      # docs/operations/verifying-images.md.
+      - name: Install cosign
+        if: github.event_name == 'push'
+        uses: sigstore/cosign-installer@v3
+      - name: Sign the image (keyless)
+        if: github.event_name == 'push'
+        env:
+          IMAGE: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
