@@ -28,7 +28,7 @@ _ESPHOME = _FIRMWARE / "esphome"
 # we validate against the real contract without installing the whole API.
 sys.path.insert(0, str(_FIRMWARE.parent / "server"))
 
-from eeper.api.schemas import SensorMessage  # noqa: E402
+from eeper.api.schemas import PulseOxMessage, SensorMessage  # noqa: E402
 
 _DEVICE_PREFIX = "eeper/dev/${device_id}/"
 
@@ -56,7 +56,12 @@ def _load(path: Path) -> dict:
 
 # ── 1. payload contract ───────────────────────────────────────────────────────
 
-_PAYLOADS = sorted((_HERE / "payloads").glob("*.json"))
+# Movement/presence nodes emit SensorMessage; the pulse-ox node emits the richer
+# PulseOxMessage. Keep the globs separate so each validates against its own contract.
+_PAYLOADS = sorted(
+    p for p in (_HERE / "payloads").glob("*.json") if not p.name.startswith("pulseox")
+)
+_PULSEOX_PAYLOADS = sorted((_HERE / "payloads").glob("pulseox*.json"))
 
 
 @pytest.mark.parametrize("payload_path", _PAYLOADS, ids=lambda p: p.name)
@@ -72,6 +77,23 @@ def test_payloads_cover_both_node_types() -> None:
     """Guard against an empty glob silently passing the parametrized test."""
     names = {p.name for p in _PAYLOADS}
     assert {"mmwave_movement.json", "mmwave_presence.json", "pir_movement.json"} <= names
+
+
+@pytest.mark.parametrize("payload_path", _PULSEOX_PAYLOADS, ids=lambda p: p.name)
+def test_pulseox_payload_matches_contract(payload_path: Path) -> None:
+    """The pulse-ox node's reading validates against the server's PulseOxMessage — the
+    quality field is mandatory (extra='forbid' would also reject a stray field), so the
+    firmware can't drift from the quality-gated contract the server enforces."""
+    model = PulseOxMessage.model_validate_json(payload_path.read_text())
+    assert model.ts > 0
+    assert 0.0 <= model.quality <= 1.0  # mandatory confidence
+    assert 0.0 <= model.spo2 <= 100.0
+    assert model.hr > 0
+
+
+def test_pulseox_payload_present() -> None:
+    """Guard against an empty glob silently passing the pulse-ox parametrization."""
+    assert {p.name for p in _PULSEOX_PAYLOADS} == {"pulseox.json"}
 
 
 # ── 2. base package: safe-citizen invariants ──────────────────────────────────

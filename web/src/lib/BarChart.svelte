@@ -3,12 +3,15 @@
   // view; each bar carries a <title> tooltip and a data-testid for the harness.
   let {
     values,
+    labels = [],
     color = '#2b6cb0',
     label = '',
     testid = 'chart',
     format = (v: number) => v.toFixed(1),
   }: {
     values: number[];
+    // Optional per-bar labels (e.g. the hour) prepended to each bar's tooltip.
+    labels?: string[];
     color?: string;
     label?: string;
     testid?: string;
@@ -40,7 +43,7 @@
       rx="0.4"
       fill={color}
     >
-      <title>{format(v)}</title>
+      <title>{labels[i] ? `${labels[i]} — ${format(v)}` : format(v)}</title>
     </rect>
   {/each}
 </svg>

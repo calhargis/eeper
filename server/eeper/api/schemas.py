@@ -252,6 +252,15 @@ class PulseOxDeviceHealth(BaseModel):
     discard_rate: float
 
 
+class PulseOxTrendPoint(BaseModel):
+    """One hour's average heart rate (M4.2) — trend context, from quality-gated samples
+    only. Not a live readout."""
+
+    hour: datetime
+    hr_avg: float
+    samples: int
+
+
 class PulseOxStatus(BaseModel):
     """The pulse-ox gate state (M4.2). ``enabled`` is the AND of the profile being on and
     an admin having acknowledged the current disclaimer — pulse-ox is inert otherwise."""

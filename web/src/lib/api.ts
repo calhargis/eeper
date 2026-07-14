@@ -205,3 +205,54 @@ export async function fetchTrendsWeekly(): Promise<TrendWeek[]> {
   if (!res.ok) throw new Error(`could not load weekly trends (${res.status})`);
   return (await res.json()) as TrendWeek[];
 }
+
+// ── M4.2: pulse-ox (optional, insights-only) ──────────────────────────────────
+// Every pulse-ox view surfaces the accuracy caveat. Trend context only — never a
+// vital-sign readout or alarm.
+
+export type PulseOxStatus = {
+  profile_enabled: boolean;
+  acknowledged: boolean;
+  enabled: boolean;
+  disclaimer_version: string;
+};
+
+export type PulseOxDisclaimer = {
+  version: string;
+  text: string;
+  accuracy_caveat: string;
+  safe_sleep_url: string;
+};
+
+export type PulseOxTrendPoint = {
+  hour: string;
+  hr_avg: number;
+  samples: number;
+};
+
+export async function fetchPulseoxStatus(): Promise<PulseOxStatus> {
+  const res = await api('/pulseox/status');
+  if (!res.ok) throw new Error(`could not load pulse-ox status (${res.status})`);
+  return (await res.json()) as PulseOxStatus;
+}
+
+export async function fetchPulseoxDisclaimer(): Promise<PulseOxDisclaimer> {
+  const res = await api('/pulseox/disclaimer');
+  if (!res.ok) throw new Error(`could not load disclaimer (${res.status})`);
+  return (await res.json()) as PulseOxDisclaimer;
+}
+
+export async function acknowledgePulseox(version: string): Promise<PulseOxStatus> {
+  const res = await api('/pulseox/acknowledge', {
+    method: 'POST',
+    body: JSON.stringify({ version }),
+  });
+  if (!res.ok) throw new Error(await detail(res, 'could not acknowledge'));
+  return (await res.json()) as PulseOxStatus;
+}
+
+export async function fetchPulseoxTrend(): Promise<PulseOxTrendPoint[]> {
+  const res = await api('/pulseox/trend');
+  if (!res.ok) throw new Error(`could not load pulse-ox trend (${res.status})`);
+  return (await res.json()) as PulseOxTrendPoint[];
+}

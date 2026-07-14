@@ -75,5 +75,14 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // Pulse-ox (M4.2): the optional, insights-only HR trend view + disclaimer flow.
+      // Needs a core stack whose api has EEPER_PULSEOX_PROFILE_ENABLED=true (CI job env);
+      // no video, so bundled Chromium is fine.
+      name: 'pulseox',
+      testMatch: /pulseox\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 });

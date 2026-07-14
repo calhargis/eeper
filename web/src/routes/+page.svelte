@@ -1,7 +1,7 @@
 <script lang="ts">
   // First-boot wizard + sign-in. Once authed, the Live view is one tap away.
   import { onMount } from 'svelte';
-  import { api, detail, fetchSession, fetchStatus, type User } from '$lib/api';
+  import { api, detail, fetchPulseoxStatus, fetchSession, fetchStatus, type User } from '$lib/api';
 
   type LoginResult = { totp_required: boolean; challenge: string | null; user: User | null };
   type View = 'loading' | 'first-boot' | 'login' | 'totp' | 'authed';
@@ -18,6 +18,8 @@
   let totpCode = $state('');
   let error = $state('');
   let busy = $state(false);
+  // Pulse-ox is optional; only surface its nav link where the profile is enabled.
+  let pulseoxProfile = $state(false);
 
   function reset(): void {
     username = '';
@@ -44,6 +46,19 @@
 
   onMount(() => {
     void refresh();
+  });
+
+  // Whichever path reaches the authed view (mount, login, first-boot, TOTP), discover
+  // whether the optional pulse-ox profile is on so the nav link can appear.
+  $effect(() => {
+    if (view !== 'authed') return;
+    void (async () => {
+      try {
+        pulseoxProfile = (await fetchPulseoxStatus()).profile_enabled;
+      } catch {
+        pulseoxProfile = false;
+      }
+    })();
   });
 
   async function submitFirstBoot(event: SubmitEvent): Promise<void> {
@@ -218,6 +233,7 @@
     <a class="cta secondary" href="/tonight">Tonight</a>
     <a class="cta secondary" href="/trends">Trends</a>
     <a class="cta secondary" href="/devices">Devices</a>
+    {#if pulseoxProfile}<a class="cta secondary" href="/pulseox">Pulse-ox</a>{/if}
     <button type="button" onclick={logout}>Sign out</button>
   {/if}
 
