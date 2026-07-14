@@ -124,6 +124,35 @@ jobs:
             zricethezav/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
             detect --source=/repo --config=/repo/.gitleaks.toml --no-banner --redact
 
+  docs-links:
+    name: Docs link check (lychee)
+    runs-on: ubuntu-latest
+    # M5.2: every internal link + anchor in our tracked Markdown resolves. Offline mode
+    # (local files + fragments only) keeps it deterministic — no flaky external requests.
+    steps:
+      - uses: actions/checkout@v4
+      - name: lychee (offline + fragments)
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/input" -w /input \
+            lycheeverse/lychee@sha256:eaff3e0a13603c9a701accfcc84f44158bb77bf36ecfa4622b626056c3463892 \
+            --offline --include-fragments --no-progress $(git ls-files '*.md')
+
+  docs-install-smoke:
+    name: Docs install smoke (documented commands on a clean VM)
+    runs-on: ubuntu-latest
+    # M5.2: extract the install commands from docs/install.md and run them against this
+    # checkout, then assert the outcomes the doc promises. Catches drift between the docs
+    # and the real install flow.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the documented install + assert outcomes
+        run: ./scripts/docs_install_smoke.sh
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          cd /tmp/eeper-install-smoke/eeper/deploy 2>/dev/null \
+            && docker compose --profile core logs --no-color || true
+
   dependency-audit:
     name: Dependency audit (pip-audit + npm audit)
     runs-on: ubuntu-latest
