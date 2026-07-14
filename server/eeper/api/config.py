@@ -60,6 +60,18 @@ class Settings(BaseSettings):
     retention_interval_seconds: float = 30.0
     clip_max_seconds: int = 3600  # cap a single clip promotion (disk/DoS bound)
 
+    # Retention age policies (M4.3). Both default to 0 = disabled: the byte quota above
+    # is the always-on media bound, and the raw telemetry is kept indefinitely unless an
+    # operator opts in. When set, they add an AGE bound on top.
+    #   - media_max_age_seconds: also evict finalized recording segments older than this
+    #     (promoted clips are still never auto-evicted).
+    #   - timeseries_retention_days: drop raw high-volume telemetry chunks
+    #     (state_history, sensor_readings, pulseox_readings) older than this via a
+    #     TimescaleDB retention policy. Derived/history tables (events, fused_states,
+    #     sleep_sessions — the Tonight + trends sources) are always retained.
+    media_max_age_seconds: int = 0
+    timeseries_retention_days: int = 0
+
     # Insight engine (M2.1). When set (test overlay only), the audio stage writes
     # the newest 16 kHz mono PCM window per camera as a WAV here for the pipeline
     # test to read; empty in production (no tap). M2.2 also writes a per-camera
