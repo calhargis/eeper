@@ -9,12 +9,17 @@ checks ``enabled`` here. eeper is never a vital-sign monitor or alarm.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request, status
+from datetime import datetime, timedelta
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from eeper.api.dependencies import AdminUser, CurrentUser, SessionDep, SettingsDep
-from eeper.api.models import PulseOxConsent
+from eeper.api.config import Settings
+from eeper.api.dependencies import AdminUser, CurrentUser, NowDep, SessionDep, SettingsDep
+from eeper.api.models import PulseOxConsent, PulseOxReading
 from eeper.api.pulseox_copy import (
     ACCURACY_CAVEAT,
     DISCLAIMER_TEXT,
@@ -26,6 +31,7 @@ from eeper.api.schemas import (
     PulseOxDeviceHealth,
     PulseOxDisclaimer,
     PulseOxStatus,
+    PulseOxTrendPoint,
 )
 
 router = APIRouter(prefix="/pulseox", tags=["pulseox"])
@@ -38,6 +44,41 @@ async def _acknowledged(session: SessionDep, household_id: str) -> bool:
         select(PulseOxConsent.disclaimer_version).where(PulseOxConsent.household_id == household_id)
     )
     return row.scalar_one_or_none() == DISCLAIMER_VERSION
+
+
+async def _enabled(session: AsyncSession, settings: Settings, household_id: str) -> bool:
+    """The full gate: profile on AND the current disclaimer acknowledged."""
+    return settings.pulseox_profile_enabled and await _acknowledged(session, household_id)
+
+
+@router.get("/trend", response_model=list[PulseOxTrendPoint])
+async def trend(
+    user: CurrentUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    now: NowDep,
+    since: Annotated[datetime | None, Query()] = None,
+) -> list[PulseOxTrendPoint]:
+    """Hourly average heart rate over a window — trend context from quality-gated samples
+    only. Inert (empty) unless pulse-ox is fully enabled."""
+    if not await _enabled(session, settings, user.household_id):
+        return []
+    start = since or now - timedelta(days=2)
+    rows = await session.execute(
+        select(
+            func.date_trunc("hour", PulseOxReading.ts).label("hour"),
+            func.avg(PulseOxReading.hr).label("hr_avg"),
+            func.count().label("samples"),
+        )
+        .where(
+            PulseOxReading.household_id == user.household_id,
+            PulseOxReading.ts >= start,
+            PulseOxReading.ts < now,
+        )
+        .group_by("hour")
+        .order_by("hour")
+    )
+    return [PulseOxTrendPoint(hour=r.hour, hr_avg=float(r.hr_avg), samples=r.samples) for r in rows]
 
 
 @router.get("/status", response_model=PulseOxStatus)

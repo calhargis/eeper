@@ -5,9 +5,30 @@ version-checked, and the disclaimer + accuracy caveat are served.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from eeper.api.models import PulseOxReading
 from eeper.api.pulseox_copy import ACCURACY_CAVEAT, DISCLAIMER_VERSION
 
 _PW = "correct horse battery staple"
+
+
+async def _seed_readings(postgres_url: str, rows: list[PulseOxReading]) -> None:
+    engine = create_async_engine(postgres_url)
+    sm = async_sessionmaker(engine, expire_on_commit=False)
+    async with sm() as s:
+        s.add_all(rows)
+        await s.commit()
+    await engine.dispose()
+
+
+async def _enable(api) -> None:  # type: ignore[no-untyped-def]
+    """Fully enable pulse-ox: profile on + admin acknowledgment recorded."""
+    api.settings.pulseox_profile_enabled = True
+    r = await api.client.post("/api/v1/pulseox/acknowledge", json={"version": DISCLAIMER_VERSION})
+    assert r.status_code == 200, r.text
 
 
 async def _first_boot(api) -> None:  # type: ignore[no-untyped-def]
@@ -96,3 +117,56 @@ async def test_disclaimer_served_with_caveat(api) -> None:  # type: ignore[no-un
 async def test_status_requires_auth(api) -> None:  # type: ignore[no-untyped-def]
     async with api.fresh() as anon:
         assert (await anon.get("/api/v1/pulseox/status")).status_code == 401
+
+
+# ── the HR trend read (M4.2 slice 3) ──────────────────────────────────────────
+
+
+def _reading(when: datetime, hr: float) -> PulseOxReading:
+    return PulseOxReading(
+        ts=when, household_id="default", device_id=1, hr=hr, spo2=98.0, perfusion=4.0, quality=0.9
+    )
+
+
+async def test_trend_inert_unless_enabled(api, postgres_url: str) -> None:  # type: ignore[no-untyped-def]
+    await _first_boot(api)
+    now = api.clock["now"]
+    await _seed_readings(postgres_url, [_reading(now - timedelta(minutes=30), 120.0)])
+
+    # Profile off → withheld even though rows exist.
+    api.settings.pulseox_profile_enabled = False
+    assert (await api.client.get("/api/v1/pulseox/trend")).json() == []
+
+    # Profile on but not acknowledged → still withheld (both halves of the gate required).
+    api.settings.pulseox_profile_enabled = True
+    assert (await api.client.get("/api/v1/pulseox/trend")).json() == []
+
+
+async def test_trend_returns_hourly_averages(api, postgres_url: str) -> None:  # type: ignore[no-untyped-def]
+    await _first_boot(api)
+    api.clock["now"] = datetime(2026, 7, 13, 6, 30, tzinfo=UTC)
+    await _enable(api)
+
+    # Two samples in the 05:00 hour (mean 130) and one in the 06:00 hour (100).
+    await _seed_readings(
+        postgres_url,
+        [
+            _reading(datetime(2026, 7, 13, 5, 10, tzinfo=UTC), 120.0),
+            _reading(datetime(2026, 7, 13, 5, 40, tzinfo=UTC), 140.0),
+            _reading(datetime(2026, 7, 13, 6, 10, tzinfo=UTC), 100.0),
+        ],
+    )
+
+    r = await api.client.get("/api/v1/pulseox/trend")
+    assert r.status_code == 200, r.text
+    points = r.json()
+    assert len(points) == 2
+    assert points[0]["hr_avg"] == 130.0 and points[0]["samples"] == 2
+    assert points[1]["hr_avg"] == 100.0 and points[1]["samples"] == 1
+    # Ordered oldest-first.
+    assert points[0]["hour"] < points[1]["hour"]
+
+
+async def test_trend_requires_auth(api) -> None:  # type: ignore[no-untyped-def]
+    async with api.fresh() as anon:
+        assert (await anon.get("/api/v1/pulseox/trend")).status_code == 401

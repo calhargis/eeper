@@ -254,6 +254,56 @@ jobs:
         working-directory: deploy
         run: docker compose --profile core down -v
 
+  e2e-pulseox:
+    name: Pulse-ox view (Playwright trend + caveat)
+    runs-on: ubuntu-latest
+    # Turn the optional pulse-ox profile ON for the api. Compose interpolates this from
+    # the environment, so install.sh's `up` brings the api up with the profile enabled —
+    # the first half of the pulse-ox gate. The suite acknowledges the disclaimer (the
+    # second half) through the UI, then asserts the trend view + the caveat on every view.
+    env:
+      EEPER_PULSEOX_PROFILE_ENABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Install Playwright browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Bring up the core stack (install.sh)
+        working-directory: deploy
+        run: ./install.sh
+
+      - name: Run Pulse-ox view harness
+        working-directory: web
+        run: npx playwright test --project=pulseox
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-pulseox
+          path: web/playwright-report/
+          retention-days: 7
+
+      - name: Dump stack logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose --profile core logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose --profile core down -v
+
   e2e-live:
     name: Live view (Playwright WebRTC)
     runs-on: ubuntu-latest
