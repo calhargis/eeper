@@ -51,8 +51,8 @@ def test_valid_frame_publishes_both_validated_messages() -> None:
     assert pub.tick() is True
     assert [m for m, _ in sink] == [GRID_METRIC, FEATURES_METRIC]
     # Round-trips back through the contract → what's on the wire is always valid.
-    ThermalGridMessage(**sink[0][1])  # type: ignore[arg-type]
-    ThermalFeaturesMessage(**sink[1][1])  # type: ignore[arg-type]
+    ThermalGridMessage.model_validate(sink[0][1])
+    ThermalFeaturesMessage.model_validate(sink[1][1])
     assert pub.stats.published == 1
 
 

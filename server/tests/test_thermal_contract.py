@@ -45,14 +45,16 @@ def test_non_finite_or_out_of_range_temp_rejected(bad: float) -> None:
 
 def test_extra_field_forbidden() -> None:
     with pytest.raises(ValidationError):
-        ThermalGridMessage(
-            ts=1.0,
-            grid=_grid(),
-            t_min=0,
-            t_max=0,
-            t_mean=0,
-            quality=1.0,
-            sneaky=1,  # type: ignore[call-arg]
+        ThermalGridMessage.model_validate(
+            {
+                "ts": 1.0,
+                "grid": _grid(),
+                "t_min": 0,
+                "t_max": 0,
+                "t_mean": 0,
+                "quality": 1.0,
+                "x": 1,
+            }
         )
 
 
@@ -68,7 +70,7 @@ def test_grid_field_bounds(kwargs: dict[str, float]) -> None:
     }
     base.update(kwargs)
     with pytest.raises(ValidationError):
-        ThermalGridMessage(**base)  # type: ignore[arg-type]
+        ThermalGridMessage.model_validate(base)
 
 
 def test_features_centroid_optional_and_range_checked() -> None:
