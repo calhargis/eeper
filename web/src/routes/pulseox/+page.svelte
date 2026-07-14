@@ -59,6 +59,11 @@
         void goto('/');
         return;
       }
+      if (session.role !== 'admin') {
+        // Grandparent mode: viewers are scoped to Live + Tonight only.
+        void goto('/tonight');
+        return;
+      }
       user = session;
       try {
         // The disclaimer (and its caveat string) is always available so the caveat can

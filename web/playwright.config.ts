@@ -84,5 +84,13 @@ export default defineConfig({
       retries: process.env.CI ? 1 : 0,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // Role sweep (M4.3): "grandparent mode" — a viewer is scoped to Live + Tonight; every
+      // management route redirects them and export is denied. Core stack, no video.
+      name: 'roles',
+      testMatch: /roles\.spec\.ts/,
+      retries: process.env.CI ? 1 : 0,
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 });

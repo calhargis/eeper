@@ -107,6 +107,11 @@
         void goto('/');
         return;
       }
+      if (session.role !== 'admin') {
+        // Grandparent mode: viewers are scoped to Live + Tonight only.
+        void goto('/tonight');
+        return;
+      }
       user = session;
       await load();
       ready = true;

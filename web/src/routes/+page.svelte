@@ -20,6 +20,9 @@
   let busy = $state(false);
   // Pulse-ox is optional; only surface its nav link where the profile is enabled.
   let pulseoxProfile = $state(false);
+  // Grandparent mode: a viewer's home is scoped to Live + Tonight; the management
+  // surfaces (Trends, Devices, Pulse-ox, Settings) are admin-only.
+  const isAdmin = $derived(user?.role === 'admin');
 
   function reset(): void {
     username = '';
@@ -231,9 +234,12 @@
     <p>You are signed in as <strong>{user.username}</strong> ({user.role}).</p>
     <a class="cta" href="/live">Open live view</a>
     <a class="cta secondary" href="/tonight">Tonight</a>
-    <a class="cta secondary" href="/trends">Trends</a>
-    <a class="cta secondary" href="/devices">Devices</a>
-    {#if pulseoxProfile}<a class="cta secondary" href="/pulseox">Pulse-ox</a>{/if}
+    {#if isAdmin}
+      <a class="cta secondary" href="/trends">Trends</a>
+      <a class="cta secondary" href="/devices">Devices</a>
+      {#if pulseoxProfile}<a class="cta secondary" href="/pulseox">Pulse-ox</a>{/if}
+      <a class="cta secondary" href="/settings">Settings</a>
+    {/if}
     <button type="button" onclick={logout}>Sign out</button>
   {/if}
 
