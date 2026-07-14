@@ -36,6 +36,8 @@ secrets/
 /data/
 deploy/data/
 deploy/secrets/
+# Backup snapshots written by deploy/backup.sh (db dump + media archive).
+deploy/backups/
 # Hardened MQTT broker material — CA/broker keys + the dynamic-security seed (which
 # holds credential hashes). Generated per-install by deploy/gen-mqtt-security.sh.
 deploy/mosquitto/certs/
