@@ -23,6 +23,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ✅ [AUTO] done (M4.1–M4.3); v1.0 feature-complete |
 | Phase 5 — Hardening & release | M5.1–M5.2 | 🔨 in progress (M5.1 slice 1: supply-chain scanning) |
 | Phase 6 — Thermal input (post-v1) | M6.1–M6.3 | ⬜ not started |
+| Phase 7 — Sleep Timelapse (post-v1) | M7.1–M7.3 | ⬜ not started |
 
 **Currently working on:** M2.3 (audio nudges: sound-level + experimental cry) in review; M2.0 fixture library in review
 **Blockers:** none
@@ -439,10 +440,39 @@ far-field corpus, and a **train split**; then re-run training.
 
 ---
 
+## Phase 7 — Sleep Timelapse (post-v1)
+
+### M7.1 — Timelapse capture & assembly (fixed interval) — ⬜
+
+- [ ] [A] Capture cadence matches the configured interval; assembled frame count + duration correct
+- [ ] [A] Each still stamped with its capture time; overlay driven by those stamps (frame N ↔ time N)
+- [ ] [A] Timelapse store is isolated + retention-bounded; never touches the ring buffer or clips
+- [ ] [A] Off by default + per-camera opt-in; config admin-only (viewer denied)
+- [ ] [M] Overnight fixed-interval timelapse assembles into a watchable MP4 with a legible time overlay — ______
+
+### M7.2 — Motion-adaptive capture & sleep movement map — ⬜
+
+- [ ] [A] Adaptive cadence: density rises on movement, falls on stillness, within `[min, max]`; deterministic
+- [ ] [A] Movement map aligns 1:1 to frames; length = frame count; matches fusion activity within tolerance
+- [ ] [A] Graceful degradation: no movement signal → fixed interval + flat map, no crash
+- [ ] [M] Adaptive capture densifies around real movement; map lines up with the video — ______
+
+### M7.3 — Timelapse UI (configure, playback, map + time) — ⬜
+
+- [ ] [A] Config round-trip (interval + adaptive) persists; admin-gated (viewer denied)
+- [ ] [A] Playback: map graph renders + time/playhead tracks position (Playwright)
+- [ ] [A] Safety: copy lint green on timelapse strings; role sweep confirms grandparent-mode gating
+- [ ] [M] Overnight timelapse reviewed end-to-end: overlay legible, map matches video, controls intuitive — ______
+
+- **Scope note:** motion-adaptive capture (M7.2) is optional — shipping M7.1 + M7.3 with a fixed interval and a post-hoc movement map is a valid reduced-scope outcome, recorded here if taken.
+
+---
+
 ## Change log
 
 | Date | Change |
 | ---- | ------ |
+| 2026-07-14 | Phase 7 (Sleep Timelapse) planned; §7.3 defined. Docs-only, no implementation — a future feature captured across the planning docs. MASTER_PLAN gains **§7.3 Sleep Timelapse** (opt-in per-camera timelapse: stills at a configurable interval → an MP4 with a burned-in wall-clock time overlay; optional motion-adaptive capture density driven read-only by the M2.2/M3.3 movement signal; a per-frame sleep movement map — a relative-activity graph aligned 1:1 to the timelapse — awareness only, never medical, local-only, off by default, retention-governed), a Views mention, and a §13 roadmap **Post-v1 phases** block that now lists both Phase 6 (thermal) and Phase 7 (the roadmap had not been updated for thermal). IMPLEMENTATION_PLAN gains **Phase 7** — M7.1 fixed-interval capture + assembly + time overlay; M7.2 motion-adaptive cadence + the movement map (with a clean fixed-interval fallback); M7.3 the Timelapse UI (configure, playback with the time overlay + a map synced to the video, role-gated) — with an explicit reduced-scope exit since motion-adaptation is optional. PROGRESS gains the Phase 7 status row + milestone block. |
 | 2026-07-14 | M6.1 slice 1 (thermal node contract + publisher logic). The first thermal code — pure, hardware-free, so the whole publish path is testable without an MLX90640. Adds the §4.5 wire contract as pydantic models (`ThermalGridMessage` — the 32×24 grid with a mandatory `quality`, rejecting a truncated grid / non-finite / out-of-range temps / unknown fields; `ThermalFeaturesMessage` — the derived presence + warm-region features, the only signal fusion will consume, with a range-checked optional centroid). New `eeper/thermal/` package: `features.derive_features` (a deterministic baseline extractor — median-background warm-region thresholding → presence / confidence / area / centroid; its _accuracy_ is the separate M6.2 gate, not asserted here), `sensor` (the `ThermalSensor` protocol + a seeded synthetic scene renderer), and `publisher.ThermalPublisher` (read → validate → rate-limit → emit). The publisher pins three M6.1 invariants under test: it never publishes a bad or stale grid (a `None` or malformed read is dropped + counted, never re-published), it caps the grid rate at 4 Hz, and its `quality` degrades on a failure streak and recovers automatically — no crash. 21 new tests (contract, extractor direction, publisher invariants); the full server suite stays green (250 passed). Remaining M6.1: the `thermal` device kind + server ingestor (features storage, quality gate, device-health flip) + M3.1 pairing-parity tests + synthetic thermal traces in the sensor-fleet harness + the real-MLX90640 node entrypoint (slice 2). |
 | 2026-07-14 | Phase 6 thermal milestones added; §4.5 contract defined. Docs-only: MASTER_PLAN §4.5 specifies the thermal input contract (MLX90640 32×24 grid + derived presence/warm-region features on `eeper/{node}/thermal`; grid published for characterization/debug, fusion consumes features only; surface-temperature-only per §2, never a body-temperature readout). IMPLEMENTATION_PLAN gains Phase 6 (M6.1 capture node + publisher; M6.2 characterization & explicit go/no-go gate — presence ≥ 0.95 incl. blanket-covered, false-presence ≤ 0.05 vs confounders, with a documented no-go as a valid phase outcome; M6.3 fusion + UI conditional on the M6.2 go, ratcheted so thermal can't degrade fusion and schema-enforced features-only with no °C in any UI surface). PROGRESS gains the Phase 6 status row + milestone block. Consistency edit: the MASTER_PLAN open-questions thermal entry is now a pointer to §4.5/Phase 6 (specced, no longer merely contemplated). No code yet — this is the plan of record. |
 | 2026-07-14 | Release mechanics — signed images (Phase 5 exit criterion). Extends `images.yml` so every image published to GHCR is **keyless-cosign-signed** (Sigstore Fulcio + the public Rekor transparency log, via the workflow's GitHub OIDC identity — no long-lived keys) and carries an **SBOM** (SPDX) + **max-mode build provenance** attestation. The push step now signs the pushed manifest by digest; the workflow also triggers on `v*` release tags, publishing an immutable `:vX.Y.Z` alongside `:latest` / `:<sha>` (all signed). Adds `docs/operations/verifying-images.md` — how to `cosign verify` against the workflow identity (not just "is it signed" but "signed by our pipeline"), inspect the SBOM/provenance, and what the guarantees are. Complements the CRITICAL-CVE Trivy scan every image already passes before push. Signing runs on push events only (gated `github.event_name == 'push'`), so it exercises on the post-merge `main` run / release tags, not on PRs. This lands the automation behind the "signed images published" release criterion (the first real signed artifacts appear on the next `main` push / release tag). |
