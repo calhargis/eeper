@@ -254,6 +254,74 @@ jobs:
         working-directory: deploy
         run: docker compose --profile core down -v
 
+  backup-restore:
+    name: Backup/restore round-trip
+    runs-on: ubuntu-latest
+    # Prove the M4.3 [AUTO] criterion end to end: seed a stack → back up → destroy the
+    # volumes → restore into a fresh stack → the DB digest + media checksum are identical.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bring up the core stack (install.sh)
+        working-directory: deploy
+        run: ./install.sh
+
+      - name: Seed database + media, capture pre-backup digests
+        working-directory: deploy
+        run: |
+          set -euo pipefail
+          PGPW=$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2-)
+          dxe() { docker compose exec -T -e PGPASSWORD="$PGPW" db psql -U eeper -d eeper "$@"; }
+          # Rows across a hypertable feeding the continuous aggregate, plus pulse-ox.
+          dxe -c "INSERT INTO sleep_sessions (started_at, household_id, ended_at, total_sleep_s, wake_count, longest_stretch_s)
+                  SELECT d, 'default', d + interval '8 hours', 28800, 1, 14400
+                  FROM generate_series(now() - interval '40 days', now() - interval '1 day', interval '1 day') d;"
+          dxe -c "INSERT INTO pulseox_readings (ts, household_id, device_id, hr, spo2, perfusion, quality)
+                  SELECT g, 'default', 1, 120, 98, 4, 0.9 FROM generate_series(now() - interval '2 days', now(), interval '1 hour') g;"
+          dxe -c "CALL refresh_continuous_aggregate('trends_nightly', NULL, NULL);"
+          # A known media file (a stand-in promoted clip).
+          docker run --rm -v eeper_media-data:/media alpine sh -c "mkdir -p /media/clips && echo eeper-backup-roundtrip > /media/clips/ci.bin"
+          # Digests to compare after the restore.
+          dxe -tAc "SELECT count(*)||'|'||coalesce(round(sum(total_sleep_s)),0)||'|'||(SELECT count(*) FROM pulseox_readings)||'|'||(SELECT count(*) FROM trends_nightly) FROM sleep_sessions" | tr -d '[:space:]' > /tmp/dig.before
+          docker run --rm -v eeper_media-data:/media alpine sha256sum /media/clips/ci.bin | awk '{print $1}' > /tmp/media.before
+          echo "digest=$(cat /tmp/dig.before)  media=$(cat /tmp/media.before)"
+
+      - name: Back up
+        working-directory: deploy
+        run: ./backup.sh backups/ci
+
+      - name: Destroy the stack (volumes included)
+        working-directory: deploy
+        run: docker compose --profile core down -v
+
+      - name: Restore into a fresh stack
+        working-directory: deploy
+        run: ./restore.sh backups/ci
+
+      - name: Verify data + media are byte-identical
+        working-directory: deploy
+        run: |
+          set -euo pipefail
+          PGPW=$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2-)
+          dxe() { docker compose exec -T -e PGPASSWORD="$PGPW" db psql -U eeper -d eeper "$@"; }
+          dxe -tAc "SELECT count(*)||'|'||coalesce(round(sum(total_sleep_s)),0)||'|'||(SELECT count(*) FROM pulseox_readings)||'|'||(SELECT count(*) FROM trends_nightly) FROM sleep_sessions" | tr -d '[:space:]' > /tmp/dig.after
+          docker run --rm -v eeper_media-data:/media alpine sha256sum /media/clips/ci.bin | awk '{print $1}' > /tmp/media.after
+          echo "before: $(cat /tmp/dig.before) / $(cat /tmp/media.before)"
+          echo "after:  $(cat /tmp/dig.after) / $(cat /tmp/media.after)"
+          diff /tmp/dig.before /tmp/dig.after
+          diff /tmp/media.before /tmp/media.after
+          echo "round-trip OK — database + media identical"
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose --profile core logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose --profile core down -v
+
   e2e-pulseox:
     name: Pulse-ox view (Playwright trend + caveat)
     runs-on: ubuntu-latest
