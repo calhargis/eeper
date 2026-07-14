@@ -21,6 +21,7 @@ from eeper.api.fusion_worker import FusionWorker
 from eeper.api.gateway import Go2rtcClient
 from eeper.api.ingestion import SensorIngestor
 from eeper.api.nudge_worker import NudgeWorker
+from eeper.api.pulseox_ingestion import PulseOxIngestor
 from eeper.api.routers import (
     account,
     auth,
@@ -47,19 +48,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     worker = NudgeWorker(get_sessionmaker(), settings, hub)
     ingestor = SensorIngestor(get_sessionmaker(), settings)  # M3.1: MQTT sensor readings
     fusion = FusionWorker(get_sessionmaker(), settings)  # M3.3: sleep/wake + distress fusion
+    pulseox = PulseOxIngestor(get_sessionmaker(), settings)  # M4.2: quality-gated pulse-ox
     app.state.gateway = gateway
     app.state.monitor = monitor
     app.state.hub = hub  # the /ws/events endpoint registers clients here
     app.state.worker = worker
     app.state.ingestor = ingestor
     app.state.fusion = fusion
+    app.state.pulseox = pulseox  # the /pulseox/health endpoint reads its discard stats
     await monitor.start()  # reconcile go2rtc + begin the health/keep-warm loop
     await worker.start()  # LISTEN/NOTIFY + reconciliation poll for nudge delivery
     await ingestor.start()  # subscribe eeper/dev/# -> validate -> sensor_readings
     await fusion.start()  # per-epoch fuse of every extractor -> fused_states transitions
+    await pulseox.start()  # subscribe eeper/dev/+/pulseox -> quality-gate -> pulseox_readings
     try:
         yield
     finally:
+        await pulseox.stop()
         await fusion.stop()
         await ingestor.stop()
         await worker.stop()

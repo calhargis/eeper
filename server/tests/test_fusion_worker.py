@@ -18,7 +18,8 @@ from eeper.api.config import Settings
 from eeper.api.fusion_read import sleep_sessions
 from eeper.api.fusion_signals import load_epoch_features
 from eeper.api.fusion_worker import FusionWorker
-from eeper.api.models import Base, FusedState, SensorReading, StateHistory
+from eeper.api.models import Base, FusedState, PulseOxReading, SensorReading, StateHistory
+from eeper.fusion.model import EPOCH_SECONDS
 
 WARMUP_MIN = 40
 
@@ -185,3 +186,30 @@ async def test_disabled_worker_does_nothing(env: Env) -> None:
     await worker.start()  # no task spawned
     await worker.stop()
     assert await _fused(env) == []
+
+
+async def test_featurizer_surfaces_pulseox_hr(env: Env) -> None:
+    # M4.2: HR reaches fusion only from the pulseox_readings table (accepted, i.e. already
+    # quality-gated). Epochs with no pulse-ox stay hr=None, so a no-pulse-ox night is
+    # unchanged.
+    window_start = datetime(2026, 7, 13, 4, 0, tzinfo=UTC)
+    async with env.sessionmaker() as s:
+        s.add(
+            PulseOxReading(
+                ts=window_start + timedelta(minutes=3),  # epoch 6 at 30 s epochs
+                household_id="default",
+                device_id=1,
+                hr=178.0,
+                spo2=97.0,
+                perfusion=3.5,
+                quality=0.9,
+            )
+        )
+        await s.commit()
+    async with env.sessionmaker() as s:
+        feats = await load_epoch_features(
+            s, "default", window_start, n_epochs=20, epoch_seconds=EPOCH_SECONDS
+        )
+    assert feats[6].hr == 178.0
+    assert "pulseox" in feats[6].inputs
+    assert feats[0].hr is None  # no pulse-ox sample in that epoch

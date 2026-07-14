@@ -9,7 +9,7 @@ checks ``enabled`` here. eeper is never a vital-sign monitor or alarm.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
@@ -23,6 +23,7 @@ from eeper.api.pulseox_copy import (
 )
 from eeper.api.schemas import (
     PulseOxAcknowledge,
+    PulseOxDeviceHealth,
     PulseOxDisclaimer,
     PulseOxStatus,
 )
@@ -49,6 +50,30 @@ async def status_(user: CurrentUser, session: SessionDep, settings: SettingsDep)
         enabled=profile and acknowledged,  # the gate: both halves required
         disclaimer_version=DISCLAIMER_VERSION,
     )
+
+
+@router.get("/health", response_model=list[PulseOxDeviceHealth])
+async def health(
+    request: Request, user: CurrentUser, settings: SettingsDep
+) -> list[PulseOxDeviceHealth]:
+    """Per-device pulse-ox ingest stats so the quality-gate discard rate is observable.
+    Inert (empty) when the profile is off."""
+    if not settings.pulseox_profile_enabled:
+        return []
+    ingestor = getattr(request.app.state, "pulseox", None)
+    stats: dict[int, tuple[int, int]] = ingestor.stats() if ingestor is not None else {}
+    out: list[PulseOxDeviceHealth] = []
+    for device_id, (accepted, discarded) in sorted(stats.items()):
+        total = accepted + discarded
+        out.append(
+            PulseOxDeviceHealth(
+                device_id=device_id,
+                accepted=accepted,
+                discarded=discarded,
+                discard_rate=discarded / total if total else 0.0,
+            )
+        )
+    return out
 
 
 @router.get("/disclaimer", response_model=PulseOxDisclaimer)

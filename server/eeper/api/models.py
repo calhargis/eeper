@@ -336,6 +336,26 @@ class SleepSessionRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PulseOxReading(Base):
+    """Quality-gated pulse-ox samples (M4.2), a TimescaleDB hypertable keyed on ``ts``.
+    ONLY samples that cleared the quality gate are stored — low-confidence readings are
+    discarded at ingestion, never persisted. Insights-only (heart-rate / blood-oxygen /
+    perfusion as trend + fusion features), never a vital-sign readout or alarm. Composite
+    ``(ts, id)`` PK for the hypertable reason; ``device_id`` is a logical reference."""
+
+    __tablename__ = "pulseox_readings"
+    __table_args__ = (Index("ix_pulseox_device_ts", "device_id", "ts"),)
+
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    device_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    hr: Mapped[float] = mapped_column(Float)
+    spo2: Mapped[float] = mapped_column(Float)
+    perfusion: Mapped[float] = mapped_column(Float)
+    quality: Mapped[float] = mapped_column(Float)  # >= the gate threshold (accepted only)
+
+
 class PulseOxConsent(Base):
     """An admin's acknowledgment of the pulse-ox disclaimer for a household (M4.2).
 

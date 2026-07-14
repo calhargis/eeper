@@ -142,6 +142,9 @@ class Settings(BaseSettings):
     # true. Pulse-ox stays fully inert unless it is true AND an admin has acknowledged the
     # disclaimer (see eeper.api.pulseox_copy). eeper is never a vital-sign monitor.
     pulseox_profile_enabled: bool = False
+    # Ingestion discards pulse-ox samples below this confidence — misleading readings are
+    # dropped, never stored or fused (the discard rate is observable per device).
+    pulseox_quality_threshold: float = 0.5
 
 
 @lru_cache(maxsize=1)
