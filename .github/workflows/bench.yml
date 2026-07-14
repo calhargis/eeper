@@ -1,0 +1,54 @@
+name: bench
+
+# The reference-profile performance gate (MASTER_PLAN §8/§9). This runs ONLY on the
+# self-hosted bench runner — the physical reference profile (Raspberry Pi 5 4 GB + 1080p
+# camera + mic + 2 sensor nodes) — because a GitHub-hosted runner is not a Pi and cannot
+# hold the < 60 % steady-state CPU / latency / 72 h-soak budgets. Trigger it by hand
+# (`workflow_dispatch`) for a release candidate; the CI `bench-smoke` job validates the
+# harness itself on every push.
+on:
+  workflow_dispatch:
+    inputs:
+      duration_hours:
+        description: Soak duration in hours (release gate = 72)
+        default: '72'
+        required: true
+
+jobs:
+  reference-profile:
+    name: Reference-profile bench gate (self-hosted Pi 5)
+    # The bench runner must be registered with these labels. No GitHub-hosted runner
+    # matches, so this job never runs (and never bills) in ordinary CI.
+    runs-on: [self-hosted, bench, pi5]
+    steps:
+      - uses: actions/checkout@v4
+
+      # The full stack under the reference profile: core + video (a real camera) + the
+      # sensor bus. The camera/mic/sensor nodes are physical fixtures on the bench.
+      - name: Bring up the full reference stack
+        working-directory: deploy
+        run: |
+          ./install.sh
+          docker compose --profile core --profile video --profile insight --profile recorder up -d --wait
+
+      - name: Run the reference-profile bench (real budgets)
+        run: |
+          python3 scripts/bench.py \
+            --duration "$(( ${{ github.event.inputs.duration_hours }} * 3600 ))" \
+            --interval 30 \
+            --cpu-budget 60 \
+            --latency-budget-ms 3000 \
+            | tee bench-report.json
+
+      - name: Upload bench report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-report-reference
+          path: bench-report.json
+          retention-days: 90
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose --profile core --profile video --profile insight --profile recorder down -v
