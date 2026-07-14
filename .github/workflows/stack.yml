@@ -372,6 +372,50 @@ jobs:
         working-directory: deploy
         run: docker compose --profile core down -v
 
+  e2e-roles:
+    name: Role sweep (viewer grandparent mode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Install Playwright browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Bring up the core stack (install.sh)
+        working-directory: deploy
+        run: ./install.sh
+
+      - name: Run role-sweep harness
+        working-directory: web
+        run: npx playwright test --project=roles
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-roles
+          path: web/playwright-report/
+          retention-days: 7
+
+      - name: Dump stack logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose --profile core logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose --profile core down -v
+
   e2e-live:
     name: Live view (Playwright WebRTC)
     runs-on: ubuntu-latest

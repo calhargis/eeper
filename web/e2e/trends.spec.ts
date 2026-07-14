@@ -103,9 +103,13 @@ test('admin sees sleep-trends charts and can export CSV', async ({ page }) => {
   expect(csv.length - 1).toBeGreaterThanOrEqual(28); // one row per night
 });
 
-test('a viewer sees charts but no export button', async ({ page }) => {
+test('a viewer has no Trends link and is redirected away from /trends', async ({ page }) => {
+  // Grandparent mode (M4.3): viewers are scoped to Live + Tonight. Trends is admin-only —
+  // no nav link, and a direct visit bounces to Tonight. (The full role sweep lives in
+  // roles.spec.ts; this keeps the Trends suite honest about the gating.)
   await signIn(page, VIEWER);
-  await page.getByRole('link', { name: 'Trends' }).click();
-  await expect(page.getByTestId('sleep-chart')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Trends' })).toHaveCount(0);
+  await page.goto('/trends');
+  await expect(page).toHaveURL(/\/tonight$/);
   await expect(page.getByTestId('export-csv')).toHaveCount(0);
 });
