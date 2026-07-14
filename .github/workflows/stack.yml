@@ -322,6 +322,36 @@ jobs:
         working-directory: deploy
         run: docker compose --profile core down -v
 
+  bench-smoke:
+    name: Bench harness smoke (measurement + stability)
+    runs-on: ubuntu-latest
+    # M5.2: validate the reference-profile bench HARNESS on a shared runner — it measures
+    # CPU/latency and confirms no container restarts/OOM over a short window. The real
+    # reference-profile gate (Pi 5, < 60% CPU, 72 h) runs on the self-hosted bench runner
+    # via .github/workflows/bench.yml; a GitHub runner is not a Pi, so budgets are relaxed.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring up the core stack (install.sh)
+        working-directory: deploy
+        run: ./install.sh
+      - name: Run the bench harness (smoke)
+        run: python3 scripts/bench.py --smoke --duration 45 --interval 5 | tee bench-report.json
+      - name: Upload bench report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-report-smoke
+          path: bench-report.json
+          retention-days: 7
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose --profile core logs --no-color
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose --profile core down -v
+
   e2e-pulseox:
     name: Pulse-ox view (Playwright trend + caveat)
     runs-on: ubuntu-latest
