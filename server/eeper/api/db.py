@@ -117,6 +117,40 @@ async def create_schema_and_hypertables() -> None:
             await conn.exec_driver_sql(stmt)
 
     await _create_trends_objects()
+    await _create_retention_policies()
+
+
+# Retention (M4.3): an optional AGE bound on the raw high-volume telemetry hypertables via
+# TimescaleDB retention policies that drop chunks older than `timeseries_retention_days`.
+# Opt-in (0 disables). The derived/history tables (events, fused_states) and the trends
+# source (sleep_sessions) are deliberately NOT here — they back the Tonight timeline and
+# the long-term trends and are retained (sleep_sessions is compressed, not dropped).
+_RETENTION_TABLES = ("state_history", "sensor_readings", "pulseox_readings")
+
+
+async def _create_retention_policies() -> None:
+    """Add/refresh TimescaleDB retention policies on the raw telemetry hypertables when
+    `timeseries_retention_days` > 0 (TimescaleDB only; a no-op on plain Postgres or when
+    disabled). Runs on an AUTOCOMMIT connection alongside the other policy DDL."""
+    days = get_settings().timeseries_retention_days
+    if days <= 0:
+        return
+    autocommit_engine = get_engine().execution_options(isolation_level="AUTOCOMMIT")
+    async with autocommit_engine.connect() as conn:
+        ext = await conn.exec_driver_sql("SELECT 1 FROM pg_extension WHERE extname = 'timescaledb'")
+        if ext.first() is None:
+            return
+        await conn.exec_driver_sql("SELECT pg_advisory_lock(hashtext('eeper_retention'))")
+        try:
+            for table in _RETENTION_TABLES:
+                # `days` is an int from validated config (never user input); if_not_exists
+                # keeps a reboot from churning an already-registered policy.
+                await conn.exec_driver_sql(
+                    f"SELECT add_retention_policy('{table}', "
+                    f"INTERVAL '{days} days', if_not_exists => TRUE)"
+                )
+        finally:
+            await conn.exec_driver_sql("SELECT pg_advisory_unlock(hashtext('eeper_retention'))")
 
 
 # Trends (M4.1): the sleep_sessions hypertable + a nightly continuous aggregate +

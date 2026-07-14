@@ -65,6 +65,10 @@ services:
       # takes two deliberate steps: set this true (the `pulseox` profile does so) AND have
       # an admin acknowledge the disclaimer in the app. eeper is never a vital-sign monitor.
       EEPER_PULSEOX_PROFILE_ENABLED: ${EEPER_PULSEOX_PROFILE_ENABLED:-false}
+      # Retention (M4.3): optional AGE bound (in days) on the raw high-volume telemetry
+      # hypertables via a TimescaleDB retention policy the api installs at boot. 0 keeps
+      # all telemetry (the default); the Tonight-history + trends tables are never dropped.
+      EEPER_TIMESERIES_RETENTION_DAYS: ${EEPER_TIMESERIES_RETENTION_DAYS:-0}
     tmpfs:
       - /tmp
     # The shared media volume: the recorder writes segments here; the api reads
@@ -160,6 +164,9 @@ services:
       # Not used by the recorder, but Settings requires it to load.
       EEPER_SECRET_KEY: ${EEPER_SECRET_KEY:?EEPER_SECRET_KEY is required — run deploy/install.sh}
       EEPER_GO2RTC_RTSP_URL: rtsp://go2rtc:8554
+      # Retention (M4.3): the byte quota is always on; this adds an optional AGE bound on
+      # finalized recording segments (0 = quota-only, the default).
+      EEPER_MEDIA_MAX_AGE_SECONDS: ${EEPER_MEDIA_MAX_AGE_SECONDS:-0}
     volumes:
       - media-data:/media
     tmpfs:
