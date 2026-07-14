@@ -1,0 +1,25 @@
+# eeper secrets-scan configuration (M5.1).
+#
+# Extends gitleaks' default rule set. The allowlist below covers ONLY known-dummy
+# material — hardcoded test-fixture secrets and *.example templates — so the scan stays
+# focused on real credentials accidentally committed to app / deploy / infra code. Real
+# generated secrets never land in git (deploy/.env, certs, and the dynsec store are all
+# git-ignored and produced per-install by install.sh).
+title = "eeper gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and example templates carry deliberate dummy secrets"
+# File paths (regex) that legitimately contain placeholder secrets.
+paths = [
+  '''\.example$''',       # *.example templates (env, secrets, CA)
+  '''server/tests/''',    # server test fixtures use hardcoded dummy secrets
+  '''web/e2e/''',         # Playwright suites embed a throwaway test password
+]
+# Belt-and-suspenders: the specific dummy tokens, allowed wherever they appear.
+regexes = [
+  '''test-secret-key-[0-9a-f]+''',
+  '''correct horse battery staple''',
+]

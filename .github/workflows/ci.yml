@@ -107,3 +107,51 @@ jobs:
         run: npm run lint
       - name: svelte-check (TypeScript)
         run: npm run check
+
+  secrets-scan:
+    name: Secrets scan (gitleaks)
+    runs-on: ubuntu-latest
+    # M5.1: fail on any real credential committed to the repo (full git history). The
+    # allowlist in .gitleaks.toml covers ONLY known-dummy test fixtures + *.example
+    # templates; real generated secrets are git-ignored and never committed.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scan full history, not just the tip
+      - name: gitleaks detect
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            zricethezav/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            detect --source=/repo --config=/repo/.gitleaks.toml --no-banner --redact
+
+  dependency-audit:
+    name: Dependency audit (pip-audit + npm audit)
+    runs-on: ubuntu-latest
+    # M5.1: audit the SHIPPED dependency trees for known advisories. Scope is runtime-only
+    # — the image build tooling (pip/setuptools) and dev/test deps (pytest, ruff, mypy) are
+    # not shipped; the runtime container itself is CVE-scanned by Trivy in images.yml.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: pip-audit (server runtime deps)
+        run: |
+          python -m venv /tmp/rt
+          /tmp/rt/bin/pip install --upgrade pip >/dev/null
+          /tmp/rt/bin/pip install ./server >/dev/null
+          # Freeze the runtime closure (pip freeze omits pip/setuptools/wheel); drop the
+          # local project itself (not on PyPI) so --strict has nothing unauditable.
+          /tmp/rt/bin/pip freeze | grep -viE '^eeper( |==|@)' > /tmp/runtime-reqs.txt
+          pip install pip-audit
+          pip-audit --strict -r /tmp/runtime-reqs.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: npm audit (web prod deps)
+        working-directory: web
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high
