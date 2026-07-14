@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from typing import Literal
 from urllib.parse import urlsplit
@@ -337,6 +338,66 @@ class SensorMessage(BaseModel):
     value: float
     unit: str = Field(min_length=1, max_length=16)
     quality: float = Field(ge=0.0, le=1.0)
+
+
+# ── thermal contract (M6.1, §4.5) ─────────────────────────────────────────────
+
+# The MLX90640 is a 32×24 array → 768 cells, published row-major. Fixed by the contract.
+THERMAL_COLS = 32
+THERMAL_ROWS = 24
+THERMAL_CELLS = THERMAL_ROWS * THERMAL_COLS
+# Plausible surface-temperature envelope for the sensor; a value outside it (or NaN/inf)
+# marks a malformed frame that must never be published as a good grid.
+_THERMAL_T_MIN = -40.0
+_THERMAL_T_MAX = 300.0
+
+
+class ThermalGridMessage(BaseModel):
+    """The full thermal grid wire contract (M6.1, §4.5), published to
+    ``eeper/dev/{id}/thermal`` at 2–4 Hz. The grid exists for CHARACTERIZATION and debug;
+    the fusion layer consumes only the derived :class:`ThermalFeaturesMessage`. Surface
+    temperatures only — never a body-temperature readout (§2). ``quality`` is mandatory;
+    a truncated grid or any non-finite / out-of-range temperature is rejected here, so a
+    malformed frame can never validate (the publisher drops it rather than emitting it)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ts: float = Field(gt=0)  # node event time (unix seconds)
+    grid: list[float] = Field(min_length=THERMAL_CELLS, max_length=THERMAL_CELLS)  # °C, row-major
+    t_min: float
+    t_max: float
+    t_mean: float
+    quality: float = Field(ge=0.0, le=1.0)
+
+    @field_validator("grid")
+    @classmethod
+    def _finite_in_range(cls, grid: list[float]) -> list[float]:
+        for t in grid:
+            if not math.isfinite(t) or not (_THERMAL_T_MIN <= t <= _THERMAL_T_MAX):
+                raise ValueError("grid contains a non-finite or out-of-range temperature")
+        return grid
+
+
+class ThermalFeaturesMessage(BaseModel):
+    """The derived low-rate thermal features (M6.1, §4.5), published to
+    ``eeper/dev/{id}/thermal_features``. This is the ONLY thermal signal the fusion layer
+    consumes — presence + warm-region shape, never a temperature. ``warm_region_centroid``
+    is ``[row, col]`` normalized to [0, 1] (or null when no warm region is present)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ts: float = Field(gt=0)
+    presence: bool
+    presence_confidence: float = Field(ge=0.0, le=1.0)
+    warm_region_area: float = Field(ge=0.0, le=1.0)  # fraction of cells above the warm threshold
+    warm_region_centroid: list[float] | None = Field(default=None, min_length=2, max_length=2)
+
+    @field_validator("warm_region_centroid")
+    @classmethod
+    def _centroid_in_unit_square(cls, c: list[float] | None) -> list[float] | None:
+        if c is not None and not all(0.0 <= v <= 1.0 for v in c):
+            raise ValueError("centroid components must be normalized to [0, 1]")
+        return c
 
 
 class DeviceCreate(BaseModel):
