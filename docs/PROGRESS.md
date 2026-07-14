@@ -22,6 +22,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase 3 — Sensors & sleep states | M3.1–M3.3 | 🔨 [AUTO] done (M3.1–M3.3); [MANUAL] bench pending |
 | Phase 4 — Trends & pulse-ox | M4.1–M4.3 | ✅ [AUTO] done (M4.1–M4.3); v1.0 feature-complete |
 | Phase 5 — Hardening & release | M5.1–M5.2 | 🔨 in progress (M5.1 slice 1: supply-chain scanning) |
+| Phase 6 — Thermal input (post-v1) | M6.1–M6.3 | ⬜ not started |
 
 **Currently working on:** M2.3 (audio nudges: sound-level + experimental cry) in review; M2.0 fixture library in review
 **Blockers:** none
@@ -411,10 +412,38 @@ far-field corpus, and a **train split**; then re-run training.
 
 ---
 
+## Phase 6 — Thermal Input (post-v1)
+
+### M6.1 — Thermal capture node & publisher — ⬜
+
+- [ ] [A] Grid + features messages validate against §4.5 schema; malformed frames dropped
+- [ ] [A] Pairing/revocation parity through M3.1 flow; ACL + reconcile tests green with thermal class
+- [ ] [A] I²C failure simulation: health degrades, no crash, auto-recovery
+- [ ] [A] Publisher rate capped at 4 Hz
+- [ ] [M] 24 h physical stream, no I²C lockup; FOV presence visibly registers — ______
+
+### M6.2 — Characterization & go/no-go — ⬜
+
+- [ ] [A] Presence gate: accuracy ≥ 0.95 incl. blanket-covered; false-presence ≤ 0.05 vs confounders (thermal-fixtures-v1)
+- [ ] [A] Split discipline + fixture versioning per M2.0 pattern
+- [ ] [M] Characterization report reviewed; go/no-go recorded — ______
+- **Decision:** ⬜ go / ⬜ no-go (report: docs/________)
+
+### M6.3 — Fusion integration & UI (only if M6.2 = go) — ⬜
+
+- [ ] [A] Replay ratchet: thermal maintains/improves epoch agreement vs non-thermal baseline, all subsets
+- [ ] [A] Mid-replay unpair: valid states, clean de-registration
+- [ ] [A] Safety: copy lint green; no °C surfaces in UI; features-only boundary schema-enforced
+- [ ] [A] M3.3 session/corroboration suites green with thermal
+- [ ] [M] Fused overnight bench run reviewed, blanket-occlusion spot-check — ______
+
+---
+
 ## Change log
 
 | Date | Change |
 | ---- | ------ |
+| 2026-07-14 | Phase 6 thermal milestones added; §4.5 contract defined. Docs-only: MASTER_PLAN §4.5 specifies the thermal input contract (MLX90640 32×24 grid + derived presence/warm-region features on `eeper/{node}/thermal`; grid published for characterization/debug, fusion consumes features only; surface-temperature-only per §2, never a body-temperature readout). IMPLEMENTATION_PLAN gains Phase 6 (M6.1 capture node + publisher; M6.2 characterization & explicit go/no-go gate — presence ≥ 0.95 incl. blanket-covered, false-presence ≤ 0.05 vs confounders, with a documented no-go as a valid phase outcome; M6.3 fusion + UI conditional on the M6.2 go, ratcheted so thermal can't degrade fusion and schema-enforced features-only with no °C in any UI surface). PROGRESS gains the Phase 6 status row + milestone block. Consistency edit: the MASTER_PLAN open-questions thermal entry is now a pointer to §4.5/Phase 6 (specced, no longer merely contemplated). No code yet — this is the plan of record. |
 | 2026-07-14 | Release mechanics — signed images (Phase 5 exit criterion). Extends `images.yml` so every image published to GHCR is **keyless-cosign-signed** (Sigstore Fulcio + the public Rekor transparency log, via the workflow's GitHub OIDC identity — no long-lived keys) and carries an **SBOM** (SPDX) + **max-mode build provenance** attestation. The push step now signs the pushed manifest by digest; the workflow also triggers on `v*` release tags, publishing an immutable `:vX.Y.Z` alongside `:latest` / `:<sha>` (all signed). Adds `docs/operations/verifying-images.md` — how to `cosign verify` against the workflow identity (not just "is it signed" but "signed by our pipeline"), inspect the SBOM/provenance, and what the guarantees are. Complements the CRITICAL-CVE Trivy scan every image already passes before push. Signing runs on push events only (gated `github.event_name == 'push'`), so it exercises on the post-merge `main` run / release tags, not on PRs. This lands the automation behind the "signed images published" release criterion (the first real signed artifacts appear on the next `main` push / release tag). |
 | 2026-07-14 | M5.2 slice 2 (bench harness + hardware/perf docs). Builds the reference-profile performance automation. `scripts/bench.py` is a pure-stdlib harness (only the `docker` CLI) that samples a running stack — summed container CPU as a fraction of host capacity, HTTP/page-load latency, and restart/OOM counts — and emits a JSON report, failing on any breached budget. The **same harness runs in two modes**: a **`bench-smoke`** CI job (in `stack.yml`, every push) brings up the core stack and runs it with `--smoke` (relaxed budgets — a GitHub runner is not a Pi), proving the measurement + reporting machinery works and the stack is stable; the **real reference-profile gate** runs via a new **`.github/workflows/bench.yml`** on a self-hosted `[self-hosted, bench, pi5]` runner (`workflow_dispatch`-only, so it never runs or bills in ordinary CI), bringing up the full stack and enforcing the strict budgets (< 60 % CPU, < 3 s latency, 72 h soak). New docs: **`docs/performance.md`** (budgets, the harness, CI-vs-bench split, how to register the runner, a results log) and **`docs/hardware.md`** (the reference-profile bill of materials + no-Pi alternatives + cameras/sensors/storage), both linked from the docs index. CONTRIBUTING + the PR template already carry the §2 safety boundary and the testing bar, so that deliverable is complete. Verified locally: the harness ran against a live core stack (mean CPU 0.07 %, median latency ~15 ms, 0 restarts/OOM → pass). Remaining M5.2: the physical Pi 5 bench run (hardware) + the two [MANUAL] reviews (cold-start testers, clinician safety-copy). |
 | 2026-07-14 | M5.2 slice 1 (docs gates — link checker + install-doc smoke). Two CI jobs make the docs a tested artifact. **`docs-links`** runs lychee in offline mode with `--include-fragments` over `git ls-files '*.md'` (tracked first-party Markdown only — vendored `node_modules` / `.pytest_cache` are untracked and excluded for free), so every internal link **and heading anchor** must resolve; offline keeps it deterministic (no flaky external requests). **`docs-install-smoke`** runs `scripts/docs_install_smoke.sh`, which extracts the commands from the `## Install` block of `docs/install.md`, rewrites *only* the public clone URL to the current checkout (so it exercises this tree, and any doc drift fails CI), runs them verbatim on a clean directory, and asserts the outcomes the doc promises: generated `POSTGRES_PASSWORD` + `EEPER_SECRET_KEY` in `deploy/.env`, the extracted `eeper-local-ca.crt`, and a healthy stack that reports `first_boot_required: true` (login-gated, no default credentials). Both were validated end-to-end locally (the smoke cloned the tree, ran `install.sh`, and the stack came up first-boot-gated). Lands the M5.2 docs [AUTO] criterion. Remaining M5.2: the reference-profile bench harness + hardware/sample-hardware docs (slice 2), and the hardware-gated bench run + [MANUAL] cold-start/clinician reviews. |
