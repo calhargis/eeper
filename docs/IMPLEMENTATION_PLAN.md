@@ -349,6 +349,48 @@ The real unlock for first-class cry is a corpus that doesn't yet exist, not a tr
 
 ---
 
+# Phase 7 — Sleep Timelapse (post-v1)
+
+An opt-in, per-camera timelapse of a night's sleep (§7.3): stills captured at a configurable interval and assembled into a video with a burned-in wall-clock time overlay, optional motion-adaptive capture density, and a sleep movement map. Awareness only — the movement map is relative activity, never a medical/diagnostic readout (§2). Local-only, off by default, retention-governed, and independent of the fusion pipeline (it consumes the movement signal read-only; it never feeds fusion).
+
+## M7.1 — Timelapse capture & assembly (fixed interval)
+
+**Deliverables:** a per-camera timelapse capture service that grabs a still at a configurable interval and stores frames (each stamped with its true capture time) in a dedicated, retention-governed timelapse store — separate from the recording ring buffer and promoted clips; an assembler that stitches the stills into an MP4 at a configurable output frame rate with a **burned-in wall-clock time overlay** driven by each frame's capture-time stamp; a timelapse session model (per-camera, opt-in, start/stop) + API to configure the interval, start/stop, and list/download; admin-gated per the role model. No motion adaptation yet.
+
+**Testing criteria:**
+
+- [AUTO] Capture cadence: over a simulated clock, stills are captured at the configured interval within tolerance; the assembled video's frame count equals the captured-frame count and its duration equals frames ÷ output-fps.
+- [AUTO] Time-stamp fidelity: every captured still carries its true capture time; the assembler applies the overlay from those stamps, so frame N is stamped with capture-time N — verified on a synthetic sequence with known times (the pixel-legibility of the burned-in text is the [MANUAL] item).
+- [AUTO] Isolation + retention: timelapse artifacts live in their own store bounded by a quota/age policy (the M4.3 pattern) and never evict, read, or write the recording ring buffer or promoted clips.
+- [AUTO] Opt-in + role gating: timelapse capture is off by default and per-camera opt-in; configuration is admin-only (a viewer is denied per the grandparent-mode role model).
+- [MANUAL] Bench: an overnight fixed-interval timelapse assembles into a watchable MP4 with a correct, legible time overlay.
+
+## M7.2 — Motion-adaptive capture & sleep movement map
+
+**Deliverables:** an **optional** motion-adaptive cadence — the capturer consumes the existing movement signal (the M2.2 camera-motion score / M3.3 fused activity, read-only) and shortens the interval within a configured `[min, max]` band during movement, lengthening it during stillness; a per-frame **sleep movement map** derived from the same signal, aligned 1:1 to the timelapse frames and stored alongside the timelapse; a clean fall-back to the fixed interval + a flat map when no movement signal is available. The movement map ships even where adaptive capture is disabled (it is derived post-hoc from the recorded movement).
+
+**Testing criteria:**
+
+- [AUTO] Adaptive cadence: replaying a known movement trace, capture density rises during movement windows and falls during quiet ones, always within `[min_interval, max_interval]` and never exceeding M7.1's max rate; deterministic under replay.
+- [AUTO] Movement-map alignment: every timelapse frame maps to one movement value on the same timeline; the map length equals the frame count and the series matches the fusion activity for that window within tolerance.
+- [AUTO] Graceful degradation: with no movement signal available, capture falls back to the fixed interval and the map is flat/empty — no crash, a valid timelapse is still produced.
+- [MANUAL] Bench: adaptive capture visibly densifies around real movement, and the movement map lines up with the activity seen in the video.
+
+## M7.3 — Timelapse UI (configure, playback, map + time)
+
+**Deliverables:** a **Timelapse** view — per-camera enable + interval + motion-adaptive toggle (with `[min, max]`) configuration; a list of captured timelapses; a player that shows the burned-in time overlay and renders the sleep movement map as a graph **synced to playback** (a moving playhead over the map / a scrubbable strip); download; wired into the nav and the role model (config admin-only per grandparent mode).
+
+**Testing criteria:**
+
+- [AUTO] Config round-trip: interval + adaptive settings persist and reload; the config surface is admin-gated (a viewer is denied).
+- [AUTO] Playback + map: Playwright asserts a timelapse plays, the movement-map graph renders, and the time/playhead indicator tracks the playback position (map synced to the video timeline).
+- [AUTO] Safety + roles: copy lint passes on all timelapse UI strings (awareness framing, no medical/diagnostic claims); the role sweep confirms the timelapse config surface follows the grandparent-mode gating.
+- [MANUAL] Usability: an overnight timelapse is reviewed end-to-end — the time overlay is legible, the movement map matches the video, and the controls are intuitive.
+
+**Phase 7 exit:** M7.1–M7.3 complete (fixed interval → adaptive + map → UI), **or** a documented scope decision: because motion-adaptive capture is explicitly optional, shipping M7.1 + M7.3 with a fixed interval and a post-hoc movement map (deferring M7.2's adaptive cadence) is a valid reduced-scope outcome, recorded in PROGRESS.md.
+
+---
+
 ## Ongoing (post-milestone) automation
 
 - The full-night replay job (M3.3) and the bench performance gate (M5.2) run nightly on main.

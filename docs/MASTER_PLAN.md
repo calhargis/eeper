@@ -213,9 +213,15 @@ Backup story: one `pg_dump` plus one media directory — deliberately simple for
 
 Svelte chosen for small bundle size and speed on low-end phones. Installable PWA with push-capable service worker (Web Push for nudges when the app is backgrounded).
 
-Views: **Live** (WebRTC video, current states, sound level), **Tonight** (timeline of the current/most recent night: states, events, tappable clips), **Trends** (sleep duration, wake counts, patterns over weeks), **Devices** (add/manage inputs, connection health), **Settings** (users, notifications, retention, remote access, disclaimers).
+Views: **Live** (WebRTC video, current states, sound level), **Tonight** (timeline of the current/most recent night: states, events, tappable clips), **Trends** (sleep duration, wake counts, patterns over weeks), **Devices** (add/manage inputs, connection health), **Settings** (users, notifications, retention, remote access, disclaimers), and (post-v1) **Timelapse** (§7.3).
 
 Latency budget: WebRTC glass-to-glass < 500 ms on LAN; state event to UI < 2 s; cold page load < 3 s on a mid-range phone over LAN.
+
+### 7.3 Sleep Timelapse (post-v1)
+
+A per-camera, **opt-in** timelapse of a night's sleep. The recorder captures a still at a configurable interval and assembles them into a downloadable video with a **burned-in wall-clock time overlay**, so the hour is legible as the night plays back. Capture can **optionally** densify with motion: when the movement signal (the M2.2 camera-motion score / M3.3 fused activity) shows the baby moving, the interval shortens within a configured `[min, max]` band and lengthens again during stillness — more frames where more happens. From that same movement signal each frame carries an activity value, forming a **sleep movement map** — a relative-activity graph aligned 1:1 to the timelapse and scrubbable alongside playback.
+
+Awareness only: the movement map is relative activity, **never a medical or diagnostic readout** (§2). Timelapse imagery is stored **locally**, off by default, and governed by the retention daemon under its own quota/age policy — it never touches the recording ring buffer or promoted clips. Specified as Phase 7 (§13).
 
 ---
 
@@ -291,7 +297,12 @@ Remote-access roadmap: v1 ships WireGuard/Tailscale docs (household-only, near-z
 
 **Phase 4 — Trends + pulse-ox (2–3 wks):** continuous aggregates, Trends UI, optional pulse-ox ingestion behind disclaimer, retention daemon, viewer role. *Exit: v1.0 feature-complete.*
 
-**Phase 5 — Hardening & release (2 wks):** security review, benchmark gates, docs (including safety copy review), sample-hardware guide, public release.
+**Phase 5 — Hardening & release (2 wks):** security review, benchmark gates, docs (including safety copy review), sample-hardware guide, public release. *Exit: v1.0 released.*
+
+**Post-v1 phases (optional, individually feature-gated):**
+
+- **Phase 6 — Thermal input:** MLX90640 low-res presence, characterized behind an explicit go/no-go gate before any fusion integration (§4.5).
+- **Phase 7 — Sleep Timelapse:** opt-in per-camera timelapse with a wall-clock time overlay, optional motion-adaptive capture, and a sleep movement map (§7.3).
 
 ---
 
