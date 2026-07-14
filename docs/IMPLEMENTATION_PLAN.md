@@ -307,6 +307,48 @@ The real unlock for first-class cry is a corpus that doesn't yet exist, not a tr
 
 ---
 
+# Phase 6 — Thermal Input (post-v1)
+
+## M6.1 — Thermal capture node & publisher
+
+**Deliverables:** MLX90640 driver integration on the Pi capture node (I²C, 2–4 Hz, default bus speed); publisher service emitting the §4.5 grid + derived-features messages under the standard sensor contract with mandatory `quality` (frame-read errors, checksum failures, and stale frames degrade quality rather than publishing bad grids); pairing via the existing M3.1 device flow (dynsec client + per-device role, no special-casing); device-health integration; synthetic thermal traces added to the sensor fleet harness.
+
+**Testing criteria:**
+
+- [AUTO] Contract validation: published grid and features messages validate against the §4.5 schema; malformed-frame injection (truncated grid, NaN temps) is dropped with quality degradation, never republished.
+- [AUTO] Pairing parity: a thermal node pairs, publishes, unpairs, and revokes through the exact M3.1 flow; the M3.1 ACL matrix and reconcile tests pass with a thermal device class present.
+- [AUTO] Failure handling: simulated I²C read failures (harness) flip device quality/health within the heartbeat window without crashing the publisher; recovery is automatic.
+- [AUTO] Rate discipline: publisher never exceeds 4 Hz grid rate regardless of sensor refresh configuration.
+- [MANUAL] Bench: physical MLX90640 on the Pi 4 node streams grids for 24 h without I²C lockup; a person-analog entering/leaving the 55° FOV at crib distance visibly changes the grid.
+
+## M6.2 — Characterization & go/no-go gate
+
+**Deliverables:** a recorded characterization corpus from the bench (person-analog and, where available, consented real-world nights): warm-body present/absent, blanket-covered vs uncovered, room-temperature sweeps, IR-illuminator and electronics heat as confounders; hand-labeled presence ground truth; derived-feature extractor (presence, warm-region features) tuned on a dev split; a written characterization report in `docs/` stating measured presence accuracy, confounder behavior, and an explicit recommendation.
+
+**Testing criteria:**
+
+- [AUTO] Presence quality gate on the frozen eval split: presence accuracy ≥ 0.95 with blanket-covered cases included, false-presence rate ≤ 0.05 against confounders (warm electronics, recently vacated bedding, IR illuminator heating). Derivation: presence is thermal's entire fusion contribution; below these numbers it adds noise to a signal camera+radar already provide.
+- [AUTO] Eval/dev split discipline and fixture versioning per the M2.0 pattern (`thermal-fixtures-v1`, frozen, re-baselining recorded in PROGRESS.md).
+- [MANUAL] Characterization report reviewed and go/no-go decision recorded.
+
+**Gate:** if the [AUTO] gate cannot be met after tuning, Phase 6 stops here by design: the node remains a supported experimental input (M6.1 stands), the report documents why, and M6.3 is not built. This is a valid, successful outcome — the milestone's product is the decision, not the integration.
+
+## M6.3 — Fusion integration & UI (conditional on M6.2 go)
+
+**Deliverables:** thermal presence/features registered as a fusion extractor under the graceful-degradation registry; corroboration rules updated (thermal presence as a corroborating signal for sleep/wake and occupancy, never a sole trigger for distress); Tonight/Devices UI showing thermal presence state and device health — no temperature readouts anywhere in user-facing UI; replay traces extended with thermal channels.
+
+**Testing criteria:**
+
+- [AUTO] Replay suite: full-night replays with thermal channels maintain or improve sleep/wake epoch agreement vs the recorded non-thermal baseline (ratchet — thermal must not degrade fusion), across all input-subset combinations including thermal-only-plus-audio and thermal-absent.
+- [AUTO] Degradation: unpairing the thermal node mid-replay produces valid states with no crash and correct extractor de-registration.
+- [AUTO] Safety assertions: copy lint passes on all thermal UI strings; Playwright asserts no UI surface renders grid temperatures or any °C value from the thermal input; the features-only fusion boundary is enforced by schema (fusion layer has no code path consuming raw grids).
+- [AUTO] Session integrity and corroboration tests from M3.3 re-run green with thermal present.
+- [MANUAL] Bench overnight with thermal fused: timeline reviewed against reality notes; blanket-occlusion periods spot-checked for presence stability.
+
+**Phase 6 exit:** either M6.3 complete with the fusion ratchet green, or M6.2's documented no-go — both close the phase.
+
+---
+
 ## Ongoing (post-milestone) automation
 
 - The full-night replay job (M3.3) and the bench performance gate (M5.2) run nightly on main.

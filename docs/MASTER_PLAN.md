@@ -137,6 +137,12 @@ Sources: 60 GHz mmWave radar nodes (presence + respiration-rate estimation, cont
 
 Reference node: ESP32 + MAX30102/MAX30101 publishing at 1 Hz aggregated readings. Per Section 2, this data feeds trends and fusion features only; it never drives alarms, and the UI presents it as historical context with an accuracy caveat.
 
+### 4.5 Thermal (post-v1, optional)
+
+**Contract:** MQTT on `eeper/{node}/thermal`: `{ts, grid: [32×24 temps, °C, row-major], t_min, t_max, t_mean, quality}` at 2–4 Hz, plus a derived low-rate features message `{ts, presence, presence_confidence, warm_region_area, warm_region_centroid}`. The full grid is published for characterization and debugging; the fusion layer consumes only the derived features.
+
+Reference node: MLX90640 (55° FOV) on I²C, hosted by a Pi capture node (see docs/reference-builds/pi4-all-in-one.md). Per §2, thermal readings are surface temperatures and feed presence/trend features only — never temperature-as-vital-sign, never displayed as a body-temperature readout. Thermal's value hypothesis (presence detection robust to blanket occlusion and lighting, complementary to camera motion and radar) is validated by an explicit characterization gate before fusion integration.
+
 ---
 
 ## 5. Insight Engine
@@ -295,5 +301,5 @@ Remote-access roadmap: v1 ships WireGuard/Tailscale docs (household-only, near-z
 - **WebRTC through strict NATs** for remote users: VPN sidesteps it in v1; TURN is the v1.x answer.
 - **Pi availability/pricing volatility** (2026 RAM-driven price spikes): mitigated by the run-anywhere posture — the Pi is a reference target, not a requirement.
 - **Community scope creep toward medical claims:** mitigated by contribution guidelines and PR templates encoding Section 2.
-- **Open:** trademark check on "eeper"; AGPL vs Apache-2.0 final call; whether ONVIF PTZ control makes v1; minimum supported browser set for WebRTC; post-v1 candidate inputs: thermal (low-res array, e.g. MLX90640, via the MQTT sensor contract as presence/trend features — surface temperature only, never temperature-as-vital-sign, per §2; see reference-builds/pi4-all-in-one.md) and access-point mode for networkless/travel use (idea credited to OpenBabyMonitor; see prior-art.md).
+- **Open:** trademark check on "eeper"; AGPL vs Apache-2.0 final call; whether ONVIF PTZ control makes v1; minimum supported browser set for WebRTC; post-v1 candidate inputs: access-point mode for networkless/travel use (idea credited to OpenBabyMonitor; see prior-art.md). Thermal input, formerly a candidate here, is now specified — see §4.5 and Phase 6.
 
