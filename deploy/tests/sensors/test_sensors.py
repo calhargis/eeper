@@ -64,6 +64,30 @@ def _reading(value: float = 0.5, quality: float = 0.9) -> str:
     return json.dumps({"ts": time.time(), "type": "movement", "value": value, "unit": "index", "quality": quality})
 
 
+def _thermal_features(presence: bool = True) -> str:
+    return json.dumps(
+        {
+            "ts": time.time(),
+            "presence": presence,
+            "presence_confidence": 0.7 if presence else 0.0,
+            "warm_region_area": 0.1 if presence else 0.0,
+            "warm_region_centroid": [0.5, 0.5] if presence else None,
+        }
+    )
+
+
+def _thermal_count(device_id: int) -> int:
+    out = subprocess.run(
+        [
+            *_COMPOSE, "exec", "-T", "-e", f"PGPASSWORD={_pg_password()}", "db",
+            "psql", "-U", "eeper", "-d", "eeper", "-tAc",
+            f"SELECT count(*) FROM thermal_features WHERE device_id = {device_id}",
+        ],
+        cwd=DEPLOY_DIR, capture_output=True, text=True, check=False,
+    ).stdout.strip()
+    return int(out) if out.isdigit() else 0
+
+
 @pytest.fixture(scope="session")
 def admin() -> httpx.Client:
     assert CA_PATH.exists(), f"local CA not found at {CA_PATH}"
@@ -144,3 +168,33 @@ def test_unpair_revokes_the_credential(admin: httpx.Client) -> None:
     time.sleep(1)
     # The revoked account can no longer connect (non-zero exit).
     assert _mqtt_pub(u, pw, f"eeper/dev/{did}/movement", _reading()) != 0
+
+
+def test_thermal_node_pairs_publishes_features_and_isolates(admin: httpx.Client) -> None:
+    # M6.1 pairing parity: a thermal node pairs, publishes, and revokes through the exact
+    # M3.1 flow (no special-casing), and its features land in thermal_features + it reads
+    # online. The M3.1 ACL still isolates it from other devices' subtrees.
+    dev = _pair(admin, "thermal-crib", kind="thermal")
+    did, u, pw = dev["id"], dev["mqtt_username"], dev["mqtt_password"]
+    other = _pair(admin, "thermal-other", kind="thermal")
+
+    assert _thermal_count(did) == 0
+    assert _mqtt_pub(u, pw, f"eeper/dev/{did}/thermal_features", _thermal_features()) == 0
+    for _ in range(30):
+        if _thermal_count(did) >= 1:
+            break
+        time.sleep(1)
+    assert _thermal_count(did) >= 1, "thermal features never landed in thermal_features"
+    online = next(d for d in admin.get("/api/v1/devices").json() if d["id"] == did)["online"]
+    assert online is True
+
+    # A thermal node cannot publish into another device's subtree (ACL isolation holds).
+    before = _thermal_count(other["id"])
+    _mqtt_pub(u, pw, f"eeper/dev/{other['id']}/thermal_features", _thermal_features())
+    time.sleep(3)
+    assert _thermal_count(other["id"]) == before
+
+    # Unpair revokes the credential (same M3.1 flow as any sensor node).
+    assert admin.delete(f"/api/v1/devices/{did}").status_code == 200
+    time.sleep(1)
+    assert _mqtt_pub(u, pw, f"eeper/dev/{did}/thermal_features", _thermal_features()) != 0

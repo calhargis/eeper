@@ -96,3 +96,16 @@ def test_grid_rate_capped_at_max_hz() -> None:
         clock.advance(0.01)
     assert 3 <= published <= int(MAX_HZ) + 1  # ~4 grids in one second
     assert pub.stats.rate_skipped > 0
+
+
+def test_features_are_low_rate_relative_to_grids() -> None:
+    # §4.5: the grid is 2–4 Hz; the derived features are low-rate. Over one second of
+    # 4 Hz grids, features are emitted at most once (the default 1 s cadence).
+    clock = Clock()
+    pub, sink = _publisher(ScriptedSensor([]), clock)
+    for _ in range(100):
+        pub.tick()
+        clock.advance(0.01)
+    features = sum(1 for m, _ in sink if m == FEATURES_METRIC)
+    assert features < pub.stats.published  # strictly fewer feature messages than grids
+    assert features == pub.stats.features_published == 1
