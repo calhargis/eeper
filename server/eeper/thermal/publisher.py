@@ -45,7 +45,8 @@ _T_MAX = 300.0
 class PublishStats:
     """Observable health of the publisher — the raw material for device health."""
 
-    published: int = 0
+    published: int = 0  # grids emitted
+    features_published: int = 0  # low-rate features messages emitted
     read_failures: int = 0  # sensor.read() returned None
     dropped_invalid: int = 0  # a structurally malformed frame
     rate_skipped: int = 0  # ticks skipped to hold the rate cap
@@ -75,8 +76,11 @@ class ThermalPublisher:
     publish: Callable[[str, dict[str, object]], None]  # (metric, payload) sink
     clock: Callable[[], float]  # unix seconds; used for both the rate gate and message ts
     feature_params: FeatureParams = field(default_factory=FeatureParams)
+    # §4.5: the grid is 2–4 Hz for characterization; the derived features are LOW-rate.
+    features_min_interval_s: float = 1.0
     stats: PublishStats = field(default_factory=PublishStats)
     _last_publish: float = -1e18
+    _last_features: float = -1e18
 
     def tick(self) -> bool:
         """Read + maybe publish one frame. Returns True iff a grid was published."""
@@ -106,19 +110,23 @@ class ThermalPublisher:
             t_mean=sum(temps) / len(temps),
             quality=quality,
         )
-        feats = derive_features(temps, self.feature_params)
-        centroid = list(feats.warm_region_centroid) if feats.warm_region_centroid else None
-        feat_msg = ThermalFeaturesMessage(
-            ts=now,
-            presence=feats.presence,
-            presence_confidence=feats.presence_confidence,
-            warm_region_area=feats.warm_region_area,
-            warm_region_centroid=centroid,
-        )
-
         # Validated by construction (pydantic) → a malformed grid can never reach the wire.
         self.publish(GRID_METRIC, grid_msg.model_dump())
-        self.publish(FEATURES_METRIC, feat_msg.model_dump())
         self._last_publish = now
         self.stats.published += 1
+
+        # Derived features ride at their own (lower) cadence — the only signal fusion reads.
+        if now - self._last_features >= self.features_min_interval_s:
+            feats = derive_features(temps, self.feature_params)
+            centroid = list(feats.warm_region_centroid) if feats.warm_region_centroid else None
+            feat_msg = ThermalFeaturesMessage(
+                ts=now,
+                presence=feats.presence,
+                presence_confidence=feats.presence_confidence,
+                warm_region_area=feats.warm_region_area,
+                warm_region_centroid=centroid,
+            )
+            self.publish(FEATURES_METRIC, feat_msg.model_dump())
+            self._last_features = now
+            self.stats.features_published += 1
         return True

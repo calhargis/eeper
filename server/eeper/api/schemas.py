@@ -322,7 +322,7 @@ class NotificationPreferencesIn(BaseModel):
 
 # ── devices + the MQTT sensor contract (M3.1) ────────────────────────────────
 
-DeviceKind = Literal["mmwave", "pir", "other"]
+DeviceKind = Literal["mmwave", "pir", "thermal", "other"]
 
 
 class SensorMessage(BaseModel):

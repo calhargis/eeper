@@ -356,6 +356,28 @@ class PulseOxReading(Base):
     quality: Mapped[float] = mapped_column(Float)  # >= the gate threshold (accepted only)
 
 
+class ThermalFeaturesReading(Base):
+    """Derived thermal features (M6.1, §4.5), a TimescaleDB hypertable keyed on ``ts``.
+    Only the low-rate DERIVED features are stored — presence + warm-region shape, the sole
+    thermal signal the fusion layer consumes (M6.3). The raw 32×24 grid is never persisted
+    here (it is characterization-time only). Surface features only; nothing is a
+    body-temperature readout (§2). Composite ``(ts, id)`` PK for the hypertable reason;
+    ``device_id`` is a logical reference. Centroid is null when no warm region is present."""
+
+    __tablename__ = "thermal_features"
+    __table_args__ = (Index("ix_thermal_device_ts", "device_id", "ts"),)
+
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    household_id: Mapped[str] = mapped_column(String(64), default="default", index=True)
+    device_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    presence: Mapped[bool] = mapped_column(Boolean)
+    presence_confidence: Mapped[float] = mapped_column(Float)
+    warm_region_area: Mapped[float] = mapped_column(Float)
+    centroid_row: Mapped[float | None] = mapped_column(Float, nullable=True)
+    centroid_col: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class PulseOxConsent(Base):
     """An admin's acknowledgment of the pulse-ox disclaimer for a household (M4.2).
 
