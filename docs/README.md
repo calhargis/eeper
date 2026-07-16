@@ -10,6 +10,7 @@ In this directory:
 
 - [install.md](./install.md) — install a secure stack.
 - [hardware.md](./hardware.md) — hardware guide + sample-hardware (reference profile and alternatives).
+- [thermal-node.md](./thermal-node.md) — the optional, experimental MLX90640 thermal capture node (post-v1).
 - [performance.md](./performance.md) — the reference-profile bench gate and how to run it.
 - [development.md](./development.md) — local dev setup and the check workflow.
 - [ci.md](./ci.md) — what CI runs and why.

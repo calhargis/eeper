@@ -49,7 +49,9 @@ tuned for.
 
 mmWave presence + PIR motion nodes sharpen sleep/wake fusion but are entirely optional —
 eeper works camera-only. Build them from the [reference firmware](../firmware/README.md)
-(ESPHome configs + a MicroPython template + the optional MAX3010x pulse-ox node).
+(ESPHome configs + a MicroPython template + the optional MAX3010x pulse-ox node). An
+optional, experimental **thermal** presence node (MLX90640 on a Pi) is documented in
+[thermal-node.md](./thermal-node.md).
 
 ## Storage & retention
 

@@ -30,6 +30,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Hardware-only extra for the thermal capture node (M6.1) — installed on the Pi node,
+# never in the runtime image, so it stays out of the audited runtime dependency closure.
+thermal = [
+  "adafruit-circuitpython-mlx90640>=1.2,<2",
+  "adafruit-blinka>=8,<9",
+]
 dev = [
   "ruff>=0.6,<1.0",
   "mypy>=1.11,<2.0",
