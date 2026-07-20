@@ -391,6 +391,59 @@ An opt-in, per-camera timelapse of a night's sleep (§7.3): stills captured at a
 
 ---
 
+# Phase 8 — Thermal Environment & Sleep Climate (post-v1)
+
+An opt-in sleep-climate surface for the thermal node (§4.5, §7.4): environmental temperature capture (nursery-ambient + crib-surface, occupant-excluded), a relative false-color live heatmap, temperature-vs-sleep trends with own-baseline anomaly notes, and a learned nursery sleep-temperature sweet-spot. **Environmental only** — enforced by schema, copy lint, and Playwright: no body-temperature readout of the infant, no "optimal infant temperature," no fever/illness inference (§2). Opt-in, disclaimer-gated (the M4.2 pulse-ox acknowledgment flow), retention-governed, and independent of the M6.2/M6.3 fusion track — it reads the thermal grid/features, it does not feed fusion.
+
+## M8.1 — Environmental temperature features & storage
+
+**Deliverables:** the node's derived-feature stage gains two _environmental_ temperatures computed from the grid with the occupant (warm/presence) region excluded — a **nursery-ambient** proxy (a stable cool-background statistic) and a **crib/bedding surface** temperature (a configured crib region, occupant-masked) — published low-rate on `eeper/{node}/thermal_environment`: `{ts, ambient_c, crib_surface_c, quality}` with mandatory `quality` (occlusion / too-few-background-cells / stale-frame degrade quality rather than publishing a misleading value); a server ingestor mirroring the M6.1 `ThermalIngestor` / M4.2 pulse-ox pattern; a `thermal_environment` hypertable + nightly continuous aggregate (the M4.1 pattern). No occupant/body temperature is derived, stored, or emitted anywhere.
+
+**Testing criteria:**
+
+- [AUTO] Contract + occupant-exclusion: environment messages validate against the schema; on synthetic scenes with a known warm occupant, `ambient_c`/`crib_surface_c` are computed from occupant-**excluded** cells (a warm body entering the FOV does not move the ambient value beyond tolerance) — the extractor never reports the occupant region as a temperature.
+- [AUTO] Storage + aggregate: features land in `thermal_environment`; the nightly aggregate rolls up per session; device health advances on ingest (M6.1 parity).
+- [AUTO] Quality gate: degraded frames (occlusion, too few background cells, stale) drop with quality degradation, never storing a misleading value.
+- [AUTO] Safety (schema/AST): an assertion that no code path derives, stores, or serializes an occupant/body temperature — only `ambient_c` / `crib_surface_c` / presence exist in the pipeline.
+- [MANUAL] Bench: on the Pi, `ambient_c` tracks a reference room thermometer within a stated tolerance across a room-temperature sweep; the crib-surface reading responds to bedding warmth, not to a person passing through.
+
+## M8.2 — Live thermal view (relative heatmap)
+
+**Deliverables:** an authenticated grid relay (a WebSocket like `/ws/events`, or a thermal channel on the media path) streaming the ≤4 Hz grid to the client; a **Thermal** view rendering it as a **relative false-color heatmap** (normalized per-frame / over a rolling window — awareness, not calibrated temperatures), the occupant shown as _presence_ (outline/badge), never labeled with a temperature; the M8.1 environmental readouts (ambient, crib-surface) shown as separate, clearly-labeled environmental values with an accuracy caveat; live-only (never persisted); opt-in + disclaimer-gated (the M4.2 acknowledgment), viewable by any household member once enabled.
+
+**Testing criteria:**
+
+- [AUTO] Relay + render: Playwright asserts the thermal view subscribes, receives frames, and renders the heatmap; the presence overlay tracks the occupant on a synthetic sequence.
+- [AUTO] Safety (load-bearing): no surface renders a per-pixel or occupant °C; the only numeric temperatures on screen are the occupant-excluded environmental readouts; copy lint passes on all thermal-view strings (awareness framing, no body-temp/medical language); the grid stream is never written to disk.
+- [AUTO] Gating: the view is off until the disclaimer is acknowledged; the relay authorizes the session (household-scoped) exactly like the events socket.
+- [MANUAL] Bench: the live heatmap shows a recognizable warm occupant that moves with the baby, legibly, at crib distance.
+
+## M8.3 — Sleep-climate trends & "unusual tonight"
+
+**Deliverables:** a Trends extension joining `thermal_environment` to `sleep_sessions` (M4.1): a per-night nursery-temperature summary (min/mean/max over the session) charted alongside the night; a **relative anomaly** note computed against the household's own trailing baseline — "tonight ran warmer/cooler than your typical night" — with an explicit band, never a prescribed target; API + CSV export parity with the existing Trends surfaces; admin/viewer role parity.
+
+**Testing criteria:**
+
+- [AUTO] Join + summary: on seeded nights, the per-session temperature summary matches the source series; chart + API return the expected rollups; CSV export round-trips.
+- [AUTO] Anomaly framing: the "unusual tonight" note fires only against the household's own baseline (a seeded warmer night is flagged relative to that household's history, not an absolute threshold); copy lint passes (relative, environmental, no health claim).
+- [AUTO] Roles: the surface follows grandparent-mode gating (M4.3 role-sweep parity).
+- [MANUAL] Usability: a week of nights reads clearly — the temperature curve lines up with the sleep session and the "warmer/cooler than usual" note matches reality.
+
+## M8.4 — Learned nursery sleep-temperature sweet-spot (optional ML seat)
+
+**Deliverables:** an insight job (the §5.4 post-v1 model seat) correlating the nursery-temperature series with M4.1/M3.3 sleep-quality metrics (longest stretch, wake count, settle time) across accumulated nights to surface the temperature band associated with _this_ baby's best-observed sleep — "your baby has tended to sleep longest around 19 °C"; presented as an environmental observation with a confidence / "needs more nights" state and the standard disclaimer; a minimum-nights floor before any sweet-spot is shown; an optional, clearly-labeled pointer to published safe-sleep _room_ ranges as general (non-personalized) environmental information.
+
+**Testing criteria:**
+
+- [AUTO] Correlation logic: on a synthetic corpus where sleep quality is generated to peak in a known temperature band, the job recovers that band within tolerance; below the minimum-nights floor it returns "not enough data yet," never a spurious recommendation.
+- [AUTO] Safety: the output is environmental (a room-temperature band + the observed sleep metric), never a physiological target or an instruction; copy lint passes; any safe-sleep-range text is flagged general information, not personalized advice.
+- [AUTO] Determinism: the insight is reproducible under replay of a fixed night corpus (the M2.0/M3.3 fixture discipline).
+- [MANUAL] Review: the surfaced sweet-spot is sensible against a real multi-week record and reads as awareness, not prescription.
+
+**Phase 8 exit:** M8.1–M8.4 complete (environmental capture → live heatmap → sleep-climate trends → learned sweet-spot), **or** a documented reduced-scope outcome: because the learned sweet-spot (M8.4) is an optional ML seat, shipping M8.1–M8.3 — environmental capture, the live heatmap, and own-baseline temperature-vs-sleep trends — without the learned recommendation is a valid outcome, recorded in PROGRESS.md. The environmental-only boundary — **no infant body temperature, ever** — is non-negotiable across every slice.
+
+---
+
 ## Ongoing (post-milestone) automation
 
 - The full-night replay job (M3.3) and the bench performance gate (M5.2) run nightly on main.

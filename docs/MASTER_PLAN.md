@@ -42,6 +42,7 @@ Therefore:
 3. Notifications are worded as **nudges to check** ("High movement and crying detected — you may want to look in"), never as clinical alerts ("LOW OXYGEN").
 4. No feature may claim to detect, predict, or prevent any medical condition. Contribution guidelines encode this so the boundary survives community PRs.
 5. Onboarding includes a plain-language disclaimer and a link to safe-sleep guidance, and requires acknowledgment before pulse-ox input can be enabled.
+6. **Environmental temperature is not a vital sign.** Where the system reports a temperature, it reports the _environment_ — nursery air and crib/bedding **surface** — as sleep-climate awareness, gated behind the same acknowledgment as pulse-ox. It never assigns a temperature to the infant, never presents a thermal reading as body temperature, and never judges an infant against an "ideal" or "optimal" body temperature. Non-contact IR arrays measure surface radiance at a distance, not core temperature; the boundary is a safety line and a physical fact at once.
 
 This stance is also an engineering simplification: it removes hard-realtime and fail-safe requirements from the pulse-ox path, which would otherwise be impossible to honor on hobbyist hardware.
 
@@ -143,6 +144,8 @@ Reference node: ESP32 + MAX30102/MAX30101 publishing at 1 Hz aggregated readings
 
 Reference node: MLX90640 (55° FOV) on I²C, hosted by a Pi capture node (see docs/reference-builds/pi4-all-in-one.md). Per §2, thermal readings are surface temperatures and feed presence/trend features only — never temperature-as-vital-sign, never displayed as a body-temperature readout. Thermal's value hypothesis (presence detection robust to blanket occlusion and lighting, complementary to camera motion and radar) is validated by an explicit characterization gate before fusion integration.
 
+**Environmental temperature + live view (Phase 8).** Beyond presence, the node derives two _environmental_ temperatures from the grid — a **nursery-ambient** proxy (a stable cool-background region) and a **crib/bedding surface** temperature — always with the occupant (warm) region excluded, published low-rate on `eeper/{node}/thermal_environment`: `{ts, ambient_c, crib_surface_c, quality}`, and stored as a trend series. No occupant/body temperature is ever derived, stored, or shown. A live **thermal view** relays the grid to the client as a **relative false-color heatmap** — awareness, not a thermometer: the occupant renders as _presence_, never as a temperature, and any numeric °C on screen is the occupant-excluded environmental readout. This sharpens the §2/§4.5 boundary rather than loosening it: a relative heatmap and environmental °C are permitted under the pulse-ox acknowledgment flow; a **body-temperature readout of the baby, and any "optimal infant temperature" judgment, remain prohibited** — the schema and UI tests enforce that no occupant temperature value exists in the pipeline. Specified as Phase 8 (§13); it builds on M6.1 and is independent of the M6.2/M6.3 fusion track.
+
 ---
 
 ## 5. Insight Engine
@@ -184,6 +187,8 @@ Pretrained models run via **ONNX Runtime** on CPU by default — chosen because 
 
 The event store doubles as a labeled-data substrate: users can correct states in the UI ("she was actually awake here"), producing training labels for a future personalized sequence model (e.g., a small temporal CNN/transformer over fused features). This is explicitly out of v1 scope but the data schema records everything needed for it.
 
+A second post-v1 model seat is the **sleep-climate** correlation (Phase 8, §7.4): learning, from a household's own accumulated nights, the nursery-temperature band associated with _that_ baby's best-observed sleep. It is an environmental insight computed over the trend store (nursery temperature vs. the M4.1 sleep metrics) — never a physiological target, never a claim about the infant's body.
+
 ---
 
 ## 6. Data Model & Storage
@@ -192,7 +197,7 @@ Single PostgreSQL/TimescaleDB instance, three logical areas:
 
 **Relational (app data):** `users`, `devices` (registered input nodes and their contracts), `cameras`, `sleep_sessions`, `events` (insight events with type, confidence, clip reference), `settings`, `api_tokens`.
 
-**Time series (hypertables):** `sensor_readings` (device_id, ts, metric, value, quality), `state_history` (ts, state_type, value, confidence, contributing_inputs). Continuous aggregates precompute hourly/nightly rollups so trend queries stay fast on a Pi.
+**Time series (hypertables):** `sensor_readings` (device_id, ts, metric, value, quality), `state_history` (ts, state_type, value, confidence, contributing_inputs), and the optional-input series (`pulseox_readings`; `thermal_features` — presence; and, for Phase 8, `thermal_environment` — nursery-ambient + crib-surface temperatures, occupant-excluded). Continuous aggregates precompute hourly/nightly rollups so trend queries stay fast on a Pi.
 
 **Blob storage (filesystem volume):** video segments and event clips under `/data/media`, indexed by the `events` table, with a retention daemon enforcing configurable disk quotas (oldest-first eviction, event clips outlive raw ring-buffer segments).
 
@@ -213,7 +218,7 @@ Backup story: one `pg_dump` plus one media directory — deliberately simple for
 
 Svelte chosen for small bundle size and speed on low-end phones. Installable PWA with push-capable service worker (Web Push for nudges when the app is backgrounded).
 
-Views: **Live** (WebRTC video, current states, sound level), **Tonight** (timeline of the current/most recent night: states, events, tappable clips), **Trends** (sleep duration, wake counts, patterns over weeks), **Devices** (add/manage inputs, connection health), **Settings** (users, notifications, retention, remote access, disclaimers), and (post-v1) **Timelapse** (§7.3).
+Views: **Live** (WebRTC video, current states, sound level), **Tonight** (timeline of the current/most recent night: states, events, tappable clips), **Trends** (sleep duration, wake counts, patterns over weeks — and, post-v1, the nursery sleep-climate: temperature vs. sleep, §7.4), **Devices** (add/manage inputs, connection health), **Settings** (users, notifications, retention, remote access, disclaimers, theme), and (post-v1) **Timelapse** (§7.3) and **Thermal** (§7.4).
 
 Latency budget: WebRTC glass-to-glass < 500 ms on LAN; state event to UI < 2 s; cold page load < 3 s on a mid-range phone over LAN.
 
@@ -222,6 +227,17 @@ Latency budget: WebRTC glass-to-glass < 500 ms on LAN; state event to UI < 2 s; 
 A per-camera, **opt-in** timelapse of a night's sleep. The recorder captures a still at a configurable interval and assembles them into a downloadable video with a **burned-in wall-clock time overlay**, so the hour is legible as the night plays back. Capture can **optionally** densify with motion: when the movement signal (the M2.2 camera-motion score / M3.3 fused activity) shows the baby moving, the interval shortens within a configured `[min, max]` band and lengthens again during stillness — more frames where more happens. From that same movement signal each frame carries an activity value, forming a **sleep movement map** — a relative-activity graph aligned 1:1 to the timelapse and scrubbable alongside playback.
 
 Awareness only: the movement map is relative activity, **never a medical or diagnostic readout** (§2). Timelapse imagery is stored **locally**, off by default, and governed by the retention daemon under its own quota/age policy — it never touches the recording ring buffer or promoted clips. Specified as Phase 7 (§13).
+
+### 7.4 Thermal environment & sleep climate (post-v1)
+
+An **opt-in** surface for the thermal node (§4.5) that turns it from a pure presence sensor into a **sleep-climate** instrument — strictly _environmental_, never physiological (§2):
+
+- **Live thermal view** — the grid relayed to the client as a **relative false-color heatmap** for awareness (like the WebRTC Live view, but thermal). The occupant renders as _presence_; it is never labeled with a temperature. Live-only, not stored.
+- **Environmental readouts** — the current **nursery-ambient** and **crib/bedding surface** temperatures (occupant-excluded, §4.5), shown as environmental context with an accuracy caveat, behind the pulse-ox-style acknowledgment.
+- **Sleep-climate trends** — the nursery temperature over each night, charted alongside the sleep session, with a plain-language _relative_ note: "tonight ran warmer than your typical night." Comparisons are always to the household's **own** baseline, never to a prescribed target.
+- **Learned sweet-spot** (the ML seat, §5.4) — once enough nights accrue, the nursery-temperature band associated with _this_ baby's best-observed sleep (longest stretch / fewest wakes / fastest settle): "your baby has tended to sleep longest around 19 °C." An observation about the **environment**, learned from the family's own data.
+
+Hard boundaries, enforced by copy lint + Playwright + schema: **no body-temperature readout of the infant, no "ideal/optimal infant temperature," no fever or illness inference.** Any reference to published safe-sleep _room_ ranges is general, clearly-labeled environmental information — not personalized advice. Opt-in, disclaimer-gated, retention-governed; independent of the M6.2/M6.3 fusion track. Specified as Phase 8 (§13).
 
 ---
 
@@ -303,6 +319,7 @@ Remote-access roadmap: v1 ships WireGuard/Tailscale docs (household-only, near-z
 
 - **Phase 6 — Thermal input:** MLX90640 low-res presence, characterized behind an explicit go/no-go gate before any fusion integration (§4.5).
 - **Phase 7 — Sleep Timelapse:** opt-in per-camera timelapse with a wall-clock time overlay, optional motion-adaptive capture, and a sleep movement map (§7.3).
+- **Phase 8 — Thermal environment & sleep climate:** opt-in environmental temperature capture (nursery-ambient + crib-surface, occupant-excluded), a relative false-color live heatmap, temperature-vs-sleep trends with own-baseline anomaly notes, and a learned nursery sleep-temperature sweet-spot. Environmental only, never a body-temperature readout or an infant-temperature target (§2, §7.4). Builds on the M6.1 node; independent of the M6.2/M6.3 fusion gate.
 
 ---
 
