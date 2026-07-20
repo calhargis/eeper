@@ -31,6 +31,7 @@ class NodeConfig:
     mqtt_password: str = ""
     grid_hz: float = MAX_HZ  # ≤ 4 Hz; the publisher enforces the cap
     features_min_interval_s: float = 1.0
+    i2c_bus: int = 1  # /dev/i2c-{bus}; 1 is the Pi's default header I²C
 
     @property
     def tick_interval_s(self) -> float:
@@ -56,6 +57,7 @@ class NodeConfig:
             mqtt_password=env.get("EEPER_MQTT_PASSWORD", ""),
             grid_hz=_num("EEPER_THERMAL_GRID_HZ", MAX_HZ),
             features_min_interval_s=_num("EEPER_THERMAL_FEATURES_INTERVAL_S", 1.0),
+            i2c_bus=int(_num("EEPER_THERMAL_I2C_BUS", 1)),
         )
 
 
@@ -126,7 +128,7 @@ def main() -> None:  # pragma: no cover — hardware + broker entrypoint
 
     config = NodeConfig.from_env()
     client = connect_mqtt(config)
-    sensor = MlxThermalSensor.open()
+    sensor = MlxThermalSensor.open(bus=config.i2c_bus)
     publish = topic_publisher(
         lambda topic, body: client.publish(topic, body, qos=1), config.topic_prefix
     )

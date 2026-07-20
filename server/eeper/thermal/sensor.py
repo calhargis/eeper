@@ -75,13 +75,17 @@ class MlxThermalSensor:
         self._buf = [0.0] * (ROWS * COLS)
 
     @classmethod
-    def open(cls, *, i2c_frequency: int = 800_000) -> MlxThermalSensor:  # pragma: no cover
+    def open(cls, *, bus: int = 1, i2c_frequency: int = 800_000) -> MlxThermalSensor:  # pragma: no cover
         # Hardware only — imported lazily (needs the `thermal` extra + a Pi with I²C).
+        # Open the I²C bus by NUMBER (``/dev/i2c-{bus}``) via ExtendedI2C rather than through
+        # ``board``: the MLX90640 needs only I²C, and ``import board`` would drag in the GPIO
+        # pin stack (board auto-detect + RPi.GPIO), which is fragile off bare metal — notably
+        # inside a container, where board detection fails and the GPIO libs can't reach the
+        # hardware. Talking to the bus directly keeps the node deployment-agnostic.
         import adafruit_mlx90640  # type: ignore[import-not-found]
-        import board  # type: ignore[import-not-found]
-        import busio  # type: ignore[import-not-found]
+        from adafruit_extended_bus import ExtendedI2C  # type: ignore[import-not-found]
 
-        i2c = busio.I2C(board.SCL, board.SDA, frequency=i2c_frequency)
+        i2c = ExtendedI2C(bus, frequency=i2c_frequency)
         mlx = adafruit_mlx90640.MLX90640(i2c)
         mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_4_HZ
         return cls(mlx)
