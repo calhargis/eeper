@@ -60,6 +60,44 @@ class _MlxDriver(Protocol):
     def getFrame(self, buf: list[float]) -> object: ...  # noqa: N802 — vendor API name
 
 
+# The §4.5 contract's valid per-cell range. A real MLX90640 emits the occasional
+# out-of-range "dead" pixel (a defective/uncomputable cell reads ~ -273.15 °C); the
+# datasheet allows a few. We repair those from their neighbours so one bad cell doesn't
+# invalidate the whole grid — but treat a large fraction as a genuinely corrupt read.
+_T_LO, _T_HI = -40.0, 300.0
+_MAX_DEAD = 16  # ~2% of 768; beyond this the frame is corrupt, not merely blemished
+
+
+def repair_dead_pixels(
+    grid: list[float], *, lo: float = _T_LO, hi: float = _T_HI, max_dead: int = _MAX_DEAD
+) -> list[float] | None:
+    """Replace out-of-range (dead/stuck) cells with the mean of their in-range neighbours,
+    so a lone defective pixel doesn't fail §4.5 validation. Returns the repaired grid, the
+    same list when nothing is wrong, or ``None`` when too many cells are bad (corrupt read)."""
+    bad = [i for i, v in enumerate(grid) if not math.isfinite(v) or not (lo <= v <= hi)]
+    if not bad:
+        return grid
+    if len(bad) > max_dead:
+        return None
+    badset = set(bad)
+    good = [v for i, v in enumerate(grid) if i not in badset]
+    fallback = sorted(good)[len(good) // 2] if good else 0.0  # frame median
+    out = list(grid)
+    for i in bad:
+        r, c = divmod(i, COLS)
+        neigh = [
+            grid[rr * COLS + cc]
+            for dr in (-1, 0, 1)
+            for dc in (-1, 0, 1)
+            if (dr or dc)
+            and 0 <= (rr := r + dr) < ROWS
+            and 0 <= (cc := c + dc) < COLS
+            and (rr * COLS + cc) not in badset
+        ]
+        out[i] = sum(neigh) / len(neigh) if neigh else fallback
+    return out
+
+
 class MlxThermalSensor:
     """A :class:`ThermalSensor` backed by a real MLX90640 over I²C.
 
@@ -95,4 +133,6 @@ class MlxThermalSensor:
             self._driver.getFrame(self._buf)
         except (ValueError, RuntimeError, OSError):
             return None  # checksum / I²C read failure → the publisher degrades health
-        return list(self._buf)  # snapshot; the driver reuses its buffer
+        # Repair the sensor's occasional dead pixels; a mostly-bad frame reads as a
+        # failed read (None) so the publisher degrades health rather than emit garbage.
+        return repair_dead_pixels(list(self._buf))  # snapshot; the driver reuses its buffer

@@ -10,7 +10,13 @@ import random
 
 from eeper.api.schemas import THERMAL_CELLS, ThermalFeaturesMessage, ThermalGridMessage
 from eeper.thermal.node import NodeConfig, build_publisher, run, topic_publisher
-from eeper.thermal.sensor import MlxThermalSensor, Scene, WarmBlob, render
+from eeper.thermal.sensor import (
+    MlxThermalSensor,
+    Scene,
+    WarmBlob,
+    render,
+    repair_dead_pixels,
+)
 
 
 def _good() -> list[float]:
@@ -116,3 +122,38 @@ def test_mlx_read_returns_full_grid() -> None:
 def test_mlx_read_returns_none_on_driver_error() -> None:
     for exc in (ValueError, RuntimeError, OSError):
         assert MlxThermalSensor(_FakeDriver(raises=exc)).read() is None
+
+
+# ── dead-pixel repair (real MLX90640 emits the odd out-of-range cell) ─────────
+
+
+def test_repair_passes_a_clean_grid_through() -> None:
+    grid = _good()
+    assert repair_dead_pixels(grid) is grid  # nothing bad → same object, untouched
+
+
+def test_repair_fixes_a_lone_dead_pixel() -> None:
+    grid = _good()
+    grid[320] = -273.15  # the MLX90640 dead-pixel sentinel
+    out = repair_dead_pixels(grid)
+    assert out is not None
+    assert -40.0 <= out[320] <= 300.0  # back inside the §4.5 range
+    assert abs(out[320] - 21.0) < 6.0  # interpolated from its ~ambient neighbours
+
+
+def test_repair_drops_a_mostly_bad_frame() -> None:
+    grid = _good()
+    for i in range(20):  # more than the tolerated handful → a corrupt read
+        grid[i] = -273.15
+    assert repair_dead_pixels(grid) is None
+
+
+def test_mlx_read_repairs_dead_pixels() -> None:
+    class _OneDead:
+        def getFrame(self, buf: list[float]) -> None:  # noqa: N802 — vendor API name
+            for i in range(len(buf)):
+                buf[i] = 21.0
+            buf[320] = -273.15
+
+    frame = MlxThermalSensor(_OneDead()).read()
+    assert frame is not None and -40.0 <= frame[320] <= 300.0
