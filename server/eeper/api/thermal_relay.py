@@ -32,7 +32,7 @@ from eeper.api.schemas import ThermalGridMessage
 _log = logging.getLogger("eeper.api.thermal_relay")
 
 _TOPIC = "eeper/dev/+/thermal"
-_MAX_BYTES = 16384  # a 768-float grid JSON is ~6–8 KB; cap well above that
+_MAX_BYTES = 32768  # a full-precision 768-float grid JSON runs ~15 KB; cap well above that
 _QUEUE_MAX = 2000
 
 
