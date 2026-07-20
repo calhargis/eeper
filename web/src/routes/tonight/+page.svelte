@@ -173,9 +173,10 @@
 {#if !ready}
   <p class="loading">Loading…</p>
 {:else}
-  <header>
-    <a href="/" class="back" aria-label="Back">‹ eeper</a>
+  <header class="appbar">
+    <a href="/" class="back" aria-label="Back">‹</a>
     <span class="title">Tonight</span>
+    <span class="spacer"></span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
@@ -303,31 +304,34 @@
 {/if}
 
 <style>
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
+  /* Section views share a centered single column. */
+  .timeline,
+  .notify,
+  .events,
+  .error {
+    width: 100%;
+    max-width: var(--maxw);
+    margin-inline: auto;
   }
   .timeline {
-    padding: 0.5rem 1rem 0.75rem;
+    padding: var(--sp-4) var(--sp-4) var(--sp-2);
   }
   .tl-head {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
-    color: #cbd5ea;
-    margin-bottom: 0.4rem;
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+    margin-bottom: var(--sp-2);
   }
   .tl-range {
-    color: #8a93a6;
+    color: var(--text-muted);
   }
   .track {
     position: relative;
     height: 2.25rem;
-    background: #17233c; /* awake = the track base */
-    border: 1px solid #26314a;
-    border-radius: 0.4rem;
+    background: var(--surface-2); /* awake = the track base */
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
     overflow: hidden;
   }
   .seg {
@@ -337,10 +341,16 @@
     min-width: 1px;
   }
   .seg.asleep {
-    background: #1f6f4a; /* asleep band */
+    background: color-mix(in srgb, var(--accent) 45%, var(--surface)); /* asleep band */
   }
   .seg.distressed {
-    background: repeating-linear-gradient(45deg, #7a2530, #7a2530 5px, #93313d 5px, #93313d 10px);
+    background: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--danger) 55%, var(--surface)),
+      color-mix(in srgb, var(--danger) 55%, var(--surface)) 5px,
+      color-mix(in srgb, var(--danger) 72%, var(--surface)) 5px,
+      color-mix(in srgb, var(--danger) 72%, var(--surface)) 10px
+    );
   }
   .marker {
     position: absolute;
@@ -349,27 +359,27 @@
     width: 0.7rem;
     height: 0.7rem;
     border-radius: 50%;
-    border: 2px solid #0b1220;
-    background: #8a93a6;
+    border: 2px solid var(--bg);
+    background: var(--text-muted);
     cursor: default;
     padding: 0;
   }
   .marker.has-clip {
-    background: #f2c14e;
+    background: var(--warn);
     cursor: pointer;
   }
   .legend {
     display: flex;
-    gap: 1rem;
+    gap: var(--sp-4);
     flex-wrap: wrap;
-    margin-top: 0.4rem;
-    font-size: 0.72rem;
-    color: #8a93a6;
+    margin-top: var(--sp-2);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
   }
   .legend span {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: var(--sp-1);
   }
   .legend .sw {
     width: 0.8rem;
@@ -378,90 +388,88 @@
     display: inline-block;
   }
   .legend .sw.asleep {
-    background: #1f6f4a;
+    background: color-mix(in srgb, var(--accent) 45%, var(--surface));
   }
   .legend .sw.awake {
-    background: #17233c;
-    border: 1px solid #26314a;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
   }
   .legend .sw.distressed {
-    background: #93313d;
+    background: color-mix(in srgb, var(--danger) 72%, var(--surface));
   }
   .legend .sw.dot {
-    background: #f2c14e;
+    background: var(--warn);
     border-radius: 50%;
   }
-  .back {
-    color: #e8ecf5;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .title {
-    font-weight: 600;
-  }
   .who {
-    color: #8a93a6;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   .loading,
   .empty {
     text-align: center;
-    color: #8a93a6;
-    margin: 3rem 1rem;
+    color: var(--text-muted);
+    margin: var(--sp-7) var(--sp-4);
   }
   .notify {
-    margin: 0.5rem 1rem 1rem;
-    padding: 0.75rem 1rem;
-    background: #131c2e;
-    border: 1px solid #26314a;
-    border-radius: 0.5rem;
+    margin: var(--sp-2) auto var(--sp-4);
+    padding: var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-sm);
   }
   .row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: var(--sp-2);
   }
   .quiet {
-    margin-top: 0.6rem;
+    margin-top: var(--sp-3);
   }
   .times {
-    margin-top: 0.5rem;
+    margin-top: var(--sp-2);
     justify-content: flex-start;
-    gap: 0.5rem;
+    gap: var(--sp-2);
   }
   .muted {
-    color: #8a93a6;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   input[type='time'] {
-    background: #0f1626;
-    color: #e8ecf5;
-    border: 1px solid #26314a;
-    border-radius: 0.3rem;
-    padding: 0.25rem 0.4rem;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--r-sm);
+    padding: var(--sp-2) var(--sp-3);
+    min-height: var(--tap);
+    font: inherit;
   }
   .toggle {
-    min-width: 3rem;
-    padding: 0.3rem 0.7rem;
-    border: 1px solid #26314a;
-    border-radius: 0.4rem;
-    background: #0f1626;
-    color: #8a93a6;
+    min-width: 3.5rem;
+    min-height: var(--tap);
+    padding: 0 var(--sp-4);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font: inherit;
+    font-weight: 650;
     cursor: pointer;
   }
   .toggle.on {
-    border-color: #2b6cb0;
-    background: #17233c;
-    color: #7ee0a6;
+    border-color: transparent;
+    background: var(--accent);
+    color: var(--accent-ink);
   }
   .events {
     list-style: none;
-    margin: 0;
-    padding: 0 1rem;
+    margin-block: 0;
+    padding: 0 var(--sp-4);
   }
   .event {
-    border-bottom: 1px solid #1a2336;
+    border-bottom: 1px solid var(--border);
   }
   .head {
     width: 100%;
@@ -469,10 +477,10 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.15rem;
-    padding: 0.7rem 0;
+    padding: var(--sp-4) 0;
     background: none;
     border: none;
-    color: #e8ecf5;
+    color: var(--text);
     text-align: left;
     cursor: pointer;
   }
@@ -480,25 +488,28 @@
     cursor: default;
   }
   .label {
-    font-weight: 600;
+    font-weight: 650;
   }
   .sub {
-    color: #8a93a6;
-    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   .pending {
-    color: #6b7385;
-    font-size: 0.78rem;
+    color: var(--warn);
+    font-size: var(--fs-xs);
   }
   .clip {
     width: 100%;
-    border-radius: 0.4rem;
+    border-radius: var(--r-sm);
     background: #000;
-    margin: 0.25rem 0 0.75rem;
+    margin: var(--sp-2) 0 var(--sp-4);
   }
   .error {
-    color: #ff8f8f;
-    padding: 0 1rem;
-    font-size: 0.9rem;
+    color: var(--danger);
+    background: var(--danger-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-3) var(--sp-4);
+    margin-block: var(--sp-2);
+    font-size: var(--fs-sm);
   }
 </style>

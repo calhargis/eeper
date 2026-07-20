@@ -132,9 +132,10 @@
 {#if !ready}
   <p class="loading">Loading…</p>
 {:else}
-  <header>
-    <a href="/" class="back" aria-label="Back">‹ eeper</a>
+  <header class="appbar">
+    <a href="/" class="back" aria-label="Back">‹</a>
     <span class="title">Devices</span>
+    <span class="spacer"></span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
@@ -235,124 +236,125 @@
 {/if}
 
 <style>
-  header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid #1b2537;
-  }
-  .back {
-    color: #7fb0e8;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .title {
-    font-weight: 700;
-  }
   .who {
-    margin-left: auto;
-    color: #8a93a6;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   .loading {
     text-align: center;
-    margin: 3rem;
-    color: #8a93a6;
+    margin: var(--sp-7) auto;
+    color: var(--text-muted);
   }
   main {
-    max-width: 34rem;
-    margin: 1rem auto;
-    padding: 0 1rem;
+    max-width: var(--maxw);
+    margin: var(--sp-4) auto;
+    padding: 0 var(--sp-4);
     line-height: 1.5;
   }
   section {
-    margin-bottom: 1.75rem;
+    margin-bottom: var(--sp-6);
   }
   h2 {
-    font-size: 1.05rem;
-    margin: 0 0 0.6rem;
+    font-size: var(--fs-lg);
+    margin: 0 0 var(--sp-3);
   }
   form {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
+    gap: var(--sp-3);
     align-items: flex-end;
   }
   label {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.85rem;
+    gap: var(--sp-1);
+    font-size: var(--fs-sm);
+    color: var(--text-2);
     flex: 1 1 10rem;
   }
   input,
   select {
-    padding: 0.5rem;
-    font-size: 1rem;
-    background: #131c2e;
-    color: inherit;
-    border: 1px solid #26314a;
-    border-radius: 0.4rem;
+    min-height: var(--tap);
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-base);
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--r-sm);
+  }
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--ring);
   }
   button {
-    padding: 0.55rem 0.9rem;
-    font-size: 0.95rem;
+    min-height: var(--tap);
+    padding: 0 var(--sp-5);
+    font-size: var(--fs-base);
+    font-weight: 650;
     cursor: pointer;
-    background: #2b6cb0;
-    color: #fff;
-    border: none;
-    border-radius: 0.4rem;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 1px solid transparent;
+    border-radius: var(--r-pill);
+  }
+  button:hover {
+    background: var(--accent-strong);
   }
   button:disabled {
     opacity: 0.5;
     cursor: default;
   }
   button.ghost {
-    background: #17233c;
-    color: #cbd5ea;
-    border: 1px solid #26314a;
-    padding: 0.35rem 0.6rem;
-    font-size: 0.8rem;
+    background: transparent;
+    color: var(--text-2);
+    border: 1px solid var(--border-hi);
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-sm);
+  }
+  button.ghost:hover {
+    background: var(--surface-2);
   }
   .creds {
-    border: 1px solid #3a5a2a;
-    background: #14200f;
-    border-radius: 0.5rem;
-    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--warn-subtle);
+    border-radius: var(--r);
+    padding: var(--sp-4);
+    box-shadow: var(--shadow-sm);
   }
   .creds h3 {
-    margin: 0 0 0.4rem;
+    margin: 0 0 var(--sp-2);
   }
   .warn {
-    color: #d7c98a;
-    font-size: 0.85rem;
-    margin: 0 0 0.75rem;
+    color: var(--warn);
+    font-size: var(--fs-sm);
+    margin: 0 0 var(--sp-3);
   }
   dl {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 0.4rem 0.9rem;
-    margin: 0 0 0.9rem;
+    gap: var(--sp-2) var(--sp-4);
+    margin: 0 0 var(--sp-4);
     align-items: center;
   }
   dt {
-    color: #8a93a6;
-    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   dd {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--sp-2);
     flex-wrap: wrap;
   }
   code {
-    background: #0b1220;
-    border: 1px solid #26314a;
-    border-radius: 0.3rem;
-    padding: 0.2rem 0.4rem;
-    font-size: 0.85rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: var(--sp-1) var(--sp-2);
+    font-size: var(--fs-sm);
     word-break: break-all;
   }
   ul {
@@ -361,21 +363,23 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--sp-2);
   }
   li {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 0.8rem;
-    background: #101a2b;
-    border: 1px solid #1b2537;
-    border-radius: 0.5rem;
+    gap: var(--sp-3);
+    min-height: var(--tap);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-sm);
   }
   .meta {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: var(--sp-1);
     margin-right: auto;
     min-width: 0;
   }
@@ -383,40 +387,45 @@
     font-weight: 600;
   }
   .kind {
-    color: #8a93a6;
-    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
   .seen {
-    color: #8a93a6;
-    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
   }
   .badge {
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 999px;
+    font-size: var(--fs-xs);
+    font-weight: 650;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
     white-space: nowrap;
+    border: 1px solid transparent;
   }
   .badge.online {
-    background: #123a1c;
-    color: #7ee08a;
+    background: var(--accent-subtle);
+    color: var(--ok);
   }
   .badge.offline {
-    background: #3a1c12;
-    color: #e88a7e;
+    background: var(--danger-subtle);
+    color: var(--danger);
   }
   .badge.unknown {
-    background: #23293a;
-    color: #9aa4bb;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border-color: var(--border);
   }
   .muted {
-    color: #8a93a6;
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   .error {
-    color: #ff8f8f;
-    font-size: 0.9rem;
+    color: var(--danger);
+    background: var(--danger-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-3) var(--sp-4);
+    font-size: var(--fs-sm);
   }
 </style>

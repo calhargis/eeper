@@ -64,9 +64,10 @@
 {#if !ready}
   <p class="loading">Loading…</p>
 {:else}
-  <header>
-    <a href="/" class="back" aria-label="Back">‹ eeper</a>
+  <header class="appbar">
+    <a href="/" class="back" aria-label="Back">‹</a>
     <span class="title">Trends</span>
+    <span class="spacer"></span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
@@ -99,7 +100,7 @@
         <h2>Sleep per night</h2>
         <BarChart
           values={nightly.map((n) => hours(n.total_sleep_s))}
-          color="#1f6f4a"
+          color="var(--ok)"
           label="Hours asleep per night"
           testid="sleep-chart"
           format={(v) => `${v.toFixed(1)} h`}
@@ -110,7 +111,7 @@
         <h2>Wakes per night</h2>
         <BarChart
           values={nightly.map((n) => n.wakes)}
-          color="#b0722b"
+          color="var(--warn)"
           label="Awakenings per night"
           testid="wakes-chart"
           format={(v) => `${v} wakes`}
@@ -122,7 +123,7 @@
           <h2>Week over week (avg sleep)</h2>
           <BarChart
             values={weekly.map((w) => hours(w.avg_sleep_s))}
-            color="#2b6cb0"
+            color="var(--accent)"
             label="Average hours asleep per week"
             testid="weekly-chart"
             format={(v) => `${v.toFixed(1)} h avg`}
@@ -145,81 +146,67 @@
 {/if}
 
 <style>
-  header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid #1b2537;
-  }
-  .back {
-    color: #7fb0e8;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .title {
-    font-weight: 700;
-  }
   .who {
     margin-left: auto;
-    color: #8a93a6;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
   }
   .loading,
   .empty {
     text-align: center;
-    margin: 3rem 1rem;
-    color: #8a93a6;
+    margin: var(--sp-6) var(--sp-4);
+    color: var(--text-muted);
   }
   main {
-    max-width: 34rem;
-    margin: 1rem auto;
-    padding: 0 1rem;
+    max-width: var(--maxw);
+    margin: var(--sp-4) auto;
+    padding: 0 var(--sp-4);
   }
   .cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
-    margin-bottom: 1.5rem;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-5);
   }
   .card {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-    padding: 0.7rem 0.9rem;
-    background: #101a2b;
-    border: 1px solid #1b2537;
-    border-radius: 0.5rem;
+    gap: var(--sp-1);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
   }
   .card .k {
-    color: #8a93a6;
-    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
   }
   .card .v {
-    font-size: 1.35rem;
+    font-size: var(--fs-xl);
     font-weight: 700;
   }
   .chart {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--sp-5);
   }
   .chart h2 {
-    font-size: 0.95rem;
-    margin: 0 0 0.4rem;
-    color: #cbd5ea;
+    font-size: var(--fs-sm);
+    margin: 0 0 var(--sp-2);
+    color: var(--text-2);
   }
   .export {
     display: inline-block;
-    margin-top: 0.5rem;
-    padding: 0.55rem 0.9rem;
-    background: #17233c;
-    color: #e8ecf5;
-    border: 1px solid #26314a;
-    border-radius: 0.4rem;
+    min-height: var(--tap);
+    margin-top: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--r-sm);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
   }
   .error {
-    color: #ff8f8f;
-    font-size: 0.9rem;
+    color: var(--danger);
+    font-size: var(--fs-sm);
   }
 </style>
