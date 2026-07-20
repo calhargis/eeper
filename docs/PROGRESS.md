@@ -24,6 +24,7 @@ Tracks progress against [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md). Upda
 | Phase 5 — Hardening & release | M5.1–M5.2 | 🔨 in progress (M5.1 slice 1: supply-chain scanning) |
 | Phase 6 — Thermal input (post-v1) | M6.1–M6.3 | ⬜ not started |
 | Phase 7 — Sleep Timelapse (post-v1) | M7.1–M7.3 | ⬜ not started |
+| Phase 8 — Thermal environment & sleep climate (post-v1) | M8.1–M8.4 | ⬜ not started |
 
 **Currently working on:** M2.3 (audio nudges: sound-level + experimental cry) in review; M2.0 fixture library in review
 **Blockers:** none
@@ -468,10 +469,48 @@ far-field corpus, and a **train split**; then re-run training.
 
 ---
 
+## Phase 8 — Thermal Environment & Sleep Climate (post-v1)
+
+Opt-in sleep-climate surface for the thermal node (§4.5, §7.4). **Environmental only** — no infant body-temperature readout, no "optimal infant temperature," no fever/illness inference (§2), enforced by schema + copy lint + Playwright. Builds on the M6.1 node; independent of the M6.2/M6.3 fusion track.
+
+### M8.1 — Environmental temperature features & storage — ⬜
+
+- [ ] [A] Occupant-excluded `ambient_c` + `crib_surface_c` derived; a warm body in the FOV doesn't move ambient beyond tolerance
+- [ ] [A] `thermal_environment` hypertable + nightly aggregate; device health advances on ingest (M6.1 parity)
+- [ ] [A] Quality gate: occlusion / too-few-background / stale frames drop with quality degradation
+- [ ] [A] Safety (schema/AST): no code path derives, stores, or serializes an occupant/body temperature
+- [ ] [M] Bench: `ambient_c` tracks a reference room thermometer across a sweep; crib-surface responds to bedding, not passers-by — ______
+
+### M8.2 — Live thermal view (relative heatmap) — ⬜
+
+- [ ] [A] Authenticated grid relay + view renders a relative false-color heatmap; presence overlay tracks the occupant (Playwright)
+- [ ] [A] Safety (load-bearing): no per-pixel/occupant °C on screen; only occupant-excluded environmental readouts; copy lint green; grid never written to disk
+- [ ] [A] Gating: off until disclaimer acknowledged; relay household-scoped like the events socket
+- [ ] [M] Bench: live heatmap shows a recognizable warm occupant that moves with the baby, at crib distance — ______
+
+### M8.3 — Sleep-climate trends & "unusual tonight" — ⬜
+
+- [ ] [A] `thermal_environment` ⋈ `sleep_sessions`: per-night temp summary + chart; API + CSV round-trip
+- [ ] [A] Anomaly note fires only vs the household's own baseline (not an absolute threshold); copy lint green (relative, environmental)
+- [ ] [A] Roles: surface follows grandparent-mode gating (M4.3 parity)
+- [ ] [M] A week of nights reads clearly; temp curve lines up with sleep; "warmer/cooler than usual" matches reality — ______
+
+### M8.4 — Learned nursery sleep-temperature sweet-spot (optional ML seat) — ⬜
+
+- [ ] [A] On a synthetic corpus peaking in a known temp band, the job recovers it; below the min-nights floor it returns "not enough data yet"
+- [ ] [A] Safety: output is an environmental band + observed sleep metric, never a physiological target; copy lint green; safe-sleep-range text flagged general info
+- [ ] [A] Deterministic under replay of a fixed night corpus (M2.0/M3.3 discipline)
+- [ ] [M] Surfaced sweet-spot is sensible against a real multi-week record; reads as awareness, not prescription — ______
+
+- **Scope note:** the learned sweet-spot (M8.4) is an optional ML seat — shipping M8.1–M8.3 (environmental capture + live heatmap + own-baseline trends) without it is a valid reduced-scope outcome, recorded here if taken. The environmental-only boundary (no infant body temperature, ever) is non-negotiable across every slice.
+
+---
+
 ## Change log
 
 | Date | Change |
 | ---- | ------ |
+| 2026-07-20 | Phase 8 (Thermal Environment & Sleep Climate) planned; §7.4 defined; the §2 boundary sharpened. Docs-only, no implementation — turns the M6.1 thermal node from a pure presence sensor into an opt-in _sleep-climate_ instrument, strictly environmental. MASTER_PLAN: §2 gains point 6 (**environmental temperature is not a vital sign** — the system never assigns a temperature to the infant, never presents a thermal reading as body temperature, never judges an "optimal" infant temperature; a safety line and a physical fact at once); §4.5 gains the environmental features (`ambient_c` + `crib_surface_c`, occupant-excluded, on `eeper/{node}/thermal_environment`) + the live relative false-color heatmap, explicitly _sharpening_ (not loosening) the boundary vs M6.3's "no °C in UI" — relative heatmap + environmental °C are allowed under the pulse-ox acknowledgment, a baby body-temperature readout stays prohibited; §5.4 gains the sleep-climate model seat; §6 lists the `thermal_environment` hypertable; §7 Views gains **Thermal** + a new **§7.4 Thermal environment & sleep climate**; §13 gains **Phase 8**. IMPLEMENTATION_PLAN gains **Phase 8** — M8.1 environmental features + storage (occupant-excluded ambient/crib-surface, `thermal_environment` hypertable, schema/AST safety assertion); M8.2 live thermal view (authenticated grid relay → relative heatmap, occupant as presence not a temperature, load-bearing "no occupant °C on screen" test, disclaimer-gated, never persisted); M8.3 sleep-climate trends + own-baseline "unusual tonight" anomaly; M8.4 optional ML seat — learned nursery sleep-temperature sweet-spot from the family's own nights, with a min-nights floor — plus a reduced-scope exit (M8.1–M8.3 without M8.4 is valid). PROGRESS gains the Phase 8 status row + milestone block. The environmental-only boundary (no infant body temperature, ever) is enforced across every slice by schema, copy lint, and Playwright. Reframed from a request for a baby body-temperature readout + "optimal temperature" (declined per §2 + sensor physics) into the environmental sleep-climate feature. No code yet — plan of record. |
 | 2026-07-20 | Mobile redesign + user theming (web, UI-only). A full mobile-first visual redesign of the PWA on a new "calm nightlight" design system (`web/src/app.css`) built entirely on CSS custom-property tokens — warm-charcoal surfaces, soft cream text, one muted-teal accent, amber/red semantics; light + dark, following the system with a manual override winning both. Every route restyled from the tokens (no hardcoded hex): the shell gains a role-aware fixed bottom tab bar (grandparent mode → Live + Tonight only) + a desktop pill nav; redesigned home / login / first-boot / 2FA; and re-tokened tonight / live / trends / devices / pulseox / settings + the shared `BarChart`. **User themes:** every derived token is now a `color-mix()` of ~8 BASE tokens, so a palette is just those base colors — new `web/src/lib/theme.ts` ships 8 presets (Calm nightlight, Midnight, Amethyst, Forest, Ember, Rosewood, Daylight, Parchment) + a Custom editor (per-category Hue/Saturation/Lightness sliders, live apply, WCAG-luminance auto-contrast for button ink); the choice persists per-device in localStorage and an `app.html` head-script applies it before first paint (no flash). Settings gains an **Appearance** section (3×3 preset grid + the custom editor). All e2e-critical testids/accessible names preserved — audited every Playwright spec and kept a stable hidden "Sign in" heading behind the "Welcome back" display title. `svelte-check` + `eslint` + `prettier` clean; theming engine verified end-to-end (preset + custom render) at mobile width. No server / contract / safety-surface changes; pulse-ox disclaimers + gating untouched. |
 | 2026-07-14 | Phase 7 (Sleep Timelapse) planned; §7.3 defined. Docs-only, no implementation — a future feature captured across the planning docs. MASTER_PLAN gains **§7.3 Sleep Timelapse** (opt-in per-camera timelapse: stills at a configurable interval → an MP4 with a burned-in wall-clock time overlay; optional motion-adaptive capture density driven read-only by the M2.2/M3.3 movement signal; a per-frame sleep movement map — a relative-activity graph aligned 1:1 to the timelapse — awareness only, never medical, local-only, off by default, retention-governed), a Views mention, and a §13 roadmap **Post-v1 phases** block that now lists both Phase 6 (thermal) and Phase 7 (the roadmap had not been updated for thermal). IMPLEMENTATION_PLAN gains **Phase 7** — M7.1 fixed-interval capture + assembly + time overlay; M7.2 motion-adaptive cadence + the movement map (with a clean fixed-interval fallback); M7.3 the Timelapse UI (configure, playback with the time overlay + a map synced to the video, role-gated) — with an explicit reduced-scope exit since motion-adaptation is optional. PROGRESS gains the Phase 7 status row + milestone block. |
 | 2026-07-14 | M6.1 slice 3 (MLX90640 hardware entrypoint + node docs) — **finishes the M6.1 deliverables**. The Pi node that runs the slice-1 publisher against real hardware. Adds `MlxThermalSensor` (a `ThermalSensor` backed by the MLX90640 — the vendor driver fills a 768-value buffer and raises on a checksum/read failure, which becomes `None` so the publisher degrades health; constructed with any `getFrame(buf)` object so the adapter is testable, with `open()` lazily importing the CircuitPython stack for the real device), a `node` module (env-driven `NodeConfig`, a `(metric, payload)` → `eeper/dev/{id}/{metric}` topic mapping, `build_publisher`, and a self-healing `run` loop), and the `python -m eeper.thermal` entrypoint (connects to the bus AS the paired device over TLS + drives the loop). The MLX90640 driver is a **`thermal` optional extra** installed only on the node — confirmed absent from the audited runtime dependency closure, so it adds no CVE surface to the shipped image. New `docs/thermal-node.md` (hardware, wiring, pairing, install, env config, run) linked from the hardware guide + docs index. Tests cover the testable glue — config parsing + 4 Hz cap, the topic mapping, the self-healing loop (read failures don't raise + recovery), and the MLX read adapter (full grid on success, `None` on a driver error) — hardware `open()` + broker connect stay the [MANUAL] bench. Remaining M6.1: the physical 24 h bench ([MANUAL]). Next: M6.2 characterization + the presence go/no-go gate. |
