@@ -32,11 +32,13 @@ from eeper.api.routers import (
     fusion,
     pulseox,
     system,
+    thermal,
     tokens,
     trends,
     users,
 )
 from eeper.api.thermal_ingestion import ThermalIngestor
+from eeper.api.thermal_relay import ThermalGridHub, ThermalGridRelay
 
 
 @asynccontextmanager
@@ -51,6 +53,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     fusion = FusionWorker(get_sessionmaker(), settings)  # M3.3: sleep/wake + distress fusion
     pulseox = PulseOxIngestor(get_sessionmaker(), settings)  # M4.2: quality-gated pulse-ox
     thermal = ThermalIngestor(get_sessionmaker(), settings)  # M6.1: thermal features
+    thermal_grid_hub = ThermalGridHub()  # M8.2: live grid fan-out to the Thermal view
+    thermal_relay = ThermalGridRelay(thermal_grid_hub, settings)
+    app.state.thermal_grid_hub = thermal_grid_hub  # the /ws/thermal endpoint registers here
+    app.state.thermal_relay = thermal_relay
     app.state.gateway = gateway
     app.state.monitor = monitor
     app.state.hub = hub  # the /ws/events endpoint registers clients here
@@ -65,9 +71,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await fusion.start()  # per-epoch fuse of every extractor -> fused_states transitions
     await pulseox.start()  # subscribe eeper/dev/+/pulseox -> quality-gate -> pulseox_readings
     await thermal.start()  # subscribe eeper/dev/+/thermal_features -> thermal_features
+    await thermal_relay.start()  # subscribe eeper/dev/+/thermal grid -> live WS heatmap fan-out
     try:
         yield
     finally:
+        await thermal_relay.stop()
         await thermal.stop()
         await pulseox.stop()
         await fusion.stop()
@@ -108,5 +116,6 @@ v1.include_router(events.router)
 v1.include_router(fusion.router)
 v1.include_router(trends.router)
 v1.include_router(pulseox.router)
+v1.include_router(thermal.router)
 
 app.include_router(v1)
