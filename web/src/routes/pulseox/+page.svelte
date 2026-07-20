@@ -83,9 +83,10 @@
 {#if !ready}
   <p class="loading">Loading…</p>
 {:else}
-  <header>
-    <a href="/" class="back" aria-label="Back">‹ eeper</a>
+  <header class="appbar">
+    <a href="/" class="back" aria-label="Back">‹</a>
     <span class="title">Pulse-ox</span>
+    <span class="spacer"></span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
@@ -148,86 +149,72 @@
 {/if}
 
 <style>
-  header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid #1b2537;
-  }
-  .back {
-    color: #7fb0e8;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .title {
-    font-weight: 700;
-  }
   .who {
-    margin-left: auto;
-    color: #8a93a6;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
   }
   .loading,
   .empty {
     text-align: center;
-    margin: 2rem 1rem;
-    color: #8a93a6;
+    margin: var(--sp-5) var(--sp-4);
+    color: var(--text-muted);
   }
   main {
-    max-width: 34rem;
-    margin: 1rem auto;
-    padding: 0 1rem;
+    max-width: var(--maxw);
+    margin: var(--sp-4) auto;
+    padding: 0 var(--sp-4);
   }
   .caveat {
-    margin: 0 0 1.25rem;
-    padding: 0.6rem 0.8rem;
-    background: #17233c;
-    border: 1px solid #26314a;
-    border-left: 3px solid #7a5bb0;
-    border-radius: 0.4rem;
-    color: #cbd5ea;
-    font-size: 0.85rem;
+    margin: 0 0 var(--sp-5);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--warn-subtle);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warn);
+    border-radius: var(--r-sm);
+    color: var(--text-2);
+    font-size: var(--fs-xs);
   }
   .disclaimer {
-    background: #101a2b;
-    border: 1px solid #1b2537;
-    border-radius: 0.5rem;
-    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: var(--sp-4);
+    box-shadow: var(--shadow-sm);
   }
   .disclaimer h2,
   .trend h2 {
-    font-size: 0.95rem;
-    margin: 0 0 0.6rem;
-    color: #cbd5ea;
+    font-size: var(--fs-base);
+    margin: 0 0 var(--sp-3);
+    color: var(--text);
   }
   .disclaimer .text {
-    color: #b6bfd0;
-    font-size: 0.9rem;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
     line-height: 1.5;
     white-space: pre-line;
   }
   .link {
     display: inline-block;
-    margin: 0.6rem 0;
-    color: #7fb0e8;
-    font-size: 0.85rem;
+    margin: var(--sp-3) 0;
+    color: var(--accent);
+    font-size: var(--fs-xs);
   }
   .note {
-    color: #8a93a6;
-    font-size: 0.85rem;
-    margin: 0.6rem 0 0;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    margin: var(--sp-3) 0 0;
   }
   .ack {
     display: block;
     width: 100%;
-    margin-top: 0.8rem;
-    padding: 0.6rem;
-    background: #7a5bb0;
-    color: #fff;
+    min-height: var(--tap);
+    margin-top: var(--sp-4);
+    padding: var(--sp-3);
+    background: var(--accent);
+    color: var(--accent-ink);
     border: none;
-    border-radius: 0.4rem;
-    font-size: 0.9rem;
+    border-radius: var(--r-sm);
+    font-size: var(--fs-sm);
     font-weight: 600;
     cursor: pointer;
   }
@@ -236,7 +223,7 @@
     cursor: default;
   }
   .error {
-    color: #ff8f8f;
-    font-size: 0.9rem;
+    color: var(--danger);
+    font-size: var(--fs-sm);
   }
 </style>

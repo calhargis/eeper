@@ -11,6 +11,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="eeper" />
+    <script>
+      // Apply the saved theme (lib/theme.ts) before first paint — no flash of the
+      // default palette. A theme is just base color vars + a mode; app.css derives the
+      // rest. Mirrors applyTheme(); kept tiny and dependency-free.
+      (function () {
+        try {
+          var t = JSON.parse(localStorage.getItem('eeper-theme'));
+          if (t && t.vars && t.mode) {
+            var r = document.documentElement;
+            r.setAttribute('data-theme', t.mode);
+            for (var k in t.vars) r.style.setProperty('--' + k, t.vars[k]);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', t.vars.bg);
+          }
+        } catch (e) {}
+      })();
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

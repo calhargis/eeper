@@ -4,7 +4,7 @@
   let {
     values,
     labels = [],
-    color = '#2b6cb0',
+    color = 'var(--accent)',
     label = '',
     testid = 'chart',
     format = (v: number) => v.toFixed(1),

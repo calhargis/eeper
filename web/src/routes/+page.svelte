@@ -165,162 +165,330 @@
   <title>eeper</title>
 </svelte:head>
 
-<main>
-  <h1>eeper</h1>
+<main class="home container">
+  <header class="brand">
+    <span class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" />
+      </svg>
+    </span>
+    <div>
+      <h1>eeper</h1>
+      <p class="tagline muted">Your little one's night, at a glance.</p>
+    </div>
+  </header>
 
   {#if view === 'loading'}
-    <p>Loading…</p>
+    <div class="card"><p class="muted">Loading…</p></div>
   {:else if view === 'first-boot'}
-    <h2>Create your admin account</h2>
-    <p class="muted">First-time setup. There are no default credentials.</p>
-    <form onsubmit={submitFirstBoot}>
-      <label
-        >Username<input
-          bind:value={username}
-          autocomplete="username"
-          required
-          minlength="3"
-        /></label
-      >
-      <label
-        >Password<input
-          type="password"
-          bind:value={password}
-          autocomplete="new-password"
-          required
-          minlength={MIN_PASSWORD}
-        /></label
-      >
-      <label
-        >Confirm password<input
-          type="password"
-          bind:value={confirm}
-          autocomplete="new-password"
-          required
-        /></label
-      >
-      <button type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create admin'}</button>
-    </form>
+    <section class="card auth">
+      <h2>Create your admin account</h2>
+      <p class="muted">First-time setup. There are no default credentials.</p>
+      <form onsubmit={submitFirstBoot} class="stack">
+        <label
+          >Username<input
+            class="input"
+            bind:value={username}
+            autocomplete="username"
+            required
+            minlength="3"
+          /></label
+        >
+        <label
+          >Password<input
+            class="input"
+            type="password"
+            bind:value={password}
+            autocomplete="new-password"
+            required
+            minlength={MIN_PASSWORD}
+          /></label
+        >
+        <label
+          >Confirm password<input
+            class="input"
+            type="password"
+            bind:value={confirm}
+            autocomplete="new-password"
+            required
+          /></label
+        >
+        <button class="btn btn--primary btn--block" type="submit" disabled={busy}
+          >{busy ? 'Creating…' : 'Create admin'}</button
+        >
+      </form>
+    </section>
   {:else if view === 'login'}
-    <h2>Sign in</h2>
-    <form onsubmit={submitLogin}>
-      <label>Username<input bind:value={username} autocomplete="username" required /></label>
-      <label
-        >Password<input
-          type="password"
-          bind:value={password}
-          autocomplete="current-password"
-          required
-        /></label
-      >
-      <button type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
-    </form>
+    <section class="card auth">
+      <!-- The heading is a stable "Sign in" (the e2e sign-in guard selects on it);
+           "Welcome back" is the visible display title. -->
+      <h2 class="visually-hidden">Sign in</h2>
+      <p class="auth-title">Welcome back</p>
+      <p class="muted">Sign in to check on tonight.</p>
+      <form onsubmit={submitLogin} class="stack">
+        <label
+          >Username<input
+            class="input"
+            bind:value={username}
+            autocomplete="username"
+            required
+          /></label
+        >
+        <label
+          >Password<input
+            class="input"
+            type="password"
+            bind:value={password}
+            autocomplete="current-password"
+            required
+          /></label
+        >
+        <button class="btn btn--primary btn--block" type="submit" disabled={busy}
+          >{busy ? 'Signing in…' : 'Sign in'}</button
+        >
+      </form>
+    </section>
   {:else if view === 'totp'}
-    <h2>Two-factor code</h2>
-    <p class="muted">Enter the 6-digit code from your authenticator app.</p>
-    <form onsubmit={submitTotp}>
-      <label
-        >Code<input
-          bind:value={totpCode}
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          required
-        /></label
-      >
-      <button type="submit" disabled={busy}>{busy ? 'Verifying…' : 'Verify'}</button>
-    </form>
+    <section class="card auth">
+      <h2>Two-factor code</h2>
+      <p class="muted">Enter the 6-digit code from your authenticator app.</p>
+      <form onsubmit={submitTotp} class="stack">
+        <label
+          >Code<input
+            class="input"
+            bind:value={totpCode}
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            required
+          /></label
+        >
+        <button class="btn btn--primary btn--block" type="submit" disabled={busy}
+          >{busy ? 'Verifying…' : 'Verify'}</button
+        >
+      </form>
+    </section>
   {:else if view === 'authed' && user}
-    <h2>Signed in</h2>
-    <p>You are signed in as <strong>{user.username}</strong> ({user.role}).</p>
-    <a class="cta" href="/live">Open live view</a>
-    <a class="cta secondary" href="/tonight">Tonight</a>
-    {#if isAdmin}
-      <a class="cta secondary" href="/trends">Trends</a>
-      <a class="cta secondary" href="/devices">Devices</a>
-      {#if pulseoxProfile}<a class="cta secondary" href="/pulseox">Pulse-ox</a>{/if}
-      <a class="cta secondary" href="/settings">Settings</a>
-    {/if}
-    <button type="button" onclick={logout}>Sign out</button>
+    <section class="authed stack">
+      <div class="welcome">
+        <span class="pill pill--ok">Signed in</span>
+        <p class="muted">as <strong>{user.username}</strong> · {user.role}</p>
+      </div>
+      <h2 class="visually-hidden">Signed in</h2>
+
+      <a class="hero-cta" href="/live">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          aria-hidden="true"
+        >
+          <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="3" />
+        </svg>
+        <span>Open live view</span>
+      </a>
+
+      <nav class="tiles" aria-label="Sections">
+        <a class="tile" href="/tonight">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" /></svg
+          ><span>Tonight</span>
+        </a>
+        {#if isAdmin}
+          <a class="tile" href="/trends">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              aria-hidden="true"><path d="M3 3v18h18" /><path d="M7 14l4-4 3 3 5-6" /></svg
+            ><span>Trends</span>
+          </a>
+          <a class="tile" href="/devices">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+              ><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M9 9h6v6H9z" /></svg
+            ><span>Devices</span>
+          </a>
+          {#if pulseoxProfile}
+            <a class="tile" href="/pulseox">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                aria-hidden="true"><path d="M3 12h4l2 6 4-14 2 8h6" /></svg
+              ><span>Pulse-ox</span>
+            </a>
+          {/if}
+          <a class="tile" href="/settings">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+              ><circle cx="12" cy="12" r="3" /><path
+                d="M19 12a7 7 0 00-.1-1.3l2-1.6-2-3.4-2.4 1a7 7 0 00-2.3-1.3L14 2h-4l-.3 2.4a7 7 0 00-2.3 1.3l-2.4-1-2 3.4 2 1.6A7 7 0 005 12a7 7 0 00.1 1.3l-2 1.6 2 3.4 2.4-1a7 7 0 002.3 1.3L10 22h4l.3-2.4a7 7 0 002.3-1.3l2.4 1 2-3.4-2-1.6A7 7 0 0019 12z"
+              /></svg
+            ><span>Settings</span>
+          </a>
+        {/if}
+      </nav>
+
+      <button class="btn btn--ghost btn--block" type="button" onclick={logout}>Sign out</button>
+    </section>
   {/if}
 
-  {#if error}
-    <p class="error" role="alert">{error}</p>
-  {/if}
-
-  {#if version}<p class="version">v{version}</p>{/if}
+  {#if error}<p class="error" role="alert">{error}</p>{/if}
+  {#if version}<p class="version muted">v{version}</p>{/if}
 </main>
 
 <style>
-  main {
-    max-width: 24rem;
-    margin: 3rem auto 1rem;
-    padding: 0 1rem;
-    line-height: 1.5;
+  .home {
+    padding-top: max(var(--sp-6), env(safe-area-inset-top));
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--r);
+    background: var(--accent-subtle);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+  .mark svg {
+    width: 26px;
+    height: 26px;
   }
   h1 {
-    margin-bottom: 0.25rem;
+    margin: 0;
   }
-  form {
+  .tagline {
+    margin: 2px 0 0;
+    font-size: var(--fs-sm);
+  }
+
+  .auth h2 {
+    margin-bottom: var(--sp-1);
+  }
+  .auth .muted {
+    margin: 0 0 var(--sp-4);
+    font-size: var(--fs-sm);
+  }
+  .auth form {
+    margin-top: var(--sp-2);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .auth-title {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .welcome {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+  .welcome p {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  .hero-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    min-height: 72px;
+    border-radius: var(--r-lg);
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: var(--accent-ink);
+    font-size: var(--fs-lg);
+    font-weight: 750;
+    box-shadow: var(--shadow);
+    transition: transform 0.06s ease;
+  }
+  .hero-cta:active {
+    transform: translateY(1px) scale(0.995);
+  }
+  .hero-cta svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-3);
+  }
+  .tile {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+    min-height: 92px;
+    border-radius: var(--r);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 650;
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform 0.06s ease,
+      border-color 0.15s ease;
   }
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.9rem;
+  .tile:active {
+    transform: translateY(1px);
   }
-  input {
-    padding: 0.5rem;
-    font-size: 1rem;
-    background: #131c2e;
-    color: inherit;
-    border: 1px solid #26314a;
-    border-radius: 0.4rem;
+  .tile:hover {
+    border-color: var(--border-hi);
   }
-  button {
-    padding: 0.6rem;
-    font-size: 1rem;
-    cursor: pointer;
-    background: #2b6cb0;
-    color: #fff;
-    border: none;
-    border-radius: 0.4rem;
+  .tile svg {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
   }
-  button:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-  .cta {
-    display: block;
-    text-align: center;
-    padding: 0.6rem;
-    margin: 1rem 0 0.75rem;
-    background: #2b6cb0;
-    color: #fff;
-    border-radius: 0.4rem;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .cta.secondary {
-    margin-top: 0;
-    background: #17233c;
-    color: #e8ecf5;
-    border: 1px solid #26314a;
-  }
-  .muted {
-    color: #8a93a6;
-    font-size: 0.85rem;
-  }
+
   .error {
-    color: #ff8f8f;
-    font-size: 0.9rem;
+    margin: 0;
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-sm);
+    background: var(--danger-subtle);
+    color: var(--danger);
+    font-size: var(--fs-sm);
   }
   .version {
-    color: #8a93a6;
-    font-size: 0.8rem;
-    margin-top: 2rem;
+    text-align: center;
+    font-size: var(--fs-xs);
   }
 </style>

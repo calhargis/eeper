@@ -152,8 +152,10 @@
 {#if !ready}
   <p class="loading">Loading…</p>
 {:else}
-  <header>
-    <a href="/" class="back" aria-label="Back">‹ eeper</a>
+  <header class="appbar">
+    <a href="/" class="back" aria-label="Back">‹</a>
+    <span class="title">eeper</span>
+    <span class="spacer"></span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
@@ -233,26 +235,15 @@
 {/if}
 
 <style>
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-  }
-  .back {
-    color: #e8ecf5;
-    text-decoration: none;
-    font-weight: 600;
-  }
   .who {
-    color: #8a93a6;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   .loading,
   .empty {
     text-align: center;
-    color: #8a93a6;
-    margin: 3rem 1rem;
+    color: var(--text-muted);
+    margin: var(--sp-7) var(--sp-4);
   }
   .stage {
     position: relative;
@@ -271,76 +262,78 @@
   }
   .badge {
     position: absolute;
-    top: 0.6rem;
-    left: 0.6rem;
-    font-size: 0.75rem;
+    top: var(--sp-2);
+    left: var(--sp-2);
+    font-size: var(--fs-xs);
     letter-spacing: 0.03em;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.3rem;
+    padding: var(--sp-1) var(--sp-2);
+    border-radius: var(--r-sm);
     background: rgba(0, 0, 0, 0.6);
-    color: #cfd6e4;
+    color: var(--text-2);
   }
   .badge.on {
-    color: #7ee0a6;
+    color: var(--ok);
   }
   .mute {
     position: absolute;
-    bottom: 0.6rem;
-    right: 0.6rem;
-    font-size: 0.8rem;
-    padding: 0.3rem 0.6rem;
+    bottom: var(--sp-2);
+    right: var(--sp-2);
+    min-height: var(--tap);
+    font-size: var(--fs-sm);
+    padding: var(--sp-2) var(--sp-3);
     border: none;
-    border-radius: 0.3rem;
+    border-radius: var(--r-sm);
     background: rgba(0, 0, 0, 0.6);
-    color: #e8ecf5;
+    color: var(--text);
     cursor: pointer;
   }
   .meta {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.5rem 1rem 0;
-    color: #cfd6e4;
-    font-size: 0.9rem;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4) 0;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
   }
   .dot {
     width: 0.6rem;
     height: 0.6rem;
-    border-radius: 50%;
-    background: #6b7385; /* unknown */
+    border-radius: var(--r-pill);
+    background: var(--text-muted); /* unknown */
     flex: none;
   }
   .dot.online {
-    background: #4ade80;
+    background: var(--ok);
   }
   .dot.offline {
-    background: #f87171;
+    background: var(--danger);
   }
   .cameras {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
   }
   .cam {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.7rem;
-    border: 1px solid #26314a;
-    border-radius: 0.4rem;
-    background: #131c2e;
-    color: #e8ecf5;
+    gap: var(--sp-2);
+    min-height: var(--tap);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
   }
   .cam.selected {
-    border-color: #2b6cb0;
-    background: #17233c;
+    border-color: var(--accent);
+    background: var(--surface-2);
   }
   .error {
-    color: #ff8f8f;
-    padding: 0 1rem;
-    font-size: 0.9rem;
+    color: var(--danger);
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-sm);
   }
 </style>
