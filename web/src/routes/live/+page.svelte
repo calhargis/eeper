@@ -4,15 +4,24 @@
   // 'viewer'/grandparent role) can watch; the route guards on the session.
   import { onDestroy, onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
-  import { fetchCameras, fetchSession, type Camera, type User } from '$lib/api';
+  import {
+    fetchCameras,
+    fetchDevices,
+    fetchSession,
+    type Camera,
+    type Device,
+    type User,
+  } from '$lib/api';
   import {
     connectCamera,
     inboundAudioStats,
     inboundVideoStats,
     type LiveSession,
   } from '$lib/webrtc';
+  import ThermalHeatmap from '$lib/ThermalHeatmap.svelte';
 
   type Status = 'idle' | 'connecting' | 'live' | 'error';
+  type Mode = 'camera' | 'thermal';
 
   let ready = $state(false);
   let user = $state<User | null>(null);
@@ -26,6 +35,8 @@
   let audioPackets = $state(0);
   let muted = $state(true);
   let errorMsg = $state('');
+  let mode = $state<Mode>('camera');
+  let thermalDevices = $state<Device[]>([]);
 
   let live: LiveSession | null = null;
   let statsTimer: ReturnType<typeof setInterval> | null = null;
@@ -37,6 +48,23 @@
   let destroyed = false;
 
   const selected = $derived(cameras.find((c) => c.id === selectedId) ?? null);
+  // The first paired thermal node backs the Thermal tab (multi-thermal picking lives on
+  // the dedicated /thermal view).
+  const thermalId = $derived(thermalDevices[0]?.id ?? null);
+
+  // Switch the Live view between the WebRTC camera and the thermal heatmap. Watching
+  // thermal tears the camera stream down (no point paying for it); switching back
+  // reconnects once the <video> has re-mounted.
+  async function setMode(m: Mode): Promise<void> {
+    if (m === mode) return;
+    mode = m;
+    if (m === 'thermal') {
+      teardown();
+    } else if (selectedId !== null) {
+      await tick();
+      void connect(selectedId);
+    }
+  }
 
   function fmtChecked(iso: string | null): string {
     if (!iso) return 'not checked yet';
@@ -131,7 +159,14 @@
       ready = true;
       await tick(); // let the <video> mount before we attach a stream
       await loadCameras();
-      if (cameras.length > 0) await connect(cameras[0].id);
+      try {
+        thermalDevices = (await fetchDevices()).filter((d) => d.kind === 'thermal');
+      } catch {
+        thermalDevices = [];
+      }
+      // Default to thermal only when there's no camera to show.
+      if (cameras.length === 0 && thermalDevices.length > 0) mode = 'thermal';
+      if (mode === 'camera' && cameras.length > 0) await connect(cameras[0].id);
       healthTimer = setInterval(() => {
         void loadCameras();
       }, 3000);
@@ -159,75 +194,107 @@
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
-  {#if cameras.length === 0}
+  {#if cameras.length === 0 && thermalDevices.length === 0}
     <p class="empty">No cameras are registered yet.</p>
   {:else}
-    <div class="stage">
-      <video
-        bind:this={videoEl}
-        autoplay
-        playsinline
-        {muted}
-        data-testid="live-video"
-        data-frames={framesDecoded}
-        data-latency-ms={jitterBufferMs === null ? '' : Math.round(jitterBufferMs)}
-        data-audio-track={audioTrack ? '1' : '0'}
-        data-audio-packets={audioPackets}
-      ></video>
+    {#if cameras.length > 0 && thermalDevices.length > 0}
+      <div class="modes" role="tablist" aria-label="View">
+        <button
+          type="button"
+          class="mode"
+          class:active={mode === 'camera'}
+          role="tab"
+          aria-selected={mode === 'camera'}
+          data-testid="mode-camera"
+          onclick={() => setMode('camera')}>Camera</button
+        >
+        <button
+          type="button"
+          class="mode"
+          class:active={mode === 'thermal'}
+          role="tab"
+          aria-selected={mode === 'thermal'}
+          data-testid="mode-thermal"
+          onclick={() => setMode('thermal')}>Thermal</button
+        >
+      </div>
+    {/if}
 
-      <div
-        class="badge"
-        class:on={status === 'live' && framesDecoded > 0}
-        data-testid="live-status"
-        data-status={status}
-        data-frames={framesDecoded}
-      >
-        {#if status === 'live' && framesDecoded > 0}
-          ● LIVE
-        {:else if status === 'error'}
-          Signal unavailable
-        {:else}
-          Connecting…
+    {#if mode === 'thermal' && thermalId !== null}
+      <div class="thermal-wrap" data-testid="live-thermal">
+        {#key thermalId}<ThermalHeatmap deviceId={thermalId} />{/key}
+      </div>
+    {:else if cameras.length > 0}
+      <div class="stage">
+        <video
+          bind:this={videoEl}
+          autoplay
+          playsinline
+          {muted}
+          data-testid="live-video"
+          data-frames={framesDecoded}
+          data-latency-ms={jitterBufferMs === null ? '' : Math.round(jitterBufferMs)}
+          data-audio-track={audioTrack ? '1' : '0'}
+          data-audio-packets={audioPackets}
+        ></video>
+
+        <div
+          class="badge"
+          class:on={status === 'live' && framesDecoded > 0}
+          data-testid="live-status"
+          data-status={status}
+          data-frames={framesDecoded}
+        >
+          {#if status === 'live' && framesDecoded > 0}
+            ● LIVE
+          {:else if status === 'error'}
+            Signal unavailable
+          {:else}
+            Connecting…
+          {/if}
+        </div>
+
+        {#if selected?.has_audio}
+          <button
+            class="mute"
+            data-testid="listen-toggle"
+            aria-label={muted ? 'Listen in' : 'Mute listen-in'}
+            onclick={() => (muted = !muted)}
+          >
+            {muted ? 'Listen in' : 'Mute'}
+          </button>
         {/if}
       </div>
 
-      {#if selected?.has_audio}
-        <button
-          class="mute"
-          data-testid="listen-toggle"
-          aria-label={muted ? 'Listen in' : 'Mute listen-in'}
-          onclick={() => (muted = !muted)}
-        >
-          {muted ? 'Listen in' : 'Mute'}
-        </button>
+      {#if selected}
+        <p class="meta">
+          <span class="dot" class:online={selected.online} class:offline={selected.online === false}
+          ></span>
+          <strong>{selected.name}</strong>
+          · {selected.online ? 'online' : selected.online === false ? 'offline' : 'checking'}
+          · {fmtChecked(selected.last_checked)}
+        </p>
       {/if}
-    </div>
 
-    {#if selected}
-      <p class="meta">
-        <span class="dot" class:online={selected.online} class:offline={selected.online === false}
-        ></span>
-        <strong>{selected.name}</strong>
-        · {selected.online ? 'online' : selected.online === false ? 'offline' : 'checking'}
-        · {fmtChecked(selected.last_checked)}
-      </p>
-    {/if}
-
-    {#if cameras.length > 1}
-      <div class="cameras" role="tablist" aria-label="Cameras">
-        {#each cameras as cam (cam.id)}
-          <button
-            class="cam"
-            class:selected={cam.id === selectedId}
-            role="tab"
-            aria-selected={cam.id === selectedId}
-            onclick={() => connect(cam.id)}
-          >
-            <span class="dot" class:online={cam.online} class:offline={cam.online === false}></span>
-            {cam.name}
-          </button>
-        {/each}
-      </div>
+      {#if cameras.length > 1}
+        <div class="cameras" role="tablist" aria-label="Cameras">
+          {#each cameras as cam (cam.id)}
+            <button
+              class="cam"
+              class:selected={cam.id === selectedId}
+              role="tab"
+              aria-selected={cam.id === selectedId}
+              onclick={() => connect(cam.id)}
+            >
+              <span class="dot" class:online={cam.online} class:offline={cam.online === false}
+              ></span>
+              {cam.name}
+            </button>
+          {/each}
+        </div>
+      {/if}
+    {:else}
+      <p class="empty">No camera to show.</p>
     {/if}
   {/if}
 
@@ -335,5 +402,29 @@
     color: var(--danger);
     padding: 0 var(--sp-4);
     font-size: var(--fs-sm);
+  }
+  .modes {
+    display: flex;
+    gap: var(--sp-1);
+    padding: var(--sp-3) var(--sp-4) 0;
+  }
+  .mode {
+    flex: 1;
+    min-height: var(--tap);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text-2);
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .mode.active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: transparent;
+  }
+  .thermal-wrap {
+    padding: var(--sp-3) var(--sp-4) 0;
   }
 </style>
