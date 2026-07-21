@@ -32,6 +32,12 @@ fi
 FAILED=0
 PA=(); for p in "${PROFILES[@]}"; do PA+=(--profile "$p"); done
 
+# The address to view the site = what Caddy serves + certs (EEPER_DOMAIN in .env;
+# defaults to localhost, matching the Caddyfile). This is the URL to open in a browser.
+DOMAIN=$(grep -E '^EEPER_DOMAIN=' .env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"')
+[ -n "$DOMAIN" ] || DOMAIN=localhost
+URL="https://$DOMAIN/"
+
 label_for() {
   case "$1" in
     db) echo "Database (TimescaleDB)" ;;
@@ -106,14 +112,17 @@ for svc in $(docker compose "${PA[@]}" config --services 2>/dev/null | sort); do
   wait_for "$(label_for "$svc")" 120 healthy "$cid"
 done
 
-# 4) end-to-end: the edge answers (Caddy on :80 redirects to https → curl exits 0)
-wait_for "Web edge reachable (Caddy)" 20 curl -fsS -o /dev/null http://localhost/
+# 4) end-to-end: the real site URL answers over HTTPS (-k: the cert is from the local
+#    CA, which curl doesn't trust — a browser shows a one-time warning for the same reason)
+wait_for "Site reachable" 30 curl -fsSk -o /dev/null "$URL"
 
 echo
 if [ "$FAILED" -eq 0 ]; then
-  ip=$(tailscale ip -4 2>/dev/null | head -1)
-  printf '  %s%sAll systems up.%s  %s%s%s\n\n' "$G" "$B" "$Z" "$D" "${ip:+Tailscale $ip}" "$Z"
+  printf '  %s%sAll systems up.%s\n' "$G" "$B" "$Z"
+  printf '  Open in a browser:  %s%s%s\n' "$B" "$URL" "$Z"
+  printf '  %s(Connect your device to Tailscale first; trust the local-CA cert warning on first visit.)%s\n\n' "$D" "$Z"
 else
-  printf '  %s%sSome checks failed — see the %s items above.%s\n\n' "$R" "$B" "$NO" "$Z"
+  printf '  %s%sSome checks failed — see the %s items above.%s\n' "$R" "$B" "$NO" "$Z"
+  printf '  %sSite URL (once up):  %s%s\n\n' "$D" "$URL" "$Z"
   exit 1
 fi
