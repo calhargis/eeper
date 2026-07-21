@@ -42,6 +42,7 @@ class FirstBootRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str = Field(min_length=1, max_length=150)
     password: str = Field(min_length=1, max_length=_MAX_PASSWORD)
+    remember: bool = True  # "remember me": persistent session vs. session-only cookies
 
 
 class LoginResult(BaseModel):
@@ -55,6 +56,7 @@ class LoginResult(BaseModel):
 class TotpVerifyRequest(BaseModel):
     challenge: str
     code: str = Field(min_length=6, max_length=8)
+    remember: bool = True  # carried through from the login step (see LoginRequest)
 
 
 class TotpEnrollResponse(BaseModel):

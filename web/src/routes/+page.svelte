@@ -13,6 +13,7 @@
   let user = $state<User | null>(null);
   let username = $state('');
   let password = $state('');
+  let remember = $state(true); // "remember me" — a persistent session, on by default
   let confirm = $state('');
   let challenge = $state('');
   let totpCode = $state('');
@@ -104,7 +105,7 @@
     try {
       const res = await api('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, remember }),
       });
       if (res.status === 429) {
         error = 'Too many failed attempts — try again later.';
@@ -136,7 +137,7 @@
     try {
       const res = await api('/auth/totp/verify', {
         method: 'POST',
-        body: JSON.stringify({ challenge, code: totpCode }),
+        body: JSON.stringify({ challenge, code: totpCode, remember }),
       });
       if (res.ok) {
         const body = (await res.json()) as LoginResult;
@@ -243,6 +244,10 @@
             required
           /></label
         >
+        <label class="remember">
+          <input type="checkbox" bind:checked={remember} data-testid="remember-me" />
+          <span>Keep me signed in</span>
+        </label>
         <button class="btn btn--primary btn--block" type="submit" disabled={busy}
           >{busy ? 'Signing in…' : 'Sign in'}</button
         >
@@ -413,6 +418,20 @@
     font-weight: 700;
     letter-spacing: -0.01em;
     color: var(--text);
+  }
+  .remember {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .remember input {
+    width: auto;
+    min-height: 0;
+    accent-color: var(--accent);
   }
   .welcome {
     display: flex;

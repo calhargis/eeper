@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from eeper.api.auth_service import logout_session, rotate_refresh, start_session
 from eeper.api.config import Settings
-from eeper.api.cookies import clear_auth_cookies
+from eeper.api.cookies import clear_auth_cookies, read_persist_marker
 from eeper.api.dependencies import CurrentUser, NowDep, SessionDep, SettingsDep
 from eeper.api.models import User
 from eeper.api.schemas import (
@@ -98,7 +98,7 @@ async def login(
 
     user.failed_login_count = 0
     user.locked_until = None
-    await start_session(session, response, settings, user, now)
+    await start_session(session, response, settings, user, now, persist=body.remember)
     return LoginResult(user=_user_out(user))
 
 
@@ -126,7 +126,7 @@ async def totp_verify(
 
     user.failed_login_count = 0
     user.locked_until = None
-    await start_session(session, response, settings, user, now)
+    await start_session(session, response, settings, user, now, persist=body.remember)
     return LoginResult(user=_user_out(user))
 
 
@@ -141,7 +141,8 @@ async def refresh(
     token = request.cookies.get(settings.refresh_cookie_name)
     if not token:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "No refresh token")
-    user = await rotate_refresh(session, response, settings, token, now)
+    persist = read_persist_marker(request, settings)
+    user = await rotate_refresh(session, response, settings, token, now, persist=persist)
     if user is None:
         clear_auth_cookies(response, settings)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired refresh token")

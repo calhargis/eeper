@@ -16,13 +16,15 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from eeper.api.config import Settings
-from eeper.api.cookies import set_access_cookie, set_refresh_cookie
+from eeper.api.cookies import set_access_cookie, set_persist_marker, set_refresh_cookie
 from eeper.api.models import ApiToken, RefreshToken, User
 from eeper.api.security import hash_token
 from eeper.api.tokens import create_access_token, generate_opaque_token
 
 
-def _issue_access_cookie(response: Response, settings: Settings, user: User, now: datetime) -> None:
+def _issue_access_cookie(
+    response: Response, settings: Settings, user: User, now: datetime, persist: bool = True
+) -> None:
     access = create_access_token(
         settings.secret_key,
         user_id=user.id,
@@ -30,7 +32,7 @@ def _issue_access_cookie(response: Response, settings: Settings, user: User, now
         now=now,
         ttl_seconds=settings.access_ttl_seconds,
     )
-    set_access_cookie(response, settings, access)
+    set_access_cookie(response, settings, access, persist=persist)
 
 
 async def _new_refresh(
@@ -55,14 +57,21 @@ async def revoke_family(session: AsyncSession, family_id: str) -> None:
 
 
 async def start_session(
-    session: AsyncSession, response: Response, settings: Settings, user: User, now: datetime
+    session: AsyncSession,
+    response: Response,
+    settings: Settings,
+    user: User,
+    now: datetime,
+    persist: bool = True,
 ) -> None:
-    """Begin a fresh login session (new family) and set both cookies."""
+    """Begin a fresh login session (new family) and set the cookies. ``persist`` is the
+    "remember me" choice: persistent cookies (survive a browser restart) vs. session cookies."""
     family_id = uuid.uuid4().hex
     refresh = await _new_refresh(session, settings, user.id, family_id, now)
     await session.commit()
-    set_refresh_cookie(response, settings, refresh)
-    _issue_access_cookie(response, settings, user, now)
+    set_refresh_cookie(response, settings, refresh, persist=persist)
+    _issue_access_cookie(response, settings, user, now, persist=persist)
+    set_persist_marker(response, settings, persist)
 
 
 async def rotate_refresh(
@@ -71,6 +80,7 @@ async def rotate_refresh(
     settings: Settings,
     presented_token: str,
     now: datetime,
+    persist: bool = True,
 ) -> User | None:
     """Validate + rotate a refresh token. Returns the user, or None if invalid.
 
@@ -100,8 +110,9 @@ async def rotate_refresh(
         return None
     await session.commit()
 
-    set_refresh_cookie(response, settings, new_refresh)
-    _issue_access_cookie(response, settings, user, now)
+    set_refresh_cookie(response, settings, new_refresh, persist=persist)
+    _issue_access_cookie(response, settings, user, now, persist=persist)
+    set_persist_marker(response, settings, persist)
     return user
 
 

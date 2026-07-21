@@ -266,3 +266,40 @@ async def test_api_token_revoke(api: Harness) -> None:
     async with api.fresh() as c:
         h = {"Authorization": f"Bearer {created['token']}"}
         assert (await c.get("/api/v1/me", headers=h)).status_code == 401  # revoked
+
+
+async def test_remember_me_controls_cookie_persistence(api: Harness) -> None:
+    await _first_boot(api)
+
+    def refresh_attrs(resp: object) -> str:
+        for c in resp.headers.get_list("set-cookie"):  # type: ignore[attr-defined]
+            if c.startswith("eeper_refresh="):
+                return c.lower()
+        return ""
+
+    def all_cookies(resp: object) -> str:
+        return " ".join(resp.headers.get_list("set-cookie")).lower()  # type: ignore[attr-defined]
+
+    creds = {"username": ADMIN_USER, "password": ADMIN_PW}
+
+    # remember=True → persistent refresh cookie (has Max-Age) + marker "1"
+    r = await api.client.post("/api/v1/auth/login", json={**creds, "remember": True})
+    assert r.status_code == 200
+    assert "max-age" in refresh_attrs(r)
+    assert "eeper_persist=1" in all_cookies(r)
+
+    # remember=False → session cookie (no Max-Age) + marker "0"
+    r = await api.client.post("/api/v1/auth/login", json={**creds, "remember": False})
+    assert r.status_code == 200
+    assert "max-age" not in refresh_attrs(r)
+    assert "eeper_persist=0" in all_cookies(r)
+
+    # a token refresh preserves the session-only choice (via the persist marker cookie)
+    r = await api.client.post("/api/v1/auth/refresh")
+    assert r.status_code == 200
+    assert "max-age" not in refresh_attrs(r)
+
+    # the default (no field) stays persistent — backward-compatible with older clients
+    r = await api.client.post("/api/v1/auth/login", json=creds)
+    assert r.status_code == 200
+    assert "max-age" in refresh_attrs(r)
