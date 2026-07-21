@@ -114,7 +114,7 @@ export async function updatePreferences(
 
 // ── M3.1: sensor devices ──────────────────────────────────────────────────────
 
-export type DeviceKind = 'mmwave' | 'pir' | 'other';
+export type DeviceKind = 'mmwave' | 'pir' | 'thermal' | 'other';
 
 export type Device = {
   id: number;

@@ -22,6 +22,7 @@
   const KINDS: { value: DeviceKind; label: string }[] = [
     { value: 'mmwave', label: 'mmWave presence' },
     { value: 'pir', label: 'PIR motion' },
+    { value: 'thermal', label: 'Thermal (MLX90640)' },
     { value: 'other', label: 'Other sensor' },
   ];
   const REFRESH_MS = 15_000; // re-poll so an online node ageing past its heartbeat flips offline

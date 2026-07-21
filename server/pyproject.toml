@@ -35,6 +35,9 @@ dependencies = [
 thermal = [
   "adafruit-circuitpython-mlx90640>=1.2,<2",
   "adafruit-blinka>=8,<9",
+  # Open /dev/i2c-{bus} directly by number, so the node needs neither `board`
+  # auto-detection nor the GPIO stack — it runs the same on bare metal or in a container.
+  "adafruit-extended-bus>=1.0,<2",
 ]
 dev = [
   "ruff>=0.6,<1.0",

@@ -238,9 +238,12 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./mosquitto/certs:/mosquitto/certs:ro
       # The dynamic-security store (admin + service accounts, plus per-device accounts
-      # the pairing API mints at runtime). Writable — the plugin persists provisioning
-      # changes back to it.
-      - ./mosquitto/security/dynamic-security.json:/mosquitto/data/dynamic-security.json
+      # the pairing API mints at runtime). Mount the DIRECTORY, not the single JSON file:
+      # the dynsec plugin persists changes by writing a temp file and renaming it over the
+      # target, which fails on a single-file bind mount — so runtime-provisioned accounts
+      # (paired devices, and even the service accounts) would silently not survive a
+      # restart. Mounting the parent dir makes the atomic rename work.
+      - ./mosquitto/security:/mosquitto/data
     tmpfs:
       - /mosquitto/log
     networks: [internal]
