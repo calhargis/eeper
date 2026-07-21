@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime, timedelta
 
+import httpx
 import pyotp
 
 from eeper.api.tokens import create_access_token
@@ -271,14 +272,14 @@ async def test_api_token_revoke(api: Harness) -> None:
 async def test_remember_me_controls_cookie_persistence(api: Harness) -> None:
     await _first_boot(api)
 
-    def refresh_attrs(resp: object) -> str:
-        for c in resp.headers.get_list("set-cookie"):  # type: ignore[attr-defined]
+    def refresh_attrs(resp: httpx.Response) -> str:
+        for c in resp.headers.get_list("set-cookie"):
             if c.startswith("eeper_refresh="):
                 return c.lower()
         return ""
 
-    def all_cookies(resp: object) -> str:
-        return " ".join(resp.headers.get_list("set-cookie")).lower()  # type: ignore[attr-defined]
+    def all_cookies(resp: httpx.Response) -> str:
+        return " ".join(resp.headers.get_list("set-cookie")).lower()
 
     creds = {"username": ADMIN_USER, "password": ADMIN_PW}
 
