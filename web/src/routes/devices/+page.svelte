@@ -217,6 +217,9 @@
                 data-testid={`device-${d.id}-status`}
                 data-online={d.online === null ? '' : String(d.online)}>{status(d).text}</span
               >
+              {#if d.kind === 'thermal'}
+                <a class="ghost" href="/thermal" data-testid={`thermal-link-${d.id}`}>Live view</a>
+              {/if}
               {#if isAdmin}
                 <button
                   type="button"
