@@ -5,6 +5,7 @@
   import { onDestroy, onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import {
+    fetchAudioAvailable,
     fetchCameras,
     fetchDevices,
     fetchSession,
@@ -14,6 +15,7 @@
   } from '$lib/api';
   import {
     connectCamera,
+    connectMic,
     inboundAudioStats,
     inboundVideoStats,
     type LiveSession,
@@ -37,6 +39,15 @@
   let errorMsg = $state('');
   let mode = $state<Mode>('camera');
   let thermalDevices = $state<Device[]>([]);
+
+  // Standalone "listen to the room" — the host mic (audio adapter) played on its own,
+  // independent of the camera/thermal view. Separate WebRTC session + <audio> element.
+  let audioAvailable = $state(false);
+  let roomListening = $state(false);
+  let roomConnecting = $state(false);
+  let roomEl = $state<HTMLAudioElement | undefined>();
+  let roomSession: LiveSession | null = null;
+  let roomGen = 0;
 
   let live: LiveSession | null = null;
   let statsTimer: ReturnType<typeof setInterval> | null = null;
@@ -89,6 +100,45 @@
     jitterBufferMs = null;
     audioTrack = false;
     audioPackets = 0;
+  }
+
+  function teardownRoom(): void {
+    roomGen++; // invalidate any in-flight room connect()
+    if (roomSession) {
+      roomSession.pc.close();
+      roomSession = null;
+    }
+    if (roomEl) roomEl.srcObject = null;
+    roomListening = false;
+    roomConnecting = false;
+  }
+
+  async function toggleRoom(): Promise<void> {
+    if (roomListening || roomConnecting) {
+      teardownRoom();
+      return;
+    }
+    teardownRoom();
+    const gen = roomGen;
+    roomConnecting = true;
+    let session: LiveSession;
+    try {
+      session = await connectMic();
+    } catch {
+      if (gen !== roomGen || destroyed) return;
+      roomConnecting = false;
+      return;
+    }
+    // A newer toggle or an unmount happened while negotiating — drop this session.
+    if (gen !== roomGen || destroyed || !roomEl) {
+      session.pc.close();
+      return;
+    }
+    roomSession = session;
+    roomEl.srcObject = session.stream;
+    void roomEl.play().catch(() => {}); // autoplay of a user-gesture'd stream
+    roomConnecting = false;
+    roomListening = true;
   }
 
   async function pollStats(): Promise<void> {
@@ -164,6 +214,7 @@
       } catch {
         thermalDevices = [];
       }
+      audioAvailable = await fetchAudioAvailable();
       // Default to thermal only when there's no camera to show.
       if (cameras.length === 0 && thermalDevices.length > 0) mode = 'thermal';
       if (mode === 'camera' && cameras.length > 0) await connect(cameras[0].id);
@@ -176,6 +227,7 @@
   onDestroy(() => {
     destroyed = true;
     teardown(); // bumps connectGen, so any in-flight connect() closes its own pc
+    teardownRoom();
     if (healthTimer) clearInterval(healthTimer);
   });
 </script>
@@ -193,6 +245,30 @@
     <span class="spacer"></span>
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
+
+  {#if audioAvailable}
+    <div class="room" data-testid="room-listen">
+      <button
+        type="button"
+        class="room-btn"
+        class:on={roomListening}
+        data-testid="room-listen-toggle"
+        data-listening={roomListening ? '1' : '0'}
+        aria-pressed={roomListening}
+        onclick={() => void toggleRoom()}
+      >
+        {roomConnecting
+          ? 'Connecting…'
+          : roomListening
+            ? '◼ Stop listening'
+            : '🔊 Listen to the room'}
+      </button>
+      {#if roomListening}<span class="room-live" aria-live="polite">● live audio</span>{/if}
+    </div>
+    <!-- The mic stream plays here (audio-only, unmuted); present whenever a mic exists
+         so the bind is ready before the first toggle. -->
+    <audio bind:this={roomEl} autoplay data-testid="room-audio"></audio>
+  {/if}
 
   {#if cameras.length === 0 && thermalDevices.length === 0}
     <p class="empty">No cameras are registered yet.</p>
@@ -426,5 +502,34 @@
   }
   .thermal-wrap {
     padding: var(--sp-3) var(--sp-4) 0;
+  }
+  .room {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4) 0;
+  }
+  .room-btn {
+    min-height: var(--tap);
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .room-btn.on {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: transparent;
+  }
+  .room-live {
+    color: var(--ok);
+    font-size: var(--fs-sm);
+  }
+  audio {
+    display: none;
   }
 </style>

@@ -71,6 +71,44 @@ The image installs Debian's `libcamera`; a Raspberry Pi OS deployment may need t
 Pi-tuned libcamera from `archive.raspberrypi.com` for the Pi ISP pipeline —
 adjust on the bench if the camera isn't detected.
 
+## `audio/` — ffmpeg ALSA microphone adapter (amd64 + arm64)
+
+A USB/ALSA capture device (`hw:CARD=…`) → Opus RTSP. With no `ALSA_DEVICE` set it
+uses a synthetic `sine` `lavfi` input through the identical encode + serve path
+(this is how CI exercises it — hosted runners have no capture device). The served
+stream carries **only an audio track**, so it never registers as a camera; instead
+the api merges it into a camera's go2rtc stream (`EEPER_AUDIO_SOURCE_URL`) to light up
+listen-in + the sustained-sound nudge, and re-serves it standalone as `mic` for a
+camera-independent "listen to the room".
+
+| Env          | Default | Meaning                                             |
+| ------------ | ------- | --------------------------------------------------- |
+| `ALSA_DEVICE`| _(unset)_ | Capture device (e.g. `plughw:CARD=microphone,DEV=0`). Unset → synthetic sine. |
+| `RATE`       | `48000` | Capture/encode sample rate (Opus is 48 kHz-native).  |
+| `CHANNELS`   | `1`     | Capture channels (a nursery mic is mono).            |
+| `BITRATE`    | `48000` | Opus bitrate (bps) — ample for voice + ambient.      |
+| `RTSP_PATH`  | `mic`   | Served path (`rtsp://…:8554/<path>`).                |
+
+**Device access (production/bench)** — still non-root + read-only + `cap_drop:
+ALL`. ALSA nodes are `root:audio` (mode 0660), so grant just `/dev/snd` and the
+host `audio` group; prefer `CARD=<id>` over a card index (indices renumber across
+reboots). Check the id with `cat /proc/asound/cards` and the gid with `getent
+group audio`:
+
+```yaml
+audio-adapter:
+  image: ghcr.io/calhargis/eeper/audio:latest
+  environment: { ALSA_DEVICE: plughw:CARD=microphone,DEV=0 }
+  devices: ['/dev/snd']
+  group_add: ['${EEPER_AUDIO_GID:-29}'] # host `audio` gid varies — check `getent group audio`
+  read_only: true
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  tmpfs: [/tmp]
+```
+
+No `--privileged`, no added capabilities.
+
 ## Phones
 
 An old phone running an RTSP-camera app needs no adapter — eeper pulls its

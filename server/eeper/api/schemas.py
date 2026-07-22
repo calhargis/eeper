@@ -132,6 +132,12 @@ class CameraOut(BaseModel):
     last_checked: datetime | None = None
 
 
+class AudioStatusOut(BaseModel):
+    # Whether a standalone host microphone (the audio adapter) is available to listen
+    # to independently of any camera.
+    available: bool
+
+
 # ── clips (recordings) ───────────────────────────────────────────────────────
 
 

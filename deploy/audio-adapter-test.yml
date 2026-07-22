@@ -1,0 +1,27 @@
+# Test-only overlay: the audio (ALSA) adapter as a host microphone on the go2rtc
+# `edge` network. With no ALSA_DEVICE it uses a synthetic sine through the SAME
+# encode + RTSP serve path a real USB mic takes, so CI exercises the adapter
+# end-to-end without a capture device (hosted runners have no ALSA card). Layer
+# AFTER docker-compose.yml + video-test.yml, and set EEPER_AUDIO_SOURCE_URL so the api
+# merges it into the camera stream AND serves it standalone as `mic`:
+#   EEPER_AUDIO_SOURCE_URL=rtsp://audio-adapter:8554/mic docker compose \
+#     -f docker-compose.yml -f video-test.yml -f audio-adapter-test.yml \
+#     --profile core --profile video up -d
+#
+# Hardening is inlined (a YAML anchor from docker-compose.yml can't cross files).
+services:
+  audio-adapter:
+    build:
+      context: ../adapters/audio
+    image: eeper-audio-adapter:dev
+    profiles: [video]
+    user: '10001:10001'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    networks: [edge]
+    restart: unless-stopped

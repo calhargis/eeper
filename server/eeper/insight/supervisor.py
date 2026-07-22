@@ -121,12 +121,16 @@ class InsightSupervisor:
     # ── camera discovery ──────────────────────────────────────────────────────
 
     async def _desired_cameras(self) -> dict[int, bool]:
-        """Enabled cameras -> whether each carries audio."""
+        """Enabled cameras -> whether each carries audio. A configured host mic
+        (EEPER_AUDIO_SOURCE_URL) is merged into every camera's go2rtc stream, so it makes
+        every camera audio-capable here — that is what turns the sound-level nudge on
+        with a mic-only (no camera-native audio) setup."""
+        mic = bool(self._settings.audio_source_url)
         async with self._sessionmaker() as session:
             result = await session.execute(
                 select(Camera.id, Camera.has_audio).where(Camera.enabled)
             )
-            return {row[0]: bool(row[1]) for row in result.all()}
+            return {row[0]: (bool(row[1]) or mic) for row in result.all()}
 
     # ── spawning ──────────────────────────────────────────────────────────────
 

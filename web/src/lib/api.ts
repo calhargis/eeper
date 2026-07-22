@@ -47,6 +47,18 @@ export async function fetchCameras(): Promise<Camera[]> {
   return (await res.json()) as Camera[];
 }
 
+// Whether a standalone host microphone is available to listen to independently of a
+// camera. Failures degrade to "no mic" — the room-listen control just stays hidden.
+export async function fetchAudioAvailable(): Promise<boolean> {
+  try {
+    const res = await api('/audio');
+    if (!res.ok) return false;
+    return ((await res.json()) as { available: boolean }).available;
+  } catch {
+    return false;
+  }
+}
+
 // ── M2.4: nudge events + notifications ────────────────────────────────────────
 
 export type EventItem = {

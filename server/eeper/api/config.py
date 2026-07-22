@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     # Media gateway (go2rtc). RTSP is derived from the same host for internal probes.
     go2rtc_url: str = "http://go2rtc:1984"
     go2rtc_rtsp_url: str = "rtsp://go2rtc:8554"
+
+    # Host microphone (an ALSA/USB mic via the audio adapter). When set to the
+    # adapter's RTSP URL (e.g. rtsp://eeper-audio-adapter:8554/mic), the api MERGES
+    # this audio track into every camera's go2rtc stream — lighting up listen-in and
+    # the sustained-sound nudge with no camera-native audio — AND registers it as a
+    # standalone `mic` stream for a camera-independent "listen to the room". Empty =
+    # no host mic (audio then comes only from a camera that carries its own track).
+    audio_source_url: str = ""
+    mic_stream_name: str = "mic"  # the go2rtc stream name for the standalone room-listen
     # Contract: H.264, <=1080p (orientation-agnostic short/long-edge budget).
     max_video_short_edge: int = 1080
     max_video_long_edge: int = 1920
