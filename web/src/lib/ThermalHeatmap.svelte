@@ -147,7 +147,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-2);
+    color: var(--overlay-ink);
     background: color-mix(in srgb, #000 55%, transparent);
     font-size: var(--fs-sm);
   }
