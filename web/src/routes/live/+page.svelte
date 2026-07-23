@@ -1,7 +1,10 @@
 <script lang="ts">
-  // Live view: WebRTC playback of the selected camera, camera health dots, and
-  // multi-camera switching. Any authenticated household member (admin or the
-  // 'viewer'/grandparent role) can watch; the route guards on the session.
+  // Live view: a picker of every CONNECTED input — each camera, each thermal node, and
+  // the room microphone — with a dedicated live view per input. The camera is the
+  // primary input (listed first, selected by default). Only inputs with a real live
+  // feed appear here (presence/motion sensors have no live stream — they live on the
+  // Devices page). Any authenticated household member can watch; the route guards on
+  // the session.
   import { onDestroy, onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import {
@@ -13,68 +16,62 @@
     type Device,
     type User,
   } from '$lib/api';
-  import {
-    connectCamera,
-    connectMic,
-    inboundAudioStats,
-    inboundVideoStats,
-    type LiveSession,
-  } from '$lib/webrtc';
+  import CameraView from '$lib/CameraView.svelte';
+  import AudioMonitor from '$lib/AudioMonitor.svelte';
   import ThermalHeatmap from '$lib/ThermalHeatmap.svelte';
 
-  type Status = 'idle' | 'connecting' | 'live' | 'error';
-  type Mode = 'camera' | 'thermal';
+  type LiveInput =
+    | { key: string; kind: 'camera'; label: string; camera: Camera }
+    | { key: string; kind: 'thermal'; label: string; device: Device }
+    | { key: string; kind: 'audio'; label: string };
+
+  // Trusted, hardcoded SVG path constants (same pattern as the nav icons).
+  const ICON: Record<LiveInput['kind'], string> = {
+    camera: '<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="3"/>',
+    thermal: '<path d="M14 14V4a2 2 0 1 0-4 0v10a4 4 0 1 0 4 0z"/>',
+    audio: '<path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/>',
+  };
 
   let ready = $state(false);
   let user = $state<User | null>(null);
   let cameras = $state<Camera[]>([]);
-  let selectedId = $state<number | null>(null);
-  let videoEl = $state<HTMLVideoElement | undefined>();
-  let status = $state<Status>('idle');
-  let framesDecoded = $state(0);
-  let jitterBufferMs = $state<number | null>(null);
-  let audioTrack = $state(false);
-  let audioPackets = $state(0);
-  let muted = $state(true);
-  let errorMsg = $state('');
-  let mode = $state<Mode>('camera');
   let thermalDevices = $state<Device[]>([]);
-
-  // Standalone "listen to the room" — the host mic (audio adapter) played on its own,
-  // independent of the camera/thermal view. Separate WebRTC session + <audio> element.
   let audioAvailable = $state(false);
-  let roomListening = $state(false);
-  let roomConnecting = $state(false);
-  let roomEl = $state<HTMLAudioElement | undefined>();
-  let roomSession: LiveSession | null = null;
-  let roomGen = 0;
-
-  let live: LiveSession | null = null;
-  let statsTimer: ReturnType<typeof setInterval> | null = null;
+  let selectedKey = $state<string | null>(null);
+  let errorMsg = $state('');
   let healthTimer: ReturnType<typeof setInterval> | null = null;
-  // Bumped on every connect()/teardown/destroy so a slow, superseded negotiation
-  // resolving late can detect it's stale and close its own peer connection rather
-  // than leak it or clobber the current session.
-  let connectGen = 0;
   let destroyed = false;
 
-  const selected = $derived(cameras.find((c) => c.id === selectedId) ?? null);
-  // The first paired thermal node backs the Thermal tab (multi-thermal picking lives on
-  // the dedicated /thermal view).
-  const thermalId = $derived(thermalDevices[0]?.id ?? null);
+  // Only CONNECTED inputs are offered (a camera/node reporting offline drops out).
+  // Cameras first (the primary input), then thermal nodes, then the room mic.
+  const inputs = $derived<LiveInput[]>([
+    ...cameras
+      .filter((c) => c.online !== false)
+      .map((c): LiveInput => ({ key: `cam-${c.id}`, kind: 'camera', label: c.name, camera: c })),
+    ...thermalDevices
+      .filter((d) => d.online !== false)
+      .map((d): LiveInput => ({
+        key: `thermal-${d.id}`,
+        kind: 'thermal',
+        label: d.name,
+        device: d,
+      })),
+    ...(audioAvailable ? [{ key: 'audio', kind: 'audio', label: 'Audio' } as LiveInput] : []),
+  ]);
+  const selected = $derived(inputs.find((i) => i.key === selectedKey) ?? inputs[0] ?? null);
 
-  // Switch the Live view between the WebRTC camera and the thermal heatmap. Watching
-  // thermal tears the camera stream down (no point paying for it); switching back
-  // reconnects once the <video> has re-mounted.
-  async function setMode(m: Mode): Promise<void> {
-    if (m === mode) return;
-    mode = m;
-    if (m === 'thermal') {
-      teardown();
-    } else if (selectedId !== null) {
-      await tick();
-      void connect(selectedId);
+  // If the selection falls away (input disconnected, or none chosen yet), settle on the
+  // first input — which, with cameras listed first, keeps the camera as the default.
+  $effect(() => {
+    if (inputs.length > 0 && !inputs.some((i) => i.key === selectedKey)) {
+      selectedKey = inputs[0].key;
     }
+  });
+
+  function statusOf(input: LiveInput): boolean | null {
+    if (input.kind === 'camera') return input.camera.online;
+    if (input.kind === 'thermal') return input.device.online;
+    return true; // audio availability is already gated at the list level
   }
 
   function fmtChecked(iso: string | null): string {
@@ -85,116 +82,19 @@
     return `${Math.round(secs / 60)}m ago`;
   }
 
-  function teardown(): void {
-    connectGen++; // invalidate any in-flight connect()
-    if (statsTimer) {
-      clearInterval(statsTimer);
-      statsTimer = null;
-    }
-    if (live) {
-      live.pc.close();
-      live = null;
-    }
-    if (videoEl) videoEl.srcObject = null;
-    framesDecoded = 0;
-    jitterBufferMs = null;
-    audioTrack = false;
-    audioPackets = 0;
-  }
-
-  function teardownRoom(): void {
-    roomGen++; // invalidate any in-flight room connect()
-    if (roomSession) {
-      roomSession.pc.close();
-      roomSession = null;
-    }
-    if (roomEl) roomEl.srcObject = null;
-    roomListening = false;
-    roomConnecting = false;
-  }
-
-  async function toggleRoom(): Promise<void> {
-    if (roomListening || roomConnecting) {
-      teardownRoom();
-      return;
-    }
-    teardownRoom();
-    const gen = roomGen;
-    roomConnecting = true;
-    let session: LiveSession;
-    try {
-      session = await connectMic();
-    } catch {
-      if (gen !== roomGen || destroyed) return;
-      roomConnecting = false;
-      return;
-    }
-    // A newer toggle or an unmount happened while negotiating — drop this session.
-    if (gen !== roomGen || destroyed || !roomEl) {
-      session.pc.close();
-      return;
-    }
-    roomSession = session;
-    roomEl.srcObject = session.stream;
-    void roomEl.play().catch(() => {}); // autoplay of a user-gesture'd stream
-    roomConnecting = false;
-    roomListening = true;
-  }
-
-  async function pollStats(): Promise<void> {
-    if (!live) return;
-    const s = await inboundVideoStats(live.pc);
-    framesDecoded = s.framesDecoded;
-    jitterBufferMs = s.jitterBufferMs;
-    const a = await inboundAudioStats(live.pc);
-    audioTrack = a.hasTrack;
-    audioPackets = a.packetsReceived;
-  }
-
-  async function connect(id: number): Promise<void> {
-    teardown();
-    const gen = connectGen; // teardown() just bumped it; this attempt owns `gen`
-    selectedId = id;
-    status = 'connecting';
-    errorMsg = '';
-    const el = videoEl;
-    if (!el) return;
-    let session: LiveSession;
-    try {
-      session = await connectCamera(id);
-    } catch (err) {
-      if (gen !== connectGen || destroyed) return; // superseded/unmounted
-      status = 'error';
-      errorMsg = err instanceof Error ? err.message : 'could not connect to the stream';
-      return;
-    }
-    // A newer connect(), a teardown, or unmount happened while negotiating —
-    // this session is stale, so close it instead of leaking or clobbering.
-    if (gen !== connectGen || destroyed) {
-      session.pc.close();
-      return;
-    }
-    live = session;
-    el.srcObject = session.stream;
-    status = 'live';
-    statsTimer = setInterval(() => {
-      void pollStats();
-    }, 500);
-  }
-
-  async function loadCameras(): Promise<void> {
+  async function loadInputs(): Promise<void> {
     try {
       cameras = await fetchCameras();
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : 'could not load cameras';
-      return;
     }
-    // If the camera being watched was removed, tear the session down rather than
-    // leave it running behind the unmounted <video> (the empty-state branch).
-    if (selectedId !== null && !cameras.some((c) => c.id === selectedId)) {
-      teardown();
-      selectedId = null;
-      status = 'idle';
+    try {
+      // Keep the previous list on a failed poll (don't blank the picker on a blip) —
+      // matching how the cameras path retains its prior value on error.
+      const devices = await fetchDevices();
+      thermalDevices = devices.filter((d) => d.kind === 'thermal');
+    } catch {
+      /* keep the previous thermalDevices */
     }
   }
 
@@ -207,27 +107,17 @@
       }
       user = session;
       ready = true;
-      await tick(); // let the <video> mount before we attach a stream
-      await loadCameras();
-      try {
-        thermalDevices = (await fetchDevices()).filter((d) => d.kind === 'thermal');
-      } catch {
-        thermalDevices = [];
-      }
+      await tick();
+      await loadInputs();
       audioAvailable = await fetchAudioAvailable();
-      // Default to thermal only when there's no camera to show.
-      if (cameras.length === 0 && thermalDevices.length > 0) mode = 'thermal';
-      if (mode === 'camera' && cameras.length > 0) await connect(cameras[0].id);
-      healthTimer = setInterval(() => {
-        void loadCameras();
-      }, 3000);
+      if (destroyed) return; // unmounted during the awaits — don't start an orphaned poll
+      // Poll input health so a camera/node coming or going updates the picker live.
+      healthTimer = setInterval(() => void loadInputs(), 3000);
     })();
   });
 
   onDestroy(() => {
     destroyed = true;
-    teardown(); // bumps connectGen, so any in-flight connect() closes its own pc
-    teardownRoom();
     if (healthTimer) clearInterval(healthTimer);
   });
 </script>
@@ -246,131 +136,84 @@
     {#if user}<span class="who">{user.username}</span>{/if}
   </header>
 
-  {#if audioAvailable}
-    <div class="room" data-testid="room-listen">
-      <button
-        type="button"
-        class="room-btn"
-        class:on={roomListening}
-        data-testid="room-listen-toggle"
-        data-listening={roomListening ? '1' : '0'}
-        aria-pressed={roomListening}
-        onclick={() => void toggleRoom()}
-      >
-        {roomConnecting
-          ? 'Connecting…'
-          : roomListening
-            ? '◼ Stop listening'
-            : '🔊 Listen to the room'}
-      </button>
-      {#if roomListening}<span class="room-live" aria-live="polite">● live audio</span>{/if}
-    </div>
-    <!-- The mic stream plays here (audio-only, unmuted); present whenever a mic exists
-         so the bind is ready before the first toggle. -->
-    <audio bind:this={roomEl} autoplay data-testid="room-audio"></audio>
-  {/if}
-
-  {#if cameras.length === 0 && thermalDevices.length === 0}
-    <p class="empty">No cameras are registered yet.</p>
+  {#if inputs.length === 0}
+    <p class="empty">No inputs are connected yet.</p>
   {:else}
-    {#if cameras.length > 0 && thermalDevices.length > 0}
-      <div class="modes" role="tablist" aria-label="View">
+    <div class="picker" role="group" aria-label="Inputs" data-testid="input-picker">
+      {#each inputs as input (input.key)}
+        {@const on = statusOf(input)}
         <button
           type="button"
-          class="mode"
-          class:active={mode === 'camera'}
-          role="tab"
-          aria-selected={mode === 'camera'}
-          data-testid="mode-camera"
-          onclick={() => setMode('camera')}>Camera</button
+          class="chip"
+          class:active={selected?.key === input.key}
+          aria-pressed={selected?.key === input.key}
+          data-testid={`input-${input.key}`}
+          onclick={() => (selectedKey = input.key)}
         >
-        <button
-          type="button"
-          class="mode"
-          class:active={mode === 'thermal'}
-          role="tab"
-          aria-selected={mode === 'thermal'}
-          data-testid="mode-thermal"
-          onclick={() => setMode('thermal')}>Thermal</button
-        >
-      </div>
-    {/if}
-
-    {#if mode === 'thermal' && thermalId !== null}
-      <div class="thermal-wrap" data-testid="live-thermal">
-        {#key thermalId}<ThermalHeatmap deviceId={thermalId} />{/key}
-      </div>
-    {:else if cameras.length > 0}
-      <div class="stage">
-        <video
-          bind:this={videoEl}
-          autoplay
-          playsinline
-          {muted}
-          data-testid="live-video"
-          data-frames={framesDecoded}
-          data-latency-ms={jitterBufferMs === null ? '' : Math.round(jitterBufferMs)}
-          data-audio-track={audioTrack ? '1' : '0'}
-          data-audio-packets={audioPackets}
-        ></video>
-
-        <div
-          class="badge"
-          class:on={status === 'live' && framesDecoded > 0}
-          data-testid="live-status"
-          data-status={status}
-          data-frames={framesDecoded}
-        >
-          {#if status === 'live' && framesDecoded > 0}
-            ● LIVE
-          {:else if status === 'error'}
-            Signal unavailable
-          {:else}
-            Connecting…
-          {/if}
-        </div>
-
-        {#if selected?.has_audio}
-          <button
-            class="mute"
-            data-testid="listen-toggle"
-            aria-label={muted ? 'Listen in' : 'Mute listen-in'}
-            onclick={() => (muted = !muted)}
+          <!-- eslint-disable svelte/no-at-html-tags -- trusted, hardcoded icon path constants -->
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true">{@html ICON[input.kind]}</svg
           >
-            {muted ? 'Listen in' : 'Mute'}
-          </button>
+          <!-- eslint-enable svelte/no-at-html-tags -->
+          <span class="chip-label">{input.label}</span>
+          {#if input.kind !== 'audio'}
+            <span class="dot" class:online={on} class:offline={on === false}></span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+
+    <div class="view" data-testid="live-view" data-kind={selected?.kind}>
+      {#key selected?.key}
+        {#if selected?.kind === 'camera'}
+          <CameraView camera={selected.camera} />
+        {:else if selected?.kind === 'thermal'}
+          <ThermalHeatmap deviceId={selected.device.id} />
+        {:else if selected?.kind === 'audio'}
+          <AudioMonitor />
         {/if}
-      </div>
+      {/key}
+    </div>
 
-      {#if selected}
-        <p class="meta">
-          <span class="dot" class:online={selected.online} class:offline={selected.online === false}
+    {#if selected}
+      <p class="meta">
+        {#if selected.kind === 'camera'}
+          <span
+            class="dot"
+            class:online={selected.camera.online}
+            class:offline={selected.camera.online === false}
           ></span>
-          <strong>{selected.name}</strong>
-          · {selected.online ? 'online' : selected.online === false ? 'offline' : 'checking'}
-          · {fmtChecked(selected.last_checked)}
-        </p>
-      {/if}
-
-      {#if cameras.length > 1}
-        <div class="cameras" role="tablist" aria-label="Cameras">
-          {#each cameras as cam (cam.id)}
-            <button
-              class="cam"
-              class:selected={cam.id === selectedId}
-              role="tab"
-              aria-selected={cam.id === selectedId}
-              onclick={() => connect(cam.id)}
-            >
-              <span class="dot" class:online={cam.online} class:offline={cam.online === false}
-              ></span>
-              {cam.name}
-            </button>
-          {/each}
-        </div>
-      {/if}
-    {:else}
-      <p class="empty">No camera to show.</p>
+          <strong>{selected.camera.name}</strong>
+          · {selected.camera.online
+            ? 'online'
+            : selected.camera.online === false
+              ? 'offline'
+              : 'checking'}
+          · {fmtChecked(selected.camera.last_checked)}
+        {:else if selected.kind === 'thermal'}
+          <span
+            class="dot"
+            class:online={selected.device.online}
+            class:offline={selected.device.online === false}
+          ></span>
+          <strong>{selected.device.name}</strong>
+          · {selected.device.online
+            ? 'online'
+            : selected.device.online === false
+              ? 'offline'
+              : 'checking'}
+          · {fmtChecked(selected.device.last_seen_at)}
+        {:else}
+          <span class="dot online"></span>
+          <strong>Room microphone</strong> · live audio
+        {/if}
+      </p>
     {/if}
   {/if}
 
@@ -388,53 +231,58 @@
     color: var(--text-muted);
     margin: var(--sp-7) var(--sp-4);
   }
-  .stage {
-    position: relative;
-    background: #000;
-    aspect-ratio: 16 / 9;
-    max-height: 70vh;
+  /* The input picker — a horizontal, scrollable rail of icon chips. */
+  .picker {
     display: flex;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .picker::-webkit-scrollbar {
+    display: none;
+  }
+  .chip {
+    flex: 0 0 auto;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-  }
-  video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-  }
-  .badge {
-    position: absolute;
-    top: var(--sp-2);
-    left: var(--sp-2);
-    font-size: var(--fs-xs);
-    letter-spacing: 0.03em;
-    padding: var(--sp-1) var(--sp-2);
-    border-radius: var(--r-sm);
-    background: rgba(0, 0, 0, 0.6);
-    color: var(--text-2);
-  }
-  .badge.on {
-    color: var(--ok);
-  }
-  .mute {
-    position: absolute;
-    bottom: var(--sp-2);
-    right: var(--sp-2);
+    gap: var(--sp-2);
     min-height: var(--tap);
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--text-2);
+    font: inherit;
+    font-weight: 650;
     font-size: var(--fs-sm);
-    padding: var(--sp-2) var(--sp-3);
-    border: none;
-    border-radius: var(--r-sm);
-    background: rgba(0, 0, 0, 0.6);
-    color: var(--text);
     cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .chip svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+  }
+  .chip.active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: transparent;
+  }
+  .chip-label {
+    white-space: nowrap;
+  }
+  .view {
+    padding: 0 var(--sp-4);
   }
   .meta {
     display: flex;
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-4) 0;
+    padding: var(--sp-3) var(--sp-4) 0;
     color: var(--text-2);
     font-size: var(--fs-sm);
   }
@@ -442,7 +290,7 @@
     width: 0.6rem;
     height: 0.6rem;
     border-radius: var(--r-pill);
-    background: var(--text-muted); /* unknown */
+    background: var(--text-muted); /* unknown / checking */
     flex: none;
   }
   .dot.online {
@@ -451,85 +299,9 @@
   .dot.offline {
     background: var(--danger);
   }
-  .cameras {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
-    padding: var(--sp-3) var(--sp-4);
-  }
-  .cam {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    min-height: var(--tap);
-    padding: var(--sp-2) var(--sp-3);
-    border: 1px solid var(--border);
-    border-radius: var(--r-sm);
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
-    font-size: var(--fs-sm);
-  }
-  .cam.selected {
-    border-color: var(--accent);
-    background: var(--surface-2);
-  }
   .error {
     color: var(--danger);
     padding: 0 var(--sp-4);
     font-size: var(--fs-sm);
-  }
-  .modes {
-    display: flex;
-    gap: var(--sp-1);
-    padding: var(--sp-3) var(--sp-4) 0;
-  }
-  .mode {
-    flex: 1;
-    min-height: var(--tap);
-    border: 1px solid var(--border);
-    border-radius: var(--r-sm);
-    background: var(--surface);
-    color: var(--text-2);
-    font: inherit;
-    font-weight: 650;
-    cursor: pointer;
-  }
-  .mode.active {
-    background: var(--accent);
-    color: var(--accent-ink);
-    border-color: transparent;
-  }
-  .thermal-wrap {
-    padding: var(--sp-3) var(--sp-4) 0;
-  }
-  .room {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-    padding: var(--sp-3) var(--sp-4) 0;
-  }
-  .room-btn {
-    min-height: var(--tap);
-    padding: var(--sp-2) var(--sp-4);
-    border: 1px solid var(--border);
-    border-radius: var(--r-pill);
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-weight: 650;
-    cursor: pointer;
-  }
-  .room-btn.on {
-    background: var(--accent);
-    color: var(--accent-ink);
-    border-color: transparent;
-  }
-  .room-live {
-    color: var(--ok);
-    font-size: var(--fs-sm);
-  }
-  audio {
-    display: none;
   }
 </style>

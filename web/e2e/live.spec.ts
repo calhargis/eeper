@@ -76,6 +76,21 @@ test('authenticated user reaches Live view and frames flow within 3s', async ({ 
   await expect(page.getByTestId('live-status')).toHaveText(/LIVE/);
 });
 
+test('the Live view presents an input picker with the camera as the default input', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN);
+  await page.goto('/live');
+  // The redesigned Live view is an input picker; the camera is the primary input,
+  // selected by default, and its live view renders without any interaction.
+  await page.getByTestId('input-picker').waitFor();
+  await expect(page.getByTestId('live-view')).toHaveAttribute('data-kind', 'camera');
+  const camChip = page.locator('[data-testid^="input-cam-"]').first();
+  await expect(camChip).toHaveAttribute('aria-pressed', 'true');
+  const { frames } = await waitForFrames(page, FRAME_BUDGET_MS);
+  expect(frames, 'camera view should show flowing frames by default').toBeGreaterThan(0);
+});
+
 test('listen-in: audio packets flow in the Live view', async ({ page }) => {
   // Criterion 2 (M2.1): audio is negotiated (Opus) and packets flow. The <video>
   // stays muted — mute is a local playout control only; RTP still arrives.

@@ -86,6 +86,10 @@
   --warn-subtle: color-mix(in srgb, var(--warn) 16%, transparent);
   --danger-subtle: color-mix(in srgb, var(--danger) 16%, transparent);
   --ring: 0 0 0 3px var(--accent-subtle);
+  /* Text drawn over a media overlay (the always-dark video/thermal stage + a dark
+     scrim). Fixed light in BOTH themes — the theme-adaptive --text/--text-2 would flip
+     to near-black in light mode and vanish against the dark scrim. */
+  --overlay-ink: #f2ece3;
 
   /* shape + rhythm (4px base) */
   --r-sm: 10px;
