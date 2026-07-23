@@ -113,7 +113,9 @@ class MlxThermalSensor:
         self._buf = [0.0] * (ROWS * COLS)
 
     @classmethod
-    def open(cls, *, bus: int = 1, i2c_frequency: int = 800_000) -> MlxThermalSensor:  # pragma: no cover
+    def open(  # pragma: no cover
+        cls, *, bus: int = 1, i2c_frequency: int = 800_000
+    ) -> MlxThermalSensor:
         # Hardware only — imported lazily (needs the `thermal` extra + a Pi with I²C).
         # Open the I²C bus by NUMBER (``/dev/i2c-{bus}``) via ExtendedI2C rather than through
         # ``board``: the MLX90640 needs only I²C, and ``import board`` would drag in the GPIO

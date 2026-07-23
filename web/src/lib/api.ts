@@ -15,11 +15,38 @@ export type Camera = {
   last_checked: string | null;
 };
 
-export function api(path: string, init?: RequestInit): Promise<Response> {
+function rawApi(path: string, init?: RequestInit): Promise<Response> {
   return fetch(`/api/v1${path}`, {
     ...init,
     headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
   });
+}
+
+// A single in-flight refresh, shared by all callers: concurrent 401s must NOT each rotate
+// the refresh token — the server's family reuse-detection would treat that as a replay and
+// revoke the whole session. Dedupe so exactly one /refresh runs per burst.
+let refreshInFlight: Promise<boolean> | null = null;
+function refreshOnce(): Promise<boolean> {
+  refreshInFlight ??= rawApi('/auth/refresh', { method: 'POST' })
+    .then((r) => r.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
+// A 401 on these means bad credentials or would loop — never try to refresh.
+const NO_REFRESH = /^\/auth\/(login|refresh|logout|totp)/;
+
+// The API client. On a 401 (the 15-minute access token expired), transparently mint a
+// fresh one from the long-lived refresh cookie and retry once — so a signed-in session
+// lasts as long as the refresh token (30 days) without the user signing in again.
+export async function api(path: string, init?: RequestInit): Promise<Response> {
+  const res = await rawApi(path, init);
+  if (res.status !== 401 || NO_REFRESH.test(path)) return res;
+  const refreshed = await refreshOnce();
+  return refreshed ? rawApi(path, init) : res;
 }
 
 export async function detail(res: Response, fallback: string): Promise<string> {

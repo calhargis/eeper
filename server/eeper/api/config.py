@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # path-scoped so it is only sent to the auth endpoints.
     access_cookie_name: str = "eeper_access"
     refresh_cookie_name: str = "eeper_refresh"
+    persist_cookie_name: str = "eeper_persist"  # "remember me" marker (see cookies.py)
     refresh_cookie_path: str = "/api/v1/auth"
 
     # Token lifetimes.

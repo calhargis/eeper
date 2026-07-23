@@ -6,6 +6,9 @@ pins the pure logic: fan-out, dead-socket drop, contract validation, and latest-
 from __future__ import annotations
 
 import json
+from typing import cast
+
+from starlette.websockets import WebSocket
 
 from eeper.api.schemas import THERMAL_CELLS
 from eeper.api.thermal_relay import ThermalGridHub, ThermalGridRelay
@@ -41,8 +44,8 @@ class _Msg:
 async def test_hub_fans_a_frame_to_registered_clients() -> None:
     hub = ThermalGridHub()
     a, b = _FakeWS(), _FakeWS()
-    await hub.register(1, a)
-    await hub.register(1, b)
+    await hub.register(1, cast(WebSocket, a))
+    await hub.register(1, cast(WebSocket, b))
     await hub.broadcast(1, "frame")
     assert a.sent == ["frame"] and b.sent == ["frame"]
 
@@ -50,8 +53,8 @@ async def test_hub_fans_a_frame_to_registered_clients() -> None:
 async def test_hub_is_scoped_per_device() -> None:
     hub = ThermalGridHub()
     a, b = _FakeWS(), _FakeWS()
-    await hub.register(1, a)
-    await hub.register(2, b)
+    await hub.register(1, cast(WebSocket, a))
+    await hub.register(2, cast(WebSocket, b))
     await hub.broadcast(1, "one")
     assert a.sent == ["one"] and b.sent == []
 
@@ -59,7 +62,7 @@ async def test_hub_is_scoped_per_device() -> None:
 async def test_hub_drops_a_dead_socket() -> None:
     hub = ThermalGridHub()
     dead = _FakeWS(dead=True)
-    await hub.register(1, dead)
+    await hub.register(1, cast(WebSocket, dead))
     await hub.broadcast(1, "frame")  # must not raise
     assert not hub.has_clients(1)  # the dead socket was unregistered
 
@@ -67,8 +70,8 @@ async def test_hub_drops_a_dead_socket() -> None:
 async def test_hub_unregister_clears_the_device() -> None:
     hub = ThermalGridHub()
     ws = _FakeWS()
-    await hub.register(1, ws)
-    await hub.unregister(1, ws)
+    await hub.register(1, cast(WebSocket, ws))
+    await hub.unregister(1, cast(WebSocket, ws))
     assert not hub.has_clients(1)
 
 
