@@ -45,9 +45,12 @@ def set_refresh_cookie(
 
 
 def set_persist_marker(response: Response, settings: Settings, persist: bool) -> None:
-    """Remember the "remember me" choice so a token refresh preserves it — without a DB
-    column. Non-sensitive ("1"/"0"); a session cookie when not persisting, so it too is
-    dropped on browser close. Scoped to the auth path like the refresh cookie."""
+    """Remember the "remember me" choice so re-issuing a session preserves it — without a
+    DB column. Non-sensitive ("1"/"0"); a session cookie when not persisting, so it too is
+    dropped on browser close. Scoped to "/" (like the access cookie, not the auth-only
+    refresh path) so EVERY endpoint that re-issues a session — /auth/refresh AND
+    /me/password — actually receives it; an auth-path scope would hide it from the latter,
+    silently defaulting a "remember me OFF" login back to persistent on a password change."""
     response.set_cookie(
         key=settings.persist_cookie_name,
         value="1" if persist else "0",
@@ -55,7 +58,7 @@ def set_persist_marker(response: Response, settings: Settings, persist: bool) ->
         httponly=True,
         secure=True,
         samesite="lax",
-        path=settings.refresh_cookie_path,
+        path="/",
     )
 
 
@@ -81,7 +84,7 @@ def clear_auth_cookies(response: Response, settings: Settings) -> None:
     )
     response.delete_cookie(
         key=settings.persist_cookie_name,
-        path=settings.refresh_cookie_path,
+        path="/",
         httponly=True,
         secure=True,
         samesite="lax",

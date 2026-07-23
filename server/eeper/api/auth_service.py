@@ -56,6 +56,38 @@ async def revoke_family(session: AsyncSession, family_id: str) -> None:
     )
 
 
+async def revoke_all_sessions(session: AsyncSession, user_id: int) -> None:
+    """Revoke every refresh family for a user. Used on a password change so any other
+    signed-in device is logged out; the caller then issues a fresh session for itself.
+    Does not commit — the caller commits (start_session does)."""
+    await session.execute(
+        update(RefreshToken).where(RefreshToken.user_id == user_id).values(revoked=True)
+    )
+
+
+def clear_lockout_if_elapsed(user: User, now: datetime) -> bool:
+    """Reset a user's brute-force lockout once its window has passed. Returns True if the
+    account is still locked. Shared by the login and change-password re-auth paths so a
+    single account lockout governs every credential check."""
+    if user.locked_until is None:
+        return False
+    if user.locked_until <= now:
+        user.failed_login_count = 0
+        user.locked_until = None
+        return False
+    return True
+
+
+async def register_failed_attempt(
+    user: User, session: AsyncSession, settings: Settings, now: datetime
+) -> None:
+    """Count a failed credential attempt and lock the account after N. Commits."""
+    user.failed_login_count += 1
+    if user.failed_login_count >= settings.max_failed_logins:
+        user.locked_until = now + timedelta(seconds=settings.lockout_seconds)
+    await session.commit()
+
+
 async def start_session(
     session: AsyncSession,
     response: Response,
