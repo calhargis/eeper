@@ -156,16 +156,29 @@ async def materialize_closed_sessions(
     session: AsyncSession, household: str, start: datetime, end: datetime
 ) -> int:
     """Write a ``sleep_sessions`` row for each CLOSED session in ``[start, end)`` (the
-    still-open one is left to be derived on read). Idempotent via
-    ``ON CONFLICT (household_id, started_at) DO NOTHING``: because ``sleep_sessions``
-    anchors ``started_at`` to the absolute epoch grid (not to the sliding ``start``), a
-    given real session keeps the same ``started_at`` across cycles, so re-running over a
-    lookback window that moves with the wall clock inserts nothing new. Returns the number
-    of rows inserted."""
+    still-open one is left to be derived on read), once. Returns the number inserted.
+
+    Idempotent across the sliding lookback window the live worker uses. A closed session's
+    stable identity is its END: the waking transition always lands inside the window, so —
+    with ``sleep_sessions`` anchoring boundaries to the absolute epoch grid — ``ended_at``
+    is a fixed timestamp for a given session on every cycle. ``started_at`` is NOT a safe
+    key: when a session was already underway at the window's left edge, its start clamps to
+    that edge, which moves every cycle. So we dedup on ``ended_at`` (skip if a row with this
+    household + ended_at exists), not on ``started_at``. The metrics recorded are the first
+    cycle's, when the session had just closed and its onset was still inside the window — so
+    ``started_at`` and the sleep totals reflect the true, un-clamped session."""
     written = 0
     for s in await sleep_sessions(session, household, start, end):
         if s.ended_at is None:
             continue  # open session — not materialized until it closes
+        already = await session.scalar(
+            select(SleepSessionRecord.started_at).where(
+                SleepSessionRecord.household_id == household,
+                SleepSessionRecord.ended_at == s.ended_at,
+            )
+        )
+        if already is not None:
+            continue  # this session (by its end) is already recorded — don't drift a dup in
         segments = await timeline_segments(session, household, s.started_at, s.ended_at)
         total_sleep_s, wake_count, longest_stretch_s = session_metrics(segments)
         result = await session.execute(
@@ -178,6 +191,8 @@ async def materialize_closed_sessions(
                 wake_count=wake_count,
                 longest_stretch_s=longest_stretch_s,
             )
+            # started_at is the hypertable's partition key + unique constraint; keep the
+            # ON CONFLICT as a race guard behind the ended_at check above.
             .on_conflict_do_nothing(index_elements=["household_id", "started_at"])
             .returning(SleepSessionRecord.id)
         )

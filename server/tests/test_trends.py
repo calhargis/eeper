@@ -179,6 +179,59 @@ async def test_materialize_dedups_across_sliding_window(
     assert len(starts) == 1, f"expected 1 sleep_sessions row, got {len(starts)} (dedup failed)"
 
 
+async def test_materialize_dedups_session_ongoing_at_window_start(
+    sm: async_sessionmaker[AsyncSession],
+) -> None:
+    """A session already underway at the lookback window's LEFT edge has its ``started_at``
+    clamped to that edge, which slides every cycle — so the grid anchor alone can't keep it
+    stable (only ``ended_at``, the in-window waking transition, is fixed). Dedup keys on
+    ``ended_at``, so this boundary-spanning session still yields exactly ONE row. Guards the
+    residual the anchor doesn't cover (the real Pi data was full of these long bouts)."""
+    onset = datetime(2026, 7, 12, 22, 0, tzinfo=UTC)  # falls asleep...
+    wake = datetime(2026, 7, 13, 8, 0, tzinfo=UTC)  # ...wakes 10 h later
+    async with sm() as s:
+        s.add_all(
+            [
+                FusedState(
+                    ts=onset,
+                    household_id="default",
+                    sleep="sleep",
+                    arousal="calm",
+                    activity=0.1,
+                    confidence=0.7,
+                    contributing_inputs="sensor",
+                ),
+                FusedState(
+                    ts=wake,
+                    household_id="default",
+                    sleep="wake",
+                    arousal="calm",
+                    activity=0.6,
+                    confidence=0.7,
+                    contributing_inputs="sensor",
+                ),
+            ]
+        )
+        await s.commit()
+
+    inserted = 0
+    async with sm() as s:
+        # Cycles run LATE — the 26 h window's start has already swept past `onset`, so every
+        # cycle sees the session as ongoing-at-the-edge (start_epoch 0 → clamped, drifting
+        # started_at) while `wake` still sits inside the window.
+        for k in range(10):
+            cyc_now = datetime(2026, 7, 14, 4, 0, tzinfo=UTC) + timedelta(seconds=31 * k)
+            inserted += await materialize_closed_sessions(
+                s, "default", cyc_now - timedelta(hours=26), cyc_now
+            )
+            await s.commit()
+
+    async with sm() as s:
+        rows = (await s.execute(select(SleepSessionRecord.ended_at))).scalars().all()
+    assert inserted == 1, f"expected a single insert for the boundary session, got {inserted}"
+    assert len(rows) == 1, f"expected 1 row, got {len(rows)} (ended_at dedup failed)"
+
+
 async def test_continuous_aggregate_matches_independent(
     sm: async_sessionmaker[AsyncSession],
 ) -> None:
