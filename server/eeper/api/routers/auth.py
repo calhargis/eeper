@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-
 import pyotp
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from eeper.api.auth_service import logout_session, rotate_refresh, start_session
-from eeper.api.config import Settings
+from eeper.api.auth_service import (
+    clear_lockout_if_elapsed,
+    logout_session,
+    register_failed_attempt,
+    rotate_refresh,
+    start_session,
+)
 from eeper.api.cookies import clear_auth_cookies, read_persist_marker
 from eeper.api.dependencies import CurrentUser, NowDep, SessionDep, SettingsDep
 from eeper.api.models import User
@@ -37,28 +39,6 @@ def _user_out(user: User) -> UserOut:
     return UserOut(id=user.id, username=user.username, role=user.role)
 
 
-def _clear_lockout_if_elapsed(user: User, now: datetime) -> bool:
-    """Reset lockout state once the window has passed. Returns True if the user
-    is still locked."""
-    if user.locked_until is None:
-        return False
-    if user.locked_until <= now:
-        user.failed_login_count = 0
-        user.locked_until = None
-        return False
-    return True
-
-
-async def _register_failure(
-    user: User, session: AsyncSession, settings: Settings, now: datetime
-) -> None:
-    """Count a failed credential/second-factor attempt and lock after N."""
-    user.failed_login_count += 1
-    if user.failed_login_count >= settings.max_failed_logins:
-        user.locked_until = now + timedelta(seconds=settings.lockout_seconds)
-    await session.commit()
-
-
 @router.post("/login", response_model=LoginResult)
 async def login(
     body: LoginRequest,
@@ -75,12 +55,12 @@ async def login(
         raise _INVALID
 
     # Locked accounts fail exactly like a wrong password (no 429 oracle).
-    if _clear_lockout_if_elapsed(user, now):
+    if clear_lockout_if_elapsed(user, now):
         verify_dummy(body.password)
         raise _INVALID
 
     if not verify_password(user.password_hash, body.password):
-        await _register_failure(user, session, settings, now)
+        await register_failed_attempt(user, session, settings, now)
         raise _INVALID
 
     # Correct password. If TOTP is on, hand out a challenge WITHOUT clearing the
@@ -118,10 +98,10 @@ async def totp_verify(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid challenge")
 
     # The second factor is rate-limited by the same lockout as the password.
-    if _clear_lockout_if_elapsed(user, now):
+    if clear_lockout_if_elapsed(user, now):
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many attempts; try again later")
     if not pyotp.TOTP(user.totp_secret).verify(body.code, valid_window=1):
-        await _register_failure(user, session, settings, now)
+        await register_failed_attempt(user, session, settings, now)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid code")
 
     user.failed_login_count = 0

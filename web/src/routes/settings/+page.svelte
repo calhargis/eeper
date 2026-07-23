@@ -5,7 +5,13 @@
   // viewer can still manage their own), and this page links to them.
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { fetchPulseoxStatus, fetchSession, fetchStatus, type User } from '$lib/api';
+  import {
+    changePassword,
+    fetchPulseoxStatus,
+    fetchSession,
+    fetchStatus,
+    type User,
+  } from '$lib/api';
   import {
     CATEGORIES,
     PRESETS,
@@ -62,6 +68,45 @@
     clearSaved();
     activeId = 'system';
     openCat = null;
+  }
+
+  // ── change password ──
+  const MIN_PW = 12; // mirrors the server's min_password_length
+  let curPw = $state('');
+  let newPw = $state('');
+  let confirmPw = $state('');
+  let pwErr = $state('');
+  let pwMsg = $state('');
+  let pwBusy = $state(false);
+
+  async function submitPassword(e: SubmitEvent): Promise<void> {
+    e.preventDefault();
+    pwErr = '';
+    pwMsg = '';
+    if (newPw.length < MIN_PW) {
+      pwErr = `New password must be at least ${MIN_PW} characters.`;
+      return;
+    }
+    if (newPw !== confirmPw) {
+      pwErr = 'The new passwords do not match.';
+      return;
+    }
+    if (newPw === curPw) {
+      pwErr = 'New password must be different from the current one.';
+      return;
+    }
+    pwBusy = true;
+    try {
+      await changePassword(curPw, newPw);
+      pwMsg = 'Password changed.';
+      curPw = '';
+      newPw = '';
+      confirmPw = '';
+    } catch (err) {
+      pwErr = err instanceof Error ? err.message : 'Could not change the password.';
+    } finally {
+      pwBusy = false;
+    }
   }
 
   // Live-apply while the custom sliders move (deeply tracks hsl + activeId).
@@ -121,6 +166,55 @@
         <span class="k">Signed in as</span><span class="v">{user?.username}</span>
       </div>
       <div class="row"><span class="k">Role</span><span class="v">{user?.role}</span></div>
+
+      <form class="pw-form" onsubmit={submitPassword} data-testid="change-password">
+        <h3>Change password</h3>
+        <label>
+          Current password
+          <input
+            class="input"
+            type="password"
+            autocomplete="current-password"
+            bind:value={curPw}
+            data-testid="cp-current"
+            required
+          />
+        </label>
+        <label>
+          New password
+          <input
+            class="input"
+            type="password"
+            autocomplete="new-password"
+            bind:value={newPw}
+            data-testid="cp-new"
+            minlength={MIN_PW}
+            required
+          />
+        </label>
+        <label>
+          Confirm new password
+          <input
+            class="input"
+            type="password"
+            autocomplete="new-password"
+            bind:value={confirmPw}
+            data-testid="cp-confirm"
+            required
+          />
+        </label>
+        <p class="pw-hint">At least {MIN_PW} characters. Signs out your other browser sessions.</p>
+        {#if pwErr}<p class="pw-err" role="alert" data-testid="cp-error">{pwErr}</p>{/if}
+        {#if pwMsg}<p class="pw-ok" role="status" data-testid="cp-success">{pwMsg}</p>{/if}
+        <button
+          type="submit"
+          class="btn btn--primary btn--block"
+          data-testid="cp-submit"
+          disabled={pwBusy}
+        >
+          {pwBusy ? 'Changing…' : 'Change password'}
+        </button>
+      </form>
     </section>
 
     <section class="card" data-testid="settings-appearance">
@@ -281,6 +375,34 @@
   }
   .row .k {
     color: var(--text-muted);
+  }
+  .pw-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--border);
+  }
+  .pw-form h3 {
+    margin: 0;
+    font-size: var(--fs-base);
+    font-weight: 700;
+  }
+  .pw-hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+  }
+  .pw-err {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-sm);
+  }
+  .pw-ok {
+    margin: 0;
+    color: var(--ok);
+    font-size: var(--fs-sm);
   }
   .link {
     display: block;

@@ -68,6 +68,13 @@ class TotpActivateRequest(BaseModel):
     code: str = Field(min_length=6, max_length=8)
 
 
+class ChangePasswordRequest(BaseModel):
+    # Both bounded only loosely here; the new-password length policy is enforced against
+    # settings.min_password_length in the handler (mirrors first-boot).
+    current_password: str = Field(min_length=1, max_length=_MAX_PASSWORD)
+    new_password: str = Field(min_length=1, max_length=_MAX_PASSWORD)
+
+
 # ── admin: users ─────────────────────────────────────────────────────────────
 
 

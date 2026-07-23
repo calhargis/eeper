@@ -51,8 +51,10 @@ export async function api(path: string, init?: RequestInit): Promise<Response> {
 
 export async function detail(res: Response, fallback: string): Promise<string> {
   try {
-    const body = (await res.json()) as { detail?: string };
-    return body.detail ?? fallback;
+    const body = (await res.json()) as { detail?: unknown };
+    // Our HTTPExceptions set `detail` to a string; FastAPI request-validation (422)
+    // errors set it to an array of objects — only surface a genuine string message.
+    return typeof body.detail === 'string' ? body.detail : fallback;
   } catch {
     return fallback;
   }
@@ -66,6 +68,17 @@ export async function fetchStatus(): Promise<SystemStatus> {
 export async function fetchSession(): Promise<User | null> {
   const res = await api('/auth/session');
   return res.ok ? ((await res.json()) as User) : null;
+}
+
+// Change the signed-in user's password. The server re-checks the current password,
+// enforces the length policy, logs out other devices, and rotates this session's
+// cookies — so the caller stays signed in. Throws with a friendly message on failure.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const res = await api('/me/password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+  if (!res.ok) throw new Error(await detail(res, 'Could not change the password.'));
 }
 
 export async function fetchCameras(): Promise<Camera[]> {
