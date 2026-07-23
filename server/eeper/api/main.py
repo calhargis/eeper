@@ -24,6 +24,7 @@ from eeper.api.nudge_worker import NudgeWorker
 from eeper.api.pulseox_ingestion import PulseOxIngestor
 from eeper.api.routers import (
     account,
+    audio,
     auth,
     cameras,
     clips,
@@ -110,6 +111,7 @@ v1.include_router(account.router)
 v1.include_router(users.router)
 v1.include_router(tokens.router)
 v1.include_router(cameras.router)
+v1.include_router(audio.router)
 v1.include_router(clips.router)
 v1.include_router(devices.router)
 v1.include_router(events.router)

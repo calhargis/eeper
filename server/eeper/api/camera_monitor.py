@@ -56,17 +56,34 @@ class CameraMonitor:
     def forget(self, camera_id: int) -> None:
         self._health.pop(camera_id, None)
 
+    @property
+    def mic_available(self) -> bool:
+        """Whether a host microphone is configured (the audio adapter's stream)."""
+        return bool(self._settings.audio_source_url)
+
+    def effective_has_audio(self, camera: Camera) -> bool:
+        """A camera plays audio if its own source carries a track OR a host mic is
+        merged into every camera stream. This is what lights up the listen-in
+        control and the sustained-sound nudge, so it must reflect the merge."""
+        return camera.has_audio or self.mic_available
+
     async def register(self, camera: Camera) -> None:
         name = stream_name(camera.id)
         # Raw RTSP source first (serves H.264 + AAC to the recorder / audio
-        # extractor). Only if the source HAS audio, add an on-demand ffmpeg source
-        # that transcodes just the audio to Opus for the browser (AAC isn't a
-        # WebRTC codec). It is deliberately audio-only: with no video track, go2rtc
-        # must serve the WebRTC video from source 0 (raw copy), so the first frame
-        # never waits on the transcoder to spin up — the Opus audio simply joins
-        # once ffmpeg is ready. A video-only source skips this entirely.
+        # extractor). Audio for the browser comes from ONE of two mutually
+        # exclusive sources (never both — two audio tracks would race in go2rtc):
+        #   * a host mic (the audio adapter) merged in as the camera's audio, when
+        #     EEPER_AUDIO_SOURCE_URL is set — already Opus, so WebRTC-ready with no
+        #     transcode, and it also feeds the insight sound nudge; else
+        #   * an on-demand ffmpeg source transcoding the source's own audio to Opus
+        #     (AAC isn't a WebRTC codec), only when the source itself has audio.
+        # Either way the audio source is deliberately audio-only: go2rtc serves the
+        # WebRTC video from source 0 (raw copy), so the first frame never waits on
+        # the audio to spin up.
         sources = [camera.source_url]
-        if camera.has_audio:
+        if self._settings.audio_source_url:
+            sources.append(self._settings.audio_source_url)
+        elif camera.has_audio:
             sources.append(f"ffmpeg:{name}#audio=opus")
         await self._gateway.add_stream(name, sources)
 
@@ -95,11 +112,18 @@ class CameraMonitor:
             self._in_flight.discard(camera_id)
 
     async def reconcile(self) -> None:
-        """Re-register any enabled camera whose stream is missing from go2rtc."""
+        """Re-register any enabled camera whose stream is missing from go2rtc, and
+        (re)register the standalone host-mic stream for camera-independent listen-in."""
         try:
             existing = await self._gateway.stream_names()
         except GatewayError:
             existing = set()
+        mic = self._settings.mic_stream_name
+        if self._settings.audio_source_url and mic not in existing:
+            try:
+                await self._gateway.add_stream(mic, [self._settings.audio_source_url])
+            except GatewayError:
+                _log.warning("could not register the host mic stream in gateway")
         for camera in await self._enabled_cameras():
             if stream_name(camera.id) not in existing:
                 try:

@@ -592,6 +592,48 @@ jobs:
         working-directory: deploy
         run: docker compose -f docker-compose.yml -f video-test.yml -f adapter-test.yml --profile core --profile video down -v
 
+  adapters-audio:
+    name: Audio adapter (ALSA mic) contract
+    runs-on: ubuntu-latest
+    env:
+      EEPER_GO2RTC_CANDIDATE: 127.0.0.1
+      # The api merges this into the camera stream + serves it standalone as `mic`.
+      EEPER_AUDIO_SOURCE_URL: rtsp://audio-adapter:8554/mic
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: python -m pip install "httpx>=0.27,<1.0" "pytest>=8.0,<9.0" "aiortc>=1.9,<2.0"
+
+      # Core + go2rtc + a synthetic camera + the audio adapter (synthetic sine input —
+      # the SAME encode + serve path a real USB mic takes; hosted runners have no ALSA
+      # device, so the real capture open is the [MANUAL] bench — see docs/ci.md).
+      - name: Bring up the core + video + audio-adapter stack
+        working-directory: deploy
+        run: |
+          ./install.sh
+          docker compose -f docker-compose.yml -f video-test.yml -f audio-adapter-test.yml \
+            --profile core --profile video up -d --build --wait
+
+      # Contract: the adapter serves Opus over RTSP, the api reports the mic available,
+      # relays a standalone `mic` WebRTC session + merges the mic into the camera
+      # stream, and the container is hardened.
+      - name: Audio adapter contract suite
+        run: pytest deploy/tests/audio/test_mic_adapter.py -v
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: deploy
+        run: docker compose -f docker-compose.yml -f video-test.yml -f audio-adapter-test.yml --profile core --profile video logs --no-color
+
+      - name: Tear down
+        if: always()
+        working-directory: deploy
+        run: docker compose -f docker-compose.yml -f video-test.yml -f audio-adapter-test.yml --profile core --profile video down -v
+
   lighthouse:
     name: PWA (Lighthouse installability + budget)
     runs-on: ubuntu-latest

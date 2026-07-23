@@ -65,6 +65,41 @@ export async function connectCamera(cameraId: number): Promise<LiveSession> {
   return { pc, stream };
 }
 
+/** Negotiate a recv-only, AUDIO-ONLY session for the standalone host microphone
+ * (the `mic` go2rtc stream, relayed via POST /api/v1/audio/webrtc). Used by the
+ * "listen to the room" control, which works with no camera selected. */
+export async function connectMic(): Promise<LiveSession> {
+  const pc = new RTCPeerConnection();
+  pc.addTransceiver('audio', { direction: 'recvonly' });
+
+  const stream = new MediaStream();
+  pc.addEventListener('track', (event: RTCTrackEvent) => {
+    stream.addTrack(event.track);
+  });
+
+  await pc.setLocalDescription(await pc.createOffer());
+  await iceGatheringComplete(pc, 1500);
+
+  const offer = pc.localDescription?.sdp;
+  if (!offer) {
+    pc.close();
+    throw new Error('failed to create an offer');
+  }
+
+  const res = await api('/audio/webrtc', {
+    method: 'POST',
+    headers: { 'content-type': 'application/sdp' },
+    body: offer,
+  });
+  if (!res.ok) {
+    pc.close();
+    throw new Error(`microphone is not available (${res.status})`);
+  }
+
+  await pc.setRemoteDescription({ type: 'answer', sdp: await res.text() });
+  return { pc, stream };
+}
+
 export type InboundVideoStats = {
   // Total decoded video frames — the reliable "frames are flowing" signal
   // (increments headless, no display needed).

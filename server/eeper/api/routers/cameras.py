@@ -48,7 +48,10 @@ def _camera_out(camera: Camera, monitor: CameraMonitor) -> CameraOut:
         width=camera.width,
         height=camera.height,
         enabled=camera.enabled,
-        has_audio=camera.has_audio,
+        # A host mic merged into the stream makes the camera audio-capable even when
+        # its own source has no track — surface the effective value so the client's
+        # listen-in control appears.
+        has_audio=monitor.effective_has_audio(camera),
         online=health.online if health else None,
         last_checked=health.last_checked if health else None,
     )
