@@ -19,6 +19,7 @@
   import CameraView from '$lib/CameraView.svelte';
   import AudioMonitor from '$lib/AudioMonitor.svelte';
   import ThermalHeatmap from '$lib/ThermalHeatmap.svelte';
+  import { camerasSignature, devicesSignature } from '$lib/live-inputs';
 
   type LiveInput =
     | { key: string; kind: 'camera'; label: string; camera: Camera }
@@ -83,18 +84,20 @@
   }
 
   async function loadInputs(): Promise<void> {
+    // Reassign state ONLY when a structural field changes — never on the last_checked /
+    // last_seen_at heartbeat that advances every poll. Otherwise each 3s poll would churn
+    // `inputs`/`selected` into new objects and tear the thermal WebSocket down + reconnect.
     try {
-      cameras = await fetchCameras();
+      const next = await fetchCameras();
+      if (camerasSignature(next) !== camerasSignature(cameras)) cameras = next;
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : 'could not load cameras';
     }
     try {
-      // Keep the previous list on a failed poll (don't blank the picker on a blip) —
-      // matching how the cameras path retains its prior value on error.
-      const devices = await fetchDevices();
-      thermalDevices = devices.filter((d) => d.kind === 'thermal');
+      const next = (await fetchDevices()).filter((d) => d.kind === 'thermal');
+      if (devicesSignature(next) !== devicesSignature(thermalDevices)) thermalDevices = next;
     } catch {
-      /* keep the previous thermalDevices */
+      /* keep the previous thermalDevices on a failed poll (don't blank the picker) */
     }
   }
 
@@ -195,7 +198,9 @@
             : selected.camera.online === false
               ? 'offline'
               : 'checking'}
-          · {fmtChecked(selected.camera.last_checked)}
+          <!-- Only show the last-check time when NOT online (where staleness is the point);
+               while online it would just tick upward, since the poll no longer churns state. -->
+          {#if selected.camera.online !== true}· {fmtChecked(selected.camera.last_checked)}{/if}
         {:else if selected.kind === 'thermal'}
           <span
             class="dot"
@@ -208,7 +213,7 @@
             : selected.device.online === false
               ? 'offline'
               : 'checking'}
-          · {fmtChecked(selected.device.last_seen_at)}
+          {#if selected.device.online !== true}· {fmtChecked(selected.device.last_seen_at)}{/if}
         {:else}
           <span class="dot online"></span>
           <strong>Room microphone</strong> · live audio

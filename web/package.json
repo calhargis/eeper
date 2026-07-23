@@ -11,7 +11,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "eslint .",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
@@ -27,6 +28,7 @@
     "svelte-check": "^4.1.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.19.0",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^4.1.10"
   }
 }

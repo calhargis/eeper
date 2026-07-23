@@ -90,7 +90,7 @@ jobs:
         run: python server/scripts/clinical_terms_lint.py
 
   web:
-    name: Web (eslint, svelte-check)
+    name: Web (eslint, svelte-check, unit)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -107,6 +107,8 @@ jobs:
         run: npm run lint
       - name: svelte-check (TypeScript)
         run: npm run check
+      - name: Unit tests (vitest)
+        run: npm run test:unit
 
   secrets-scan:
     name: Secrets scan (gitleaks)
