@@ -20,6 +20,19 @@ from eeper.fusion.model import DEFAULT_PARAMS, EPOCH_SECONDS, Arousal, FusionPar
 from eeper.fusion.sessions import extract_sessions
 
 
+def _floor_to_epoch(ts: datetime, epoch_seconds: int) -> datetime:
+    """Snap ``ts`` DOWN to the absolute epoch grid — a fixed multiple of ``epoch_seconds``
+    seconds anchored at the Unix epoch, NOT at any sliding query origin. Sessions are
+    derived by discretizing time into epochs from a start point; anchoring that start to
+    absolute time (rather than to ``now - lookback``, which slides every fusion cycle) is
+    what makes a session's ``started_at`` a deterministic function of the durable log. See
+    ``sleep_sessions``."""
+    quantum = timedelta(seconds=epoch_seconds)
+    origin = datetime(1970, 1, 1, tzinfo=ts.tzinfo)
+    steps = (ts - origin) // quantum  # floor division -> rounds toward the earlier boundary
+    return origin + steps * quantum
+
+
 @dataclass(frozen=True)
 class SleepInterval:
     """A consolidated sleep period. ``ended_at`` is ``None`` for the session still in
@@ -143,13 +156,29 @@ async def materialize_closed_sessions(
     session: AsyncSession, household: str, start: datetime, end: datetime
 ) -> int:
     """Write a ``sleep_sessions`` row for each CLOSED session in ``[start, end)`` (the
-    still-open one is left to be derived on read). Idempotent via
-    ``ON CONFLICT (household_id, started_at) DO NOTHING``, so every cycle can re-run over
-    the same lookback harmlessly. Returns the number of rows inserted."""
+    still-open one is left to be derived on read), once. Returns the number inserted.
+
+    Idempotent across the sliding lookback window the live worker uses. A closed session's
+    stable identity is its END: the waking transition always lands inside the window, so —
+    with ``sleep_sessions`` anchoring boundaries to the absolute epoch grid — ``ended_at``
+    is a fixed timestamp for a given session on every cycle. ``started_at`` is NOT a safe
+    key: when a session was already underway at the window's left edge, its start clamps to
+    that edge, which moves every cycle. So we dedup on ``ended_at`` (skip if a row with this
+    household + ended_at exists), not on ``started_at``. The metrics recorded are the first
+    cycle's, when the session had just closed and its onset was still inside the window — so
+    ``started_at`` and the sleep totals reflect the true, un-clamped session."""
     written = 0
     for s in await sleep_sessions(session, household, start, end):
         if s.ended_at is None:
             continue  # open session — not materialized until it closes
+        already = await session.scalar(
+            select(SleepSessionRecord.started_at).where(
+                SleepSessionRecord.household_id == household,
+                SleepSessionRecord.ended_at == s.ended_at,
+            )
+        )
+        if already is not None:
+            continue  # this session (by its end) is already recorded — don't drift a dup in
         segments = await timeline_segments(session, household, s.started_at, s.ended_at)
         total_sleep_s, wake_count, longest_stretch_s = session_metrics(segments)
         result = await session.execute(
@@ -162,6 +191,8 @@ async def materialize_closed_sessions(
                 wake_count=wake_count,
                 longest_stretch_s=longest_stretch_s,
             )
+            # started_at is the hypertable's partition key + unique constraint; keep the
+            # ON CONFLICT as a race guard behind the ended_at check above.
             .on_conflict_do_nothing(index_elements=["household_id", "started_at"])
             .returning(SleepSessionRecord.id)
         )
@@ -178,12 +209,19 @@ async def sleep_sessions(
     params: FusionParams = DEFAULT_PARAMS,
 ) -> list[SleepInterval]:
     """Consolidated sleep sessions within ``[start, end)``, derived from the fused-state
-    log. A session touching the last epoch is still open (``ended_at=None``)."""
-    timeline = await _sleep_timeline(session, household, start, end, epoch_seconds)
+    log. A session touching the last epoch is still open (``ended_at=None``).
+
+    The epoch grid is anchored to absolute time (``_floor_to_epoch``), not to ``start``.
+    The live worker calls this every cycle with ``start = now - lookback``, which slides
+    with the wall clock; anchoring to ``start`` would map the same real session to a
+    slightly different ``started_at`` each cycle, defeating the ON CONFLICT dedup in
+    ``materialize_closed_sessions`` and re-inserting a near-duplicate row every cycle."""
+    anchor = _floor_to_epoch(start, epoch_seconds)
+    timeline = await _sleep_timeline(session, household, anchor, end, epoch_seconds)
     intervals: list[SleepInterval] = []
     for s in extract_sessions(timeline, params):
-        started = start + timedelta(seconds=s.start_epoch * epoch_seconds)
+        started = anchor + timedelta(seconds=s.start_epoch * epoch_seconds)
         open_ended = s.end_epoch >= len(timeline)
-        ended = None if open_ended else start + timedelta(seconds=s.end_epoch * epoch_seconds)
+        ended = None if open_ended else anchor + timedelta(seconds=s.end_epoch * epoch_seconds)
         intervals.append(SleepInterval(started_at=started, ended_at=ended))
     return intervals
