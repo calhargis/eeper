@@ -16,6 +16,16 @@ set -uo pipefail
 # ── the compose profiles this deployment runs ───────────────────────────────
 PROFILES=(core video insight)
 
+# Lite mode (EEPER_LITE=1 ./eeper-up.sh): a stripped, low-RAM deployment for hardware like a
+# Raspberry Pi 3 / 1GB — login + camera + room audio only, no ML/fusion/trends/sensors, on a
+# small plain Postgres. Adds the lite overlay and runs ONLY the `lite` profile, so mqtt,
+# insight, and the recorder stay down. See deploy/LITE.md.
+COMPOSE_FILES=()
+if [ -n "${EEPER_LITE:-}" ]; then
+  PROFILES=(lite)
+  COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.lite.yml)
+fi
+
 # ── run as root ─────────────────────────────────────────────────────────────
 if [ "$(id -u)" -ne 0 ]; then exec sudo "$0" "$@"; fi
 
@@ -101,11 +111,11 @@ step     "Tailscale — connecting" tailscale up
 wait_for "Tailscale — online" 20 tailscale status
 
 # 2) the Docker stack
-step "eeper stack — starting containers" docker compose "${PA[@]}" up -d --remove-orphans
+step "eeper stack — starting containers" docker compose "${COMPOSE_FILES[@]}" "${PA[@]}" up -d --remove-orphans
 
 # 3) each service healthy
-for svc in $(docker compose "${PA[@]}" config --services 2>/dev/null | sort); do
-  cid=$(docker compose "${PA[@]}" ps -q "$svc" 2>/dev/null)
+for svc in $(docker compose "${COMPOSE_FILES[@]}" "${PA[@]}" config --services 2>/dev/null | sort); do
+  cid=$(docker compose "${COMPOSE_FILES[@]}" "${PA[@]}" ps -q "$svc" 2>/dev/null)
   if [ -z "$cid" ]; then
     printf "  ${R}%s${Z} %s ${D}(not created)${Z}\n" "$NO" "$(label_for "$svc")"; FAILED=1; continue
   fi

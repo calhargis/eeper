@@ -5,12 +5,15 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
-  import { fetchPulseoxStatus, fetchSession, type User } from '$lib/api';
+  import { fetchPulseoxStatus, fetchSession, fetchStatus, type User } from '$lib/api';
 
   let { children } = $props();
 
   let user = $state<User | null>(null);
   let pulseoxOn = $state(false);
+  // "Live-monitor lite" builds (EEPER_LITE) only serve login + camera + audio; the
+  // insight/fusion/trends/devices routes don't exist, so we show just Live (+ Settings).
+  let lite = $state(false);
 
   const path = $derived($page.url.pathname);
   const isAdmin = $derived(user?.role === 'admin');
@@ -27,18 +30,27 @@
     settings:
       '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.3l2-1.6-2-3.4-2.4 1a7 7 0 00-2.3-1.3L14 2h-4l-.3 2.4a7 7 0 00-2.3 1.3l-2.4-1-2 3.4 2 1.6A7 7 0 005 12a7 7 0 00.1 1.3l-2 1.6 2 3.4 2.4-1a7 7 0 002.3 1.3L10 22h4l.3-2.4a7 7 0 002.3-1.3l2.4 1 2-3.4-2-1.6A7 7 0 0019 12z"/>',
   };
-  const tabs = $derived<Tab[]>([
-    { href: '/live', label: 'Live', icon: ICON.live },
-    { href: '/tonight', label: 'Tonight', icon: ICON.tonight },
-    ...(isAdmin
-      ? ([
-          { href: '/trends', label: 'Trends', icon: ICON.trends },
-          { href: '/devices', label: 'Devices', icon: ICON.devices },
-          ...(pulseoxOn ? [{ href: '/pulseox', label: 'Pulse-ox', icon: ICON.pulseox }] : []),
-          { href: '/settings', label: 'Settings', icon: ICON.settings },
-        ] as Tab[])
-      : []),
-  ]);
+  const tabs = $derived<Tab[]>(
+    lite
+      ? [
+          { href: '/live', label: 'Live', icon: ICON.live },
+          // Settings stays for admins so a password can still be changed; the other
+          // management surfaces have no backend in lite and are omitted.
+          ...(isAdmin ? [{ href: '/settings', label: 'Settings', icon: ICON.settings }] : []),
+        ]
+      : [
+          { href: '/live', label: 'Live', icon: ICON.live },
+          { href: '/tonight', label: 'Tonight', icon: ICON.tonight },
+          ...(isAdmin
+            ? ([
+                { href: '/trends', label: 'Trends', icon: ICON.trends },
+                { href: '/devices', label: 'Devices', icon: ICON.devices },
+                ...(pulseoxOn ? [{ href: '/pulseox', label: 'Pulse-ox', icon: ICON.pulseox }] : []),
+                { href: '/settings', label: 'Settings', icon: ICON.settings },
+              ] as Tab[])
+            : []),
+        ],
+  );
 
   async function refresh(): Promise<void> {
     user = await fetchSession();
@@ -51,7 +63,15 @@
     }
   }
 
-  onMount(refresh);
+  onMount(async () => {
+    // The lite flag is a build/deploy constant, so read it once (unauthenticated).
+    try {
+      lite = (await fetchStatus()).lite ?? false;
+    } catch {
+      lite = false;
+    }
+    await refresh();
+  });
   // Re-check the session on navigation so the tab bar appears right after sign-in.
   $effect(() => {
     void path;
