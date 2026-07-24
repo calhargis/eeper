@@ -114,7 +114,8 @@
   --fs-2xl: 1.9rem;
 
   --tap: 44px; /* minimum touch target */
-  --maxw: 34rem; /* comfortable single-column width */
+  --maxw: 34rem; /* comfortable reading width — forms, sign-in, text cards */
+  --app-w: 56rem; /* the app column: wide enough that the camera/live views stay large */
 }
 
 /* ── base ─────────────────────────────────────────────────────────────────── */
@@ -294,7 +295,12 @@ label {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: max(var(--sp-3), env(safe-area-inset-top)) var(--sp-4) var(--sp-3);
+  /* Full-bleed across the viewport with content re-aligned to the centered column, so the
+     sticky header reads as a real top bar on desktop instead of a clipped strip. The
+     horizontal overflow this creates is contained by `overflow-x: clip` on `.app`. */
+  margin-inline: calc(50% - 50vw);
+  padding: max(var(--sp-3), env(safe-area-inset-top))
+    max(var(--sp-4), calc((100vw - var(--app-w)) / 2 + var(--sp-4))) var(--sp-3);
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--border);
