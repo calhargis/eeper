@@ -60,7 +60,9 @@
 </script>
 
 <div class="app" class:has-nav={showNav}>
-  {@render children()}
+  <div class="app-main">
+    {@render children()}
+  </div>
   <footer class="safety">Not a medical device — a sleep-insight and awareness tool only.</footer>
 </div>
 
@@ -98,6 +100,15 @@
   }
   .app.has-nav {
     padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+  /* Every route renders inside one centered, phone-width column. On a phone it fills the
+     screen; on a wider desktop/tablet it stays a centered column (matching the centered
+     tab bar) instead of stretching content to the left edge. Pages keep their own inner
+     padding — this only constrains and centers the column, so all views line up. */
+  .app-main {
+    width: 100%;
+    max-width: var(--maxw);
+    margin-inline: auto;
   }
   .safety {
     margin-top: auto;
