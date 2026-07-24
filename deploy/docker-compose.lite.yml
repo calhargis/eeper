@@ -1,0 +1,58 @@
+# eeper "live-monitor lite" overlay — for very low-RAM hardware (e.g. a Raspberry Pi 3 /
+# 1GB). Apply ON TOP of docker-compose.yml with the `lite` profile:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lite.yml --profile lite up -d
+#
+# (deploy/eeper-up.sh --lite does this for you.) It turns the api into a lite build
+# (EEPER_LITE=true → login + camera + room-audio only, no ML/fusion/trends/sensors), and
+# swaps TimescaleDB for a small, low-memory plain Postgres. Lite uses its OWN database
+# volume (db-data-lite): a plain-Postgres binary cannot open a PGDATA that was initialised
+# with the timescaledb extension, so a host is either "full" or "lite", not both at once.
+services:
+  api:
+    environment:
+      EEPER_LITE: 'true'
+
+  db:
+    # Plain Postgres — no timescaledb preload libs, far less resident memory than the
+    # TimescaleDB image. Tuned for a shared 1GB host; passed as -c flags because the
+    # container rootfs is read-only (no writable postgresql.conf).
+    image: postgres:16-alpine
+    command:
+      - postgres
+      - -c
+      - shared_buffers=96MB
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - max_connections=20
+      - -c
+      - max_wal_size=512MB
+      - -c
+      - min_wal_size=64MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - wal_compression=on
+      - -c
+      - max_parallel_workers_per_gather=0
+      - -c
+      - max_worker_processes=2
+      - -c
+      - max_parallel_workers=0
+      - -c
+      - jit=off
+      - -c
+      - huge_pages=off
+    # Hard cap so the DB can never starve the live-view path (api/go2rtc) on a 1GB box.
+    # Lite writes almost nothing (no telemetry), so this is generous headroom.
+    mem_limit: 320m
+    volumes:
+      - db-data-lite:/var/lib/postgresql/data
+
+volumes:
+  db-data-lite:

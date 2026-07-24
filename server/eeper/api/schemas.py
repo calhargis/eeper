@@ -18,6 +18,7 @@ _MAX_PASSWORD = 1024
 class SystemStatus(BaseModel):
     first_boot_required: bool
     version: str
+    lite: bool = False  # live-monitor lite build — the web app hides non-live nav when true
 
 
 class UserOut(BaseModel):

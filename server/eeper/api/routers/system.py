@@ -20,10 +20,11 @@ _FIRST_BOOT_LOCK = 8675309
 
 
 @router.get("/status", response_model=SystemStatus)
-async def get_status(session: SessionDep) -> SystemStatus:
+async def get_status(session: SessionDep, settings: SettingsDep) -> SystemStatus:
     return SystemStatus(
         first_boot_required=not await admin_exists(session),
         version=__version__,
+        lite=settings.lite,
     )
 
 

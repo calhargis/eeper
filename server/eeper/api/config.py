@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     database_url: str = Field(min_length=1)
     secret_key: str = Field(min_length=16)
 
+    # Live-monitor lite (EEPER_LITE): a stripped deployment for very low-RAM hardware
+    # (e.g. a Raspberry Pi 3 / 1GB). It serves ONLY login + camera live view + room audio,
+    # and skips every heavy subsystem — the ML insight engine, sleep/wake fusion, Trends,
+    # MQTT sensor/thermal/pulse-ox ingestion, and the TimescaleDB hypertables/aggregates.
+    # main.py gates the workers + routers on this; db.py skips the timeseries objects.
+    # Field name is `lite` so the env var is exactly EEPER_LITE (env_prefix + field name).
+    lite: bool = False
+
     # Auth cookies (httpOnly, Secure, SameSite=Lax). The refresh cookie is
     # path-scoped so it is only sent to the auth endpoints.
     access_cookie_name: str = "eeper_access"
