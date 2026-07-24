@@ -7,6 +7,7 @@ faces the network directly.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -40,6 +41,24 @@ from eeper.api.routers import (
 )
 from eeper.api.thermal_ingestion import ThermalIngestor
 from eeper.api.thermal_relay import ThermalGridHub, ThermalGridRelay
+
+
+def _configure_logging() -> None:
+    """Give the API's application logs a home. Unlike the worker entrypoints, the API runs
+    under uvicorn, which leaves the root logger at WARNING — so app ``INFO`` logs (e.g. the
+    auth-audit lines) would never reach ``docker logs``. Attach a stderr handler at INFO to
+    the ``eeper`` namespace only, leaving uvicorn's own access/error loggers untouched.
+    Idempotent, so repeated imports/reloads don't stack handlers."""
+    log = logging.getLogger("eeper")
+    if not log.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+        log.addHandler(handler)
+        log.setLevel(logging.INFO)
+        log.propagate = False
+
+
+_configure_logging()
 
 
 @asynccontextmanager

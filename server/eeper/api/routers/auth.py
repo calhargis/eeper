@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import pyotp
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from sqlalchemy import select
@@ -30,6 +32,13 @@ from eeper.api.tokens import create_totp_challenge, decode_totp_challenge
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Auth-audit logging. Every login attempt records its OUTCOME and the username as received
+# (``%r`` exposes stray capitalization/whitespace from mobile keyboards — the class of bug
+# that makes a login mysteriously fail on one device only). Never logs the password or its
+# length. The response itself stays a single generic error (below) so nothing leaks to the
+# client; the detail lives only in the server log.
+logger = logging.getLogger(__name__)
+
 # Generic auth-failure response. Using one status/message for wrong password,
 # unknown user, AND locked account avoids leaking which usernames exist.
 _INVALID = HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid username or password")
@@ -51,15 +60,22 @@ async def login(
         await session.execute(select(User).where(User.username == body.username))
     ).scalar_one_or_none()
     if user is None:
+        logger.info("login denied (unknown username): username=%r", body.username)
         verify_dummy(body.password)  # equalize timing for unknown users
         raise _INVALID
 
     # Locked accounts fail exactly like a wrong password (no 429 oracle).
     if clear_lockout_if_elapsed(user, now):
+        logger.info(
+            "login denied (account locked until %s): username=%r",
+            user.locked_until,
+            body.username,
+        )
         verify_dummy(body.password)
         raise _INVALID
 
     if not verify_password(user.password_hash, body.password):
+        logger.info("login denied (wrong password): username=%r", body.username)
         await register_failed_attempt(user, session, settings, now)
         raise _INVALID
 
@@ -67,6 +83,7 @@ async def login(
     # lockout counter — the second factor is still pending, so failed TOTP codes
     # keep accumulating toward a lock (they can't be reset by re-login).
     if user.totp_enabled:
+        logger.info("login: password ok, TOTP challenge issued: username=%r", body.username)
         await session.commit()
         challenge = create_totp_challenge(
             settings.secret_key,
@@ -76,6 +93,7 @@ async def login(
         )
         return LoginResult(totp_required=True, challenge=challenge)
 
+    logger.info("login success: username=%r", body.username)
     user.failed_login_count = 0
     user.locked_until = None
     await start_session(session, response, settings, user, now, persist=body.remember)
