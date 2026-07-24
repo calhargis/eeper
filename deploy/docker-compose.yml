@@ -123,6 +123,11 @@ services:
       # The host address the browser reaches go2rtc's media port on. Expanded into
       # webrtc.candidates in go2rtc.yaml.
       EEPER_GO2RTC_CANDIDATE: ${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}
+      # Optional SECOND WebRTC candidate for off-LAN clients (e.g. a Tailscale/VPN IP).
+      # Defaults to the primary candidate so a single-network install advertises just the
+      # one; set it (and publish 8555 on that address — see deploy/README) to let viewers
+      # who reach the host over the tunnel play camera + audio, not just thermal.
+      EEPER_GO2RTC_CANDIDATE_ALT: ${EEPER_GO2RTC_CANDIDATE_ALT:-${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}}
     ports:
       - '${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}:8555:8555/udp'
       - '${EEPER_GO2RTC_CANDIDATE:-127.0.0.1}:8555:8555/tcp'

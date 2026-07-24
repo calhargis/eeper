@@ -13,12 +13,18 @@ rtsp:
 
 webrtc:
   listen: ':8555' # fixed TCP+UDP media transport; port 8555 is published on the host
-  # Advertise a browser-reachable ICE candidate. go2rtc hardcode-excludes its own
+  # Advertise browser-reachable ICE candidates. go2rtc hardcode-excludes its own
   # Docker-bridge (172.16/12) address, so auto-discovery alone yields no candidate a
   # client can route to. EEPER_GO2RTC_CANDIDATE is the host address the browser
   # reaches (127.0.0.1 for local/CI; the host LAN IP for a real install — set by
-  # install.sh). Signaling still flows only through the authenticated api relay.
+  # install.sh). EEPER_GO2RTC_CANDIDATE_ALT is an optional SECOND address for clients
+  # that reach the host by a different route — e.g. a Tailscale/VPN IP — so off-LAN
+  # viewers get a candidate they can actually connect to (otherwise WebRTC media fails
+  # from off-LAN even though signaling over the tunnel works). It defaults to the primary
+  # candidate (a harmless duplicate) when unset, so single-network installs are unchanged.
+  # Signaling still flows only through the authenticated api relay.
   candidates:
     - ${EEPER_GO2RTC_CANDIDATE:127.0.0.1}:8555
+    - ${EEPER_GO2RTC_CANDIDATE_ALT:127.0.0.1}:8555
   # No public STUN: self-hosted, no internet egress, and it would leak the host IP.
   ice_servers: []
