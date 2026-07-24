@@ -97,17 +97,21 @@
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
+    /* Contain the appbar's full-bleed (negative margins) so it never adds a horizontal
+       scrollbar. `clip` (unlike `hidden`) doesn't create a scroll container, so the
+       sticky appbar keeps sticking to the viewport top. */
+    overflow-x: clip;
   }
   .app.has-nav {
     padding-bottom: calc(66px + env(safe-area-inset-bottom));
   }
-  /* Every route renders inside one centered, phone-width column. On a phone it fills the
-     screen; on a wider desktop/tablet it stays a centered column (matching the centered
-     tab bar) instead of stretching content to the left edge. Pages keep their own inner
-     padding — this only constrains and centers the column, so all views line up. */
+  /* Every route renders inside one centered column. On a phone it fills the screen; on a
+     wider desktop/tablet it stays a centered column (matching the centered tab bar)
+     instead of stretching to the left edge. The width is generous (--app-w) so the camera
+     and other views stay large; text-heavy pages cap themselves narrower via .container. */
   .app-main {
     width: 100%;
-    max-width: var(--maxw);
+    max-width: var(--app-w);
     margin-inline: auto;
   }
   .safety {
