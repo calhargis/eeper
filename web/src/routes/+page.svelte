@@ -191,6 +191,9 @@
             class="input"
             bind:value={username}
             autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
             required
             minlength="3"
           /></label
@@ -232,6 +235,9 @@
             class="input"
             bind:value={username}
             autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
             required
           /></label
         >
