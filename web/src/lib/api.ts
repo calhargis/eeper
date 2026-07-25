@@ -2,7 +2,7 @@
 // httpOnly session cookie is sent automatically.
 
 export type User = { id: number; username: string; role: string };
-export type SystemStatus = { first_boot_required: boolean; version: string };
+export type SystemStatus = { first_boot_required: boolean; version: string; lite?: boolean };
 export type Camera = {
   id: number;
   name: string;

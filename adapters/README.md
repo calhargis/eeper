@@ -54,6 +54,10 @@ image builds and is CRITICAL-clean).
 | `BITRATE`         | `3000000`    | H.264 bitrate (bps).              |
 | `HFLIP` / `VFLIP` | `false`      | Flip the image.                   |
 
+> **Low-power / Pi 3 "lite" preset:** `WIDTH=640 HEIGHT=480 FPS=15 BITRATE=800000`. The CSI
+> encoder is hardware H.264, so a reduced feed costs almost no CPU — ideal for the
+> live-monitor lite deployment (see [deploy/LITE.md](../deploy/LITE.md)).
+
 **Device access (bench, Pi only)** — libcamera's buffer allocation needs the Pi's
 DMA/udev surfaces, which a non-root container can't reach cleanly, so the bench
 runs it **`privileged`** — a deliberate, documented, bench-scoped relaxation

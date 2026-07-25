@@ -8,6 +8,7 @@ faces the network directly.
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -86,21 +87,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.pulseox = pulseox  # the /pulseox/health endpoint reads its discard stats
     app.state.thermal = thermal
     await monitor.start()  # reconcile go2rtc + begin the health/keep-warm loop
-    await worker.start()  # LISTEN/NOTIFY + reconciliation poll for nudge delivery
-    await ingestor.start()  # subscribe eeper/dev/# -> validate -> sensor_readings
-    await fusion.start()  # per-epoch fuse of every extractor -> fused_states transitions
-    await pulseox.start()  # subscribe eeper/dev/+/pulseox -> quality-gate -> pulseox_readings
-    await thermal.start()  # subscribe eeper/dev/+/thermal_features -> thermal_features
-    await thermal_relay.start()  # subscribe eeper/dev/+/thermal grid -> live WS heatmap fan-out
+    # Live-monitor lite (EEPER_LITE, for a Pi 3 / 1GB) keeps only the camera + mic monitor
+    # above; the insight/nudge/sensor/fusion/pulse-ox/thermal workers below are skipped.
+    if not settings.lite:
+        await worker.start()  # LISTEN/NOTIFY + reconciliation poll for nudge delivery
+        await ingestor.start()  # subscribe eeper/dev/# -> validate -> sensor_readings
+        await fusion.start()  # per-epoch fuse of every extractor -> fused_states transitions
+        await pulseox.start()  # subscribe eeper/dev/+/pulseox -> quality-gate -> pulseox_readings
+        await thermal.start()  # subscribe eeper/dev/+/thermal_features -> thermal_features
+        await thermal_relay.start()  # subscribe eeper/dev/+/thermal grid -> live heatmap fan-out
     try:
         yield
     finally:
-        await thermal_relay.stop()
-        await thermal.stop()
-        await pulseox.stop()
-        await fusion.stop()
-        await ingestor.stop()
-        await worker.stop()
+        if not settings.lite:  # mirror the start guard — only stop what we started
+            await thermal_relay.stop()
+            await thermal.stop()
+            await pulseox.stop()
+            await fusion.stop()
+            await ingestor.stop()
+            await worker.stop()
         await monitor.stop()
 
 
@@ -124,6 +129,7 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "version": __version__}
 
 
+# Always available (login + camera + room audio — the live-monitor lite surface).
 v1.include_router(system.router)
 v1.include_router(auth.router)
 v1.include_router(account.router)
@@ -131,12 +137,21 @@ v1.include_router(users.router)
 v1.include_router(tokens.router)
 v1.include_router(cameras.router)
 v1.include_router(audio.router)
-v1.include_router(clips.router)
-v1.include_router(devices.router)
-v1.include_router(events.router)
-v1.include_router(fusion.router)
-v1.include_router(trends.router)
-v1.include_router(pulseox.router)
-v1.include_router(thermal.router)
+
+# Live-monitor lite (EEPER_LITE) omits the routers below: they read tables/aggregates it
+# doesn't create (trends_nightly, fused_states, pulseox_readings, thermal_features) or drive
+# workers it doesn't run (nudge/events, MQTT device pairing, the recorder). Registering them
+# in lite would 500 on the first query; the web app hides their nav via the `lite` flag on
+# /system/status. Read the flag straight from the env here — this runs at import, and
+# get_settings() would force the DB/secret settings just to import the app.
+_LITE = os.getenv("EEPER_LITE", "").strip().lower() in {"1", "true", "yes", "on", "t", "y"}
+if not _LITE:
+    v1.include_router(clips.router)
+    v1.include_router(devices.router)
+    v1.include_router(events.router)
+    v1.include_router(fusion.router)
+    v1.include_router(trends.router)
+    v1.include_router(pulseox.router)
+    v1.include_router(thermal.router)
 
 app.include_router(v1)

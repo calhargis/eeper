@@ -104,27 +104,37 @@ async def create_schema_and_hypertables() -> None:
     On a database without the TimescaleDB extension (e.g. a plain-Postgres unit
     environment) the hypertable conversion is skipped and the plain tables stand in.
     """
+    # Live-monitor lite (EEPER_LITE) serves only login + camera + audio, so it needs none of
+    # the telemetry hypertables / continuous aggregate / retention policies. It typically runs
+    # on plain Postgres; the tables above are still created (as empty plain tables) so nothing
+    # that is kept can hit a missing relation, but the Timescale-only conversions are skipped.
+    lite = get_settings().lite
     async with get_engine().begin() as conn:
         # hashtext() -> a stable advisory-lock key; released at transaction end.
         await conn.exec_driver_sql("SELECT pg_advisory_xact_lock(hashtext('eeper_schema'))")
         await conn.run_sync(Base.metadata.create_all)
-        ext = await conn.exec_driver_sql("SELECT 1 FROM pg_extension WHERE extname = 'timescaledb'")
-        if ext.first() is not None:
-            for table in _HYPERTABLES:
-                # if_not_exists => TRUE makes this a NOTICE-only no-op when already a
-                # hypertable, so it is safe to run on every boot.
-                await conn.exec_driver_sql(
-                    f"SELECT create_hypertable('{table}', 'ts', if_not_exists => TRUE)"
-                )
+        if not lite:
+            ext = await conn.exec_driver_sql(
+                "SELECT 1 FROM pg_extension WHERE extname = 'timescaledb'"
+            )
+            if ext.first() is not None:
+                for table in _HYPERTABLES:
+                    # if_not_exists => TRUE makes this a NOTICE-only no-op when already a
+                    # hypertable, so it is safe to run on every boot.
+                    await conn.exec_driver_sql(
+                        f"SELECT create_hypertable('{table}', 'ts', if_not_exists => TRUE)"
+                    )
         # Add any missing delivery-state columns (upgrade path) BEFORE the trigger,
         # which references them; then the wake-up trigger itself — after any hypertable
-        # conversion, on plain Postgres too. Idempotent, so every boot re-applies them.
+        # conversion, on plain Postgres too. Kept even in lite: it is plain-Postgres SQL and
+        # the events table must carry its notify trigger for boot to succeed. Idempotent.
         await conn.exec_driver_sql(_EVENT_COLUMN_MIGRATION)
         for stmt in _EVENT_NOTIFY_SQL:
             await conn.exec_driver_sql(stmt)
 
-    await _create_trends_objects()
-    await _create_retention_policies()
+    if not lite:
+        await _create_trends_objects()
+        await _create_retention_policies()
 
 
 # Retention (M4.3): an optional AGE bound on the raw high-volume telemetry hypertables via
