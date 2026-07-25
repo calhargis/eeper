@@ -13,11 +13,19 @@
     inboundVideoStats,
     type LiveSession,
   } from '$lib/webrtc';
+  import {
+    exitNativeFullscreen,
+    isNativeFullscreen,
+    onFullscreenChange,
+    pickFullscreenStrategy,
+    requestNativeFullscreen,
+  } from '$lib/fullscreen';
 
   let { camera }: { camera: Camera } = $props();
 
   type Status = 'connecting' | 'live' | 'error';
   let videoEl = $state<HTMLVideoElement | undefined>();
+  let stageEl = $state<HTMLDivElement | undefined>();
   let status = $state<Status>('connecting');
   let framesDecoded = $state(0);
   let jitterBufferMs = $state<number | null>(null);
@@ -29,6 +37,30 @@
   // "listen in" gesture). Volume is remembered across a mute/unmute.
   let listening = $state(false);
   let volume = $state(80); // 0..100
+
+  // Fullscreen. Native where the browser has the Element Fullscreen API; a CSS
+  // viewport-filling stage on iPhone Safari, which doesn't (see $lib/fullscreen).
+  let fullscreen = $state(false);
+  let fauxFullscreen = $state(false);
+
+  async function toggleFullscreen(): Promise<void> {
+    if (fullscreen) {
+      if (!fauxFullscreen) await exitNativeFullscreen();
+      fauxFullscreen = false;
+      fullscreen = false;
+      return;
+    }
+    const strategy = pickFullscreenStrategy(
+      stageEl,
+      typeof document === 'undefined' ? null : document,
+    );
+    if (strategy === 'native' && stageEl && (await requestNativeFullscreen(stageEl))) {
+      fullscreen = true; // fullscreenchange keeps this honest if the user escapes out
+      return;
+    }
+    fauxFullscreen = true;
+    fullscreen = true;
+  }
 
   let session: LiveSession | null = null;
   let statsTimer: ReturnType<typeof setInterval> | null = null;
@@ -62,7 +94,21 @@
     }
   }
 
+  // Track fullscreen exits we didn't initiate (Esc, the system back gesture, the browser's
+  // own exit button) so our button label and styling stay truthful.
+  let stopFullscreenWatch: (() => void) | null = null;
+
+  // Stop the page behind the fixed stage scrolling/rubber-banding in the CSS fallback.
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle('fs-lock', fauxFullscreen);
+    return () => document.body.classList.remove('fs-lock');
+  });
+
   onMount(() => {
+    stopFullscreenWatch = onFullscreenChange(() => {
+      if (!fauxFullscreen) fullscreen = isNativeFullscreen(stageEl);
+    });
     void (async () => {
       const el = videoEl;
       if (!el) return;
@@ -89,12 +135,23 @@
   onDestroy(() => {
     destroyed = true;
     if (statsTimer) clearInterval(statsTimer);
+    stopFullscreenWatch?.();
+    // Switching inputs while fullscreen must not strand the browser in fullscreen on a
+    // element that is about to be torn down.
+    if (fullscreen && !fauxFullscreen) void exitNativeFullscreen();
     session?.pc.close();
     session = null;
   });
 </script>
 
-<div class="stage">
+<svelte:window
+  onkeydown={(e) => {
+    // Esc leaves the CSS fallback (the browser already handles Esc for native fullscreen).
+    if (e.key === 'Escape' && fauxFullscreen) void toggleFullscreen();
+  }}
+/>
+
+<div class="stage" class:fs={fauxFullscreen} bind:this={stageEl} data-fullscreen={fullscreen}>
   <video
     bind:this={videoEl}
     autoplay
@@ -122,6 +179,32 @@
       Connecting…
     {/if}
   </div>
+
+  <button
+    type="button"
+    class="fs-btn"
+    data-testid="camera-fullscreen"
+    aria-pressed={fullscreen}
+    aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+    title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+    onclick={() => void toggleFullscreen()}
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      {#if fullscreen}
+        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+      {:else}
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+      {/if}
+    </svg>
+  </button>
 
   {#if camera.has_audio}
     <div class="audio-controls">
@@ -164,6 +247,44 @@
     justify-content: center;
     border-radius: var(--r);
     overflow: hidden;
+  }
+  /* Fullscreen, both ways: the native API (desktop/Android/iPad) and the CSS fallback
+     (.fs — iPhone Safari, which has no Element Fullscreen API). Both drop the letterboxed
+     16:9 box and fill the screen; the video keeps object-fit: contain so nothing crops. */
+  .stage:fullscreen,
+  .stage.fs {
+    aspect-ratio: auto;
+    max-height: none;
+    border-radius: 0;
+  }
+  .stage.fs {
+    position: fixed;
+    inset: 0;
+    /* Above the app's fixed bottom tab bar (z-index 20). */
+    z-index: 50;
+    /* Respect the notch/home indicator when there's no browser chrome (installed PWA). */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+  }
+  .fs-btn {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tap);
+    height: var(--tap);
+    padding: 0;
+    border: none;
+    border-radius: var(--r-pill);
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--overlay-ink);
+    cursor: pointer;
+  }
+  .fs-btn svg {
+    width: 22px;
+    height: 22px;
   }
   video {
     width: 100%;

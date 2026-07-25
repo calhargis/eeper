@@ -91,6 +91,29 @@ test('the Live view presents an input picker with the camera as the default inpu
   expect(frames, 'camera view should show flowing frames by default').toBeGreaterThan(0);
 });
 
+test('fullscreen: the camera view expands and restores without dropping the stream', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN);
+  await page.goto('/live');
+  const stage = page.locator('[data-testid="live-view"] .stage').first();
+  const button = page.getByTestId('camera-fullscreen');
+  await expect(button).toHaveAttribute('aria-pressed', 'false');
+
+  await button.click();
+  // Chromium exercises the native Fullscreen API path here (the CSS fallback that iPhone
+  // Safari needs is unit-tested in src/lib/fullscreen.test.ts).
+  await expect(stage).toHaveAttribute('data-fullscreen', 'true');
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  // The WebRTC session must survive going fullscreen — frames keep arriving.
+  const { frames } = await waitForFrames(page, FRAME_BUDGET_MS);
+  expect(frames, 'frames should keep flowing while fullscreen').toBeGreaterThan(0);
+
+  await button.click();
+  await expect(stage).toHaveAttribute('data-fullscreen', 'false');
+  await expect(button).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('listen-in: audio packets flow in the Live view', async ({ page }) => {
   // Criterion 2 (M2.1): audio is negotiated (Opus) and packets flow. The <video>
   // stays muted — mute is a local playout control only; RTP still arrives.
