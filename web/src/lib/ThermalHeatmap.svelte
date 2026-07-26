@@ -5,12 +5,64 @@
   // temperature, and is not a medical or diagnostic tool (§2, §7.4). Reused by the Thermal
   // view and the Live view's Thermal tab.
   import { subscribeToThermal, THERMAL_COLS, THERMAL_ROWS, type ThermalFrame } from '$lib/thermal';
+  import {
+    exitNativeFullscreen,
+    isNativeFullscreen,
+    onFullscreenChange,
+    pickFullscreenStrategy,
+    requestNativeFullscreen,
+  } from '$lib/fullscreen';
 
   let { deviceId }: { deviceId: number } = $props();
 
   let connected = $state(false);
   let frame = $state<ThermalFrame | null>(null);
   let canvas = $state<HTMLCanvasElement | undefined>(undefined);
+  let stageEl = $state<HTMLDivElement | undefined>(undefined);
+
+  // Fullscreen. Native where the browser has the Element Fullscreen API; a CSS
+  // viewport-filling stage on iPhone Safari, which doesn't (see $lib/fullscreen). A canvas
+  // has no native video-fullscreen path at all, so the fallback matters here.
+  let fullscreen = $state(false);
+  let fauxFullscreen = $state(false);
+
+  async function toggleFullscreen(): Promise<void> {
+    if (fullscreen) {
+      if (!fauxFullscreen) await exitNativeFullscreen();
+      fauxFullscreen = false;
+      fullscreen = false;
+      return;
+    }
+    const strategy = pickFullscreenStrategy(
+      stageEl,
+      typeof document === 'undefined' ? null : document,
+    );
+    if (strategy === 'native' && stageEl && (await requestNativeFullscreen(stageEl))) {
+      fullscreen = true;
+      return;
+    }
+    fauxFullscreen = true;
+    fullscreen = true;
+  }
+
+  // Keep our state truthful when the user leaves fullscreen by Esc / system gesture, and
+  // never strand the browser in fullscreen if this view unmounts (e.g. input switch).
+  $effect(() => {
+    const stop = onFullscreenChange(() => {
+      if (!fauxFullscreen) fullscreen = isNativeFullscreen(stageEl);
+    });
+    return () => {
+      stop();
+      if (fullscreen && !fauxFullscreen) void exitNativeFullscreen();
+    };
+  });
+
+  // Stop the page behind the fixed stage scrolling/rubber-banding in the CSS fallback.
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle('fs-lock', fauxFullscreen);
+    return () => document.body.classList.remove('fs-lock');
+  });
 
   // A warm object standing clear of the background reads as presence — never a value.
   const presence = $derived(frame !== null && frame.t_max - frame.t_mean > 2.0);
@@ -89,7 +141,14 @@
   });
 </script>
 
-<div class="stage">
+<svelte:window
+  onkeydown={(e) => {
+    // Esc leaves the CSS fallback (the browser already handles Esc for native fullscreen).
+    if (e.key === 'Escape' && fauxFullscreen) void toggleFullscreen();
+  }}
+/>
+
+<div class="stage" class:fs={fauxFullscreen} bind:this={stageEl} data-fullscreen={fullscreen}>
   <canvas
     bind:this={canvas}
     class="heat"
@@ -101,6 +160,31 @@
       {connected ? 'Waiting for the first frame…' : 'Connecting…'}
     </div>
   {/if}
+  <button
+    type="button"
+    class="fs-btn"
+    data-testid="thermal-fullscreen"
+    aria-pressed={fullscreen}
+    aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+    title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+    onclick={() => void toggleFullscreen()}
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      {#if fullscreen}
+        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+      {:else}
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+      {/if}
+    </svg>
+  </button>
 </div>
 
 <div class="status">
@@ -140,6 +224,51 @@
     border-radius: var(--r-sm);
     image-rendering: auto;
     display: block;
+  }
+  /* Fullscreen, both ways: the native API (desktop/Android/iPad) and the CSS fallback
+     (.fs — iPhone Safari, which has no Element Fullscreen API). The heatmap grows to fill
+     the screen while keeping its 4:3 grid ratio. */
+  .stage:fullscreen,
+  .stage.fs {
+    border-radius: 0;
+    padding: 0;
+  }
+  .stage.fs {
+    position: fixed;
+    inset: 0;
+    /* Above the app's fixed bottom tab bar (z-index 20). */
+    z-index: 50;
+    /* Respect the notch/home indicator when there's no browser chrome (installed PWA). */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+  }
+  .stage:fullscreen .heat,
+  .stage.fs .heat {
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  .fs-btn {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tap);
+    height: var(--tap);
+    padding: 0;
+    border: none;
+    border-radius: var(--r-pill);
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--overlay-ink);
+    cursor: pointer;
+  }
+  .fs-btn svg {
+    width: 22px;
+    height: 22px;
   }
   .overlay {
     position: absolute;

@@ -127,6 +127,11 @@ html,
 body {
   margin: 0;
 }
+/* Set while a live view is in CSS "faux" fullscreen (iPhone Safari, which has no Element
+   Fullscreen API) so the page behind the fixed stage can't scroll or rubber-band. */
+body.fs-lock {
+  overflow: hidden;
+}
 html {
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
