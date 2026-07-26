@@ -62,6 +62,9 @@ export async function detail(res: Response, fallback: string): Promise<string> {
 
 export async function fetchStatus(): Promise<SystemStatus> {
   const res = await api('/system/status');
+  // Check the status before parsing: a proxy error page or a 5xx would otherwise blow up in
+  // res.json() with an opaque parse error. Callers treat a throw here as "server unreachable".
+  if (!res.ok) throw new Error(`status ${res.status}`);
   return (await res.json()) as SystemStatus;
 }
 
