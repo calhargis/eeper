@@ -28,3 +28,19 @@ test('first-boot wizard: create admin, sign out, sign in', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: 'Signed in' })).toBeVisible();
 });
+
+test('an unreachable server shows a retry card, never a stuck "Loading"', async ({ page }) => {
+  // Regression guard: /system/status failing used to leave the app on "Loading" forever
+  // (an unhandled rejection), which on iPhone Safari meant clearing website data to recover.
+  // It must surface the failure and keep retrying instead.
+  await page.route('**/api/v1/system/status', (route) => route.abort());
+  await page.goto('/');
+
+  await expect(page.getByTestId('unreachable')).toBeVisible();
+  await expect(page.getByText('Loading…')).toHaveCount(0);
+
+  // Once the server answers again, the app recovers on its own — no reload, no cache clear.
+  await page.unroute('**/api/v1/system/status');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByTestId('unreachable')).toHaveCount(0);
+});

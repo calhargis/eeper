@@ -4,7 +4,10 @@
   import { api, detail, fetchPulseoxStatus, fetchSession, fetchStatus, type User } from '$lib/api';
 
   type LoginResult = { totp_required: boolean; challenge: string | null; user: User | null };
-  type View = 'loading' | 'first-boot' | 'login' | 'totp' | 'authed';
+  // 'unreachable' is its own state: if the very first status call fails we must NOT sit on
+  // "Loading" forever (the failure mode that stranded iPhone Safari when a background fetch
+  // was refused). Show it, and keep retrying so a transient failure heals itself.
+  type View = 'loading' | 'unreachable' | 'first-boot' | 'login' | 'totp' | 'authed';
 
   const MIN_PASSWORD = 12;
 
@@ -32,24 +35,68 @@
     error = '';
   }
 
+  // Auto-retry backoff while unreachable: quick at first (a blip heals in a second), then
+  // easing off so a genuinely-down server isn't hammered all night.
+  const RETRY_MS = [1000, 2000, 5000, 10000, 30000];
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let retries = $state(0);
+  let retrying = $state(false);
+
   async function refresh(): Promise<void> {
-    const status = await fetchStatus();
-    version = status.version;
-    if (status.first_boot_required) {
-      view = 'first-boot';
-      return;
+    try {
+      const status = await fetchStatus();
+      version = status.version;
+      retries = 0;
+      if (status.first_boot_required) {
+        view = 'first-boot';
+        return;
+      }
+      const session = await fetchSession();
+      if (session) {
+        user = session;
+        view = 'authed';
+      } else {
+        view = 'login';
+      }
+    } catch {
+      // Can't reach the server (offline, TLS refused, a 5xx/HTML response). Never strand
+      // the user on a blank "Loading" — surface it and schedule another attempt. Views the
+      // user already reached are left alone; only the initial handshake falls back here.
+      if (view === 'loading' || view === 'unreachable') {
+        view = 'unreachable';
+        scheduleRetry();
+      }
     }
-    const session = await fetchSession();
-    if (session) {
-      user = session;
-      view = 'authed';
-    } else {
-      view = 'login';
-    }
+  }
+
+  function scheduleRetry(): void {
+    if (retryTimer) clearTimeout(retryTimer);
+    const delay = RETRY_MS[Math.min(retries, RETRY_MS.length - 1)];
+    retries += 1;
+    retryTimer = setTimeout(() => void refresh(), delay);
+  }
+
+  async function retryNow(): Promise<void> {
+    if (retryTimer) clearTimeout(retryTimer);
+    retrying = true;
+    await refresh();
+    retrying = false;
   }
 
   onMount(() => {
     void refresh();
+    // Coming back from a locked screen / backgrounded tab is the moment a stale connection
+    // most often recovers — retry right then instead of waiting out the backoff.
+    const onWake = (): void => {
+      if (view === 'unreachable' && !document.hidden) void retryNow();
+    };
+    document.addEventListener('visibilitychange', onWake);
+    window.addEventListener('online', onWake);
+    return () => {
+      if (retryTimer) clearTimeout(retryTimer);
+      document.removeEventListener('visibilitychange', onWake);
+      window.removeEventListener('online', onWake);
+    };
   });
 
   // Whichever path reaches the authed view (mount, login, first-boot, TOTP), discover
@@ -181,6 +228,23 @@
 
   {#if view === 'loading'}
     <div class="card"><p class="muted">Loading…</p></div>
+  {:else if view === 'unreachable'}
+    <section class="card auth" data-testid="unreachable">
+      <h2>Can't reach eeper</h2>
+      <p class="muted">
+        The monitor didn't answer. It may be starting up, off the network, or this device may need
+        to re-accept the connection — open
+        <a href="/">{location.host}</a> directly if the browser is asking about the certificate.
+      </p>
+      <button
+        class="btn btn--primary btn--block"
+        onclick={() => void retryNow()}
+        disabled={retrying}
+      >
+        {retrying ? 'Trying…' : 'Try again'}
+      </button>
+      <p class="muted retry-note">Retrying automatically…</p>
+    </section>
   {:else if view === 'first-boot'}
     <section class="card auth">
       <h2>Create your admin account</h2>
