@@ -15,10 +15,25 @@ export type Camera = {
   last_checked: string | null;
 };
 
+// Every API request is bounded. A bare fetch() has NO timeout: on a connection that died
+// without closing — the normal case on a phone that slept, switched Wi-Fi↔cellular, or had
+// its VPN/tunnel re-established — the request goes into a black hole and the promise never
+// settles, neither resolving nor rejecting. That is what left the app frozen on "Loading"
+// with no way out but clearing website data. Aborting turns that hang into a rejection the
+// caller can see, retry, and recover from.
+const REQUEST_TIMEOUT_MS = 10_000;
+
 function rawApi(path: string, init?: RequestInit): Promise<Response> {
+  // Respect a caller-supplied signal; otherwise bound the request ourselves. Built from
+  // AbortController rather than AbortSignal.timeout() so older Safari is covered too.
+  const controller = init?.signal ? null : new AbortController();
+  const timer = controller ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
   return fetch(`/api/v1${path}`, {
     ...init,
+    signal: init?.signal ?? controller?.signal,
     headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
+  }).finally(() => {
+    if (timer) clearTimeout(timer);
   });
 }
 
