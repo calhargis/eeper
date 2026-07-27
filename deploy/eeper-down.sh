@@ -14,7 +14,11 @@
 set -uo pipefail
 
 # ── the compose profiles this deployment runs ───────────────────────────────
-PROFILES=(core video insight)
+# Must match eeper-up.sh. A profile missing here is a service this script never
+# CONFIRMS has stopped: `down --remove-orphans` may still remove the container, but the
+# per-service ✓ loop below only walks the profiles listed here, so a container left
+# running would be reported as a clean shutdown.
+PROFILES=(core video insight record)
 
 # ── run as root ─────────────────────────────────────────────────────────────
 if [ "$(id -u)" -ne 0 ]; then exec sudo "$0" "$@"; fi
