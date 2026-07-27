@@ -4,13 +4,17 @@ degrades and recovers automatically, and the grid rate is capped at 4 Hz."""
 
 from __future__ import annotations
 
+import random
+
 from eeper.api.schemas import THERMAL_CELLS, ThermalFeaturesMessage, ThermalGridMessage
+from eeper.thermal.features import derive_features
 from eeper.thermal.publisher import (
     FEATURES_METRIC,
     GRID_METRIC,
     MAX_HZ,
     ThermalPublisher,
 )
+from eeper.thermal.sensor import Scene, WarmBlob, render
 
 
 def _good(value: float = 25.0) -> list[float]:
@@ -109,3 +113,33 @@ def test_features_are_low_rate_relative_to_grids() -> None:
     features = sum(1 for m, _ in sink if m == FEATURES_METRIC)
     assert features < pub.stats.published  # strictly fewer feature messages than grids
     assert features == pub.stats.features_published == 1
+
+
+def test_shape_is_suppressed_while_the_gate_reports_absent() -> None:
+    """A consumer must not be able to reconstruct a suppressed blip from the leftovers. While
+    the gate is holding presence back, the published centroid and confidence report the
+    absence too — otherwise a 'no presence, but here is exactly where it is, confidence 0.9'
+    message would invite exactly the flicker the gate exists to remove."""
+    grid = render(Scene(ambient_c=21.0, blobs=(WarmBlob(12.0, 16.0, 4.5, 9.0),)), random.Random(21))
+    clock = Clock()
+    # The same body stays in view for every tick (ScriptedSensor falls back to an EMPTY
+    # frame once drained, which would end the occupancy rather than sustain it).
+    pub, sent = _publisher(ScriptedSensor([grid] * 25), clock)
+    pub.tick()
+    feats = [p for m, p in sent if m == "thermal_features"]
+    assert feats, "a features message should have been emitted"
+    first = feats[0]
+    assert first["presence"] is False, "the acquire window has not elapsed yet"
+    assert first["warm_region_centroid"] is None
+    assert first["presence_confidence"] == 0.0
+    # The raw frame really does contain a body — the suppression is the gate, not the scene.
+    assert derive_features(grid).presence is True
+
+    # Once the frame has persisted past the acquire window, everything is reported.
+    for _ in range(20):
+        clock.advance(1.0)
+        pub.tick()
+    last = [p for m, p in sent if m == "thermal_features"][-1]
+    assert last["presence"] is True
+    assert last["warm_region_centroid"] is not None
+    assert last["presence_confidence"] > 0.0
