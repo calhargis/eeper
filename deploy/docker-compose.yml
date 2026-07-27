@@ -185,6 +185,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # Start after the api, not alongside it. Both mount the shared media-data volume,
+      # and Docker seeds a fresh named volume from the image on container create — two
+      # containers doing that concurrently race and one dies with
+      # "failed to mkdir /media/clips: file exists". Ordering them removes the race.
+      api:
+        condition: service_started
 
   # Insight engine (M2.1, `insight` profile). Reuses the api image with a command
   # override, like the recorder. M2.1 stage = audio extraction: one ffmpeg
