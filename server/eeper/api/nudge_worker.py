@@ -33,6 +33,7 @@ from eeper.api.clip_service import ClipPromotionError, promote_clip_for_window
 from eeper.api.config import Settings
 from eeper.api.event_hub import EventHub, event_message
 from eeper.api.models import Event, NotificationPreferences, PushSubscription, User
+from eeper.api.recording_settings import is_recording_enabled
 
 _log = logging.getLogger("eeper.api.nudge_worker")
 _NOTIFY_CHANNEL = "eeper_new_event"
@@ -183,8 +184,16 @@ class NudgeWorker:
                 if ev
                 else False
             )
-            if ev is not None and ev.clip_status == "pending" and ready:
-                await self._promote_clip(s, ev)
+            if ev is not None and ev.clip_status == "pending":
+                if not await is_recording_enabled(s):
+                    # Recording was switched off after this event was queued. Retire the
+                    # clip promise now rather than burning the retry budget on segments
+                    # that were never written. 'skip' (not 'failed') is the honest status:
+                    # we never recorded, as opposed to tried and couldn't.
+                    ev.clip_status = "skip"
+                    await s.commit()
+                elif ready:
+                    await self._promote_clip(s, ev)
 
         # 4. mark delivered when every channel is terminal.
         async with self._sessionmaker() as s:
@@ -205,6 +214,12 @@ class NudgeWorker:
     async def _promote_clip(self, session: AsyncSession, ev: Event) -> None:
         pre = timedelta(seconds=self._settings.nudge_pre_roll_seconds)
         post = timedelta(seconds=self._settings.nudge_post_roll_seconds)
+        # Read every attribute we need AFTER a possible rollback up front. session.rollback()
+        # expires the ORM instance, so touching ev.id later would trigger an implicit lazy
+        # refresh — which under asyncio raises MissingGreenlet from inside the except block,
+        # escaping it. That is exactly how failed promotions skipped their own retry
+        # bookkeeping: delivery_attempts stayed 0 and the row never reached 'failed'.
+        event_id = ev.id
         try:
             clip = await promote_clip_for_window(
                 session=session,
@@ -218,12 +233,12 @@ class NudgeWorker:
             ev.clip_id = clip.id
             ev.clip_status = "promoted"
             await session.commit()  # clip row + event link commit together (atomic)
-            fresh = await self._get(session, ev.id)  # re-broadcast now the clip is attached
+            fresh = await self._get(session, event_id)  # re-broadcast now the clip is attached
             if fresh is not None:
                 await self._hub.broadcast(fresh.household_id, event_message(fresh))
         except ClipPromotionError as exc:
             await session.rollback()
-            refetched = await self._get(session, ev.id)
+            refetched = await self._get(session, event_id)
             if refetched is None:
                 return
             refetched.delivery_attempts += 1

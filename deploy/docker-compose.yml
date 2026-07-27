@@ -157,7 +157,7 @@ services:
     build:
       context: ../server
     image: eeper-api:dev
-    profiles: [record]
+    profiles: [core, record] # always up; idle unless Settings > Recording is on
     user: '10001:10001'
     # tini as PID 1 forwards SIGTERM to the Python process (which runs as the
     # container's PID 1 otherwise, where the default SIG_DFL disposition is ignored)

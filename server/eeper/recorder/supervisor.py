@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from eeper.api.config import Settings
 from eeper.api.models import Camera
+from eeper.api.recording_settings import is_recording_enabled
 from eeper.recorder.layout import seg_dir
 from eeper.recorder.record import segment_command
 
@@ -40,8 +41,17 @@ class RecorderSupervisor:
         self._children: dict[int, Process] = {}
         self._backoff_until: dict[int, float] = {}
 
-    async def _enabled_camera_ids(self) -> set[int]:
+    async def _desired_camera_ids(self) -> set[int]:
+        """Which cameras should be recording right now.
+
+        Empty when the household has switched recording off in Settings — that is how the
+        toggle works: no container is started or stopped (the api is unprivileged and has no
+        Docker socket), the recorder simply stops wanting any children and ``reconcile``
+        tears the existing ffmpeg processes down on its next tick. A missing settings row
+        means enabled, so an upgrade records exactly as it did before."""
         async with self._sessionmaker() as session:
+            if not await is_recording_enabled(session):
+                return set()
             result = await session.execute(select(Camera.id).where(Camera.enabled))
             return set(result.scalars().all())
 
@@ -72,7 +82,7 @@ class RecorderSupervisor:
         _log.info("stopped recording camera %s", camera_id)
 
     async def reconcile(self) -> None:
-        desired = await self._enabled_camera_ids()
+        desired = await self._desired_camera_ids()
         now = time.monotonic()
         # Reap children that exited (stream dropped / camera outage); back off before respawn.
         for camera_id, proc in list(self._children.items()):
@@ -80,10 +90,15 @@ class RecorderSupervisor:
                 self._children.pop(camera_id, None)
                 self._backoff_until[camera_id] = now + _RESPAWN_BACKOFF_SECONDS
                 _log.warning("recorder for camera %s exited (rc=%s)", camera_id, proc.returncode)
-        # Stop recordings for cameras no longer enabled.
+        # Stop recordings for cameras no longer wanted (disabled camera, or recording
+        # switched off entirely).
         for camera_id in list(self._children):
             if camera_id not in desired:
                 await self._stop_child(camera_id)
+        if not desired:
+            # Nothing should be recording. Drop any crash backoff so flipping the toggle
+            # back on resumes immediately instead of waiting out a stale timer.
+            self._backoff_until.clear()
         # Start recordings for newly-enabled cameras (respecting backoff).
         for camera_id in desired:
             if camera_id in self._children:
