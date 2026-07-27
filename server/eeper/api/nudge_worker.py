@@ -130,8 +130,14 @@ class NudgeWorker:
             )
             ids = [row[0] for row in result.all()]
         for event_id in ids:
-            with contextlib.suppress(Exception):  # one event's failure never stalls the queue
+            # One event's failure must never stall the queue — but it must never be SILENT
+            # either. Swallowing bare Exception here hid a whole class of stuck rows: events
+            # sat 'pending' forever with delivery_attempts=0 and not one log line to explain
+            # why, because the throw happened before any channel could record its attempt.
+            try:
                 await self._deliver(event_id)
+            except Exception:
+                _log.exception("event %s delivery failed", event_id)
 
     async def _get(self, session: AsyncSession, event_id: int) -> Event | None:
         return (

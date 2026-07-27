@@ -110,6 +110,9 @@ export type EventItem = {
   previous_value: string | null;
   confidence: number;
   clip_id: number | null;
+  // 'pending' means a clip is still being produced; 'failed'/'skip' are terminal (no clip
+  // will ever arrive). Rendering must distinguish them or the UI promises a clip forever.
+  clip_status?: 'skip' | 'pending' | 'promoted' | 'failed';
 };
 
 export type NotificationPreferences = {

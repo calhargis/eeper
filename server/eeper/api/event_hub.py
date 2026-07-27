@@ -34,6 +34,7 @@ def event_to_out(event: Event) -> EventOut:
         previous_value=event.previous_value,
         confidence=event.confidence,
         clip_id=event.clip_id,
+        clip_status=event.clip_status,
     )
 
 
