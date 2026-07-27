@@ -1,0 +1,35 @@
+# Example: offer an external disk in Settings > Recording.
+#
+# Merge these two blocks into your deployment-local `docker-compose.override.yml` (the same
+# file that holds your camera/audio adapters) — `eeper-up.sh` picks that up automatically.
+# Read deploy/STORAGE.md first: the host-side prep (mount + chown) is the part that actually
+# decides whether this works.
+#
+# Both services need the identical mount and the identical EEPER_STORAGE_TARGETS value. The
+# recorder writes segments and the api promotes clips from them by hard-linking, so they
+# must resolve the selected target to the same path — a mismatch means clips silently stop
+# building (hard links cannot cross filesystems).
+
+services:
+  api:
+    environment:
+      EEPER_STORAGE_TARGETS: 'ssd:External SSD:/storage/ssd'
+    volumes:
+      - type: bind
+        source: /storage/ssd # host path (already mounted + chowned 10001:10001)
+        target: /storage/ssd # must equal the path in EEPER_STORAGE_TARGETS
+        bind:
+          # Without rslave the container keeps the view it had at start: unplug and remount
+          # the disk on the host and the container writes into the underlying directory on
+          # the SD card instead, with no error anywhere.
+          propagation: rslave
+
+  recorder:
+    environment:
+      EEPER_STORAGE_TARGETS: 'ssd:External SSD:/storage/ssd'
+    volumes:
+      - type: bind
+        source: /storage/ssd
+        target: /storage/ssd
+        bind:
+          propagation: rslave

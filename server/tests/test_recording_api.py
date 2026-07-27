@@ -7,6 +7,8 @@ records out of the box. A default of off would silently stop clips for everyone 
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from tests.conftest import Harness
 
 ADMIN = {"username": "recadmin", "password": "correct horse battery staple"}
@@ -40,7 +42,10 @@ async def test_admin_can_toggle_and_it_persists(api: Harness) -> None:
     assert r.json()["recording_enabled"] is True
 
 
-async def test_patch_is_partial_and_does_not_reset_other_fields(api: Harness) -> None:
+async def test_patch_is_partial_and_does_not_reset_other_fields(
+    api: Harness, tmp_path: Path
+) -> None:
+    api.settings.storage_targets = f"ssd:External SSD:{tmp_path}"
     await _sign_in_admin(api)
     await api.client.patch("/api/v1/recording/settings", json={"storage_target_id": "ssd"})
     # Toggling recording must leave the storage choice alone.

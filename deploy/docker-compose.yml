@@ -74,6 +74,11 @@ services:
       # hypertables via a TimescaleDB retention policy the api installs at boot. 0 keeps
       # all telemetry (the default); the Tonight-history + trends tables are never dropped.
       EEPER_TIMESERIES_RETENTION_DAYS: ${EEPER_TIMESERIES_RETENTION_DAYS:-0}
+      # External storage: the places an admin may choose between in Settings > Recording, as
+      # `id:Label:/path` entries. Empty (the default) means the built-in media volume is the
+      # only option and the picker is hidden. Any path listed here must ALSO be bind-mounted
+      # into both this service and the recorder — see deploy/STORAGE.md.
+      EEPER_STORAGE_TARGETS: ${EEPER_STORAGE_TARGETS:-}
     tmpfs:
       - /tmp
     # The shared media volume: the recorder writes segments here; the api reads
@@ -177,6 +182,10 @@ services:
       # Retention (M4.3): the byte quota is always on; this adds an optional AGE bound on
       # finalized recording segments (0 = quota-only, the default).
       EEPER_MEDIA_MAX_AGE_SECONDS: ${EEPER_MEDIA_MAX_AGE_SECONDS:-0}
+      # Must match the api's value: the recorder resolves the SAME selected target id to a
+      # path, and a target the recorder doesn't know about would silently fall back to the
+      # internal volume while the app reported the SSD. See deploy/STORAGE.md.
+      EEPER_STORAGE_TARGETS: ${EEPER_STORAGE_TARGETS:-}
     volumes:
       - media-data:/media
     tmpfs:

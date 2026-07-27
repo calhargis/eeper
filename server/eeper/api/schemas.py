@@ -340,9 +340,36 @@ class NotificationPreferencesIn(BaseModel):
     timezone: str | None = Field(default=None, min_length=1, max_length=64)
 
 
+class StorageTargetOut(BaseModel):
+    """One place recordings may be written, with what the server could observe about it.
+
+    A target is always listed even when it can't be used right now — "External SSD, not
+    mounted" is the message that tells someone to plug the disk back in, so an unusable
+    target must stay visible instead of quietly disappearing from the picker.
+    """
+
+    id: str
+    label: str
+    path: str
+    mounted: bool
+    writable: bool
+    total_bytes: int | None = None
+    free_bytes: int | None = None
+    error: str | None = None  # not_mounted | not_writable | unreadable
+
+
+class StorageTargetsOut(BaseModel):
+    """The choices for where to record, plus which one is selected. ``selected_id`` may name
+    a target that is missing from ``targets`` (an operator removed it, or the env changed) —
+    the server falls back to internal storage in that case, and the UI says so."""
+
+    selected_id: str
+    targets: list[StorageTargetOut]
+
+
 class RecordingSettingsOut(BaseModel):
     """Household recording controls. ``storage_target_id`` refers to a target from
-    ``GET /system/storage`` — never a raw filesystem path."""
+    ``GET /recording/storage-targets`` — never a raw filesystem path."""
 
     recording_enabled: bool
     storage_target_id: str

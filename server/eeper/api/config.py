@@ -73,6 +73,12 @@ class Settings(BaseSettings):
     # api reads them + writes promoted clips. Segments ring-buffer under a byte
     # quota; promoted clips live in a separate subtree and are never evicted.
     media_root: str = "/media"
+    # Storage targets an admin may choose between, as `id:Label:/path` entries separated by
+    # commas (e.g. "ssd:External SSD:/storage/ssd"). The built-in media volume is always
+    # offered as `internal`, so leaving this unset means exactly one choice and the feature
+    # is inert. The app never discovers or mounts disks — the operator declares what it may
+    # use, and the app only resolves an id against that list. See eeper/api/storage.py.
+    storage_targets: str = ""
     segment_seconds: int = 10
     media_quota_bytes: int = 10 * 1024**3  # 10 GiB recording ring buffer
     retention_interval_seconds: float = 30.0

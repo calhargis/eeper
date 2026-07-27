@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from eeper.api.config import Settings
 from eeper.api.models import Camera
-from eeper.api.recording_settings import is_recording_enabled
+from eeper.api.recording_settings import is_recording_enabled, read_media_root
 from eeper.recorder.layout import seg_dir
 from eeper.recorder.record import segment_command
 
@@ -40,23 +40,29 @@ class RecorderSupervisor:
         self._settings = settings
         self._children: dict[int, Process] = {}
         self._backoff_until: dict[int, float] = {}
+        # The root the running children are writing to. None until the first reconcile.
+        self._media_root: str | None = None
 
-    async def _desired_camera_ids(self) -> set[int]:
-        """Which cameras should be recording right now.
+    async def _desired(self) -> tuple[str, set[int]]:
+        """Where to record, and which cameras should be recording right now.
 
-        Empty when the household has switched recording off in Settings — that is how the
-        toggle works: no container is started or stopped (the api is unprivileged and has no
-        Docker socket), the recorder simply stops wanting any children and ``reconcile``
-        tears the existing ffmpeg processes down on its next tick. A missing settings row
-        means enabled, so an upgrade records exactly as it did before."""
+        The camera set is empty when the household has switched recording off in Settings —
+        that is how the toggle works: no container is started or stopped (the api is
+        unprivileged and has no Docker socket), the recorder simply stops wanting any
+        children and ``reconcile`` tears the existing ffmpeg processes down on its next tick.
+        A missing settings row means enabled, so an upgrade records exactly as it did before.
+
+        The root comes from the same row, so switching disks in Settings is picked up on the
+        very next tick without a restart."""
         async with self._sessionmaker() as session:
+            root = await read_media_root(session, self._settings)
             if not await is_recording_enabled(session):
-                return set()
+                return root, set()
             result = await session.execute(select(Camera.id).where(Camera.enabled))
-            return set(result.scalars().all())
+            return root, set(result.scalars().all())
 
-    async def _spawn(self, camera_id: int) -> None:
-        out_dir = seg_dir(self._settings.media_root, camera_id)
+    async def _spawn(self, camera_id: int, media_root: str) -> None:
+        out_dir = seg_dir(media_root, camera_id)
         out_dir.mkdir(parents=True, exist_ok=True)
         rtsp_url = f"{self._settings.go2rtc_rtsp_url.rstrip('/')}/cam{camera_id}"
         cmd = segment_command(rtsp_url, out_dir, self._settings.segment_seconds)
@@ -82,8 +88,18 @@ class RecorderSupervisor:
         _log.info("stopped recording camera %s", camera_id)
 
     async def reconcile(self) -> None:
-        desired = await self._desired_camera_ids()
+        media_root, desired = await self._desired()
         now = time.monotonic()
+        if self._media_root is not None and media_root != self._media_root:
+            # The storage target changed. Every child holds an open output file under the
+            # OLD root, so they must be restarted — ffmpeg can't be redirected in place.
+            # Existing segments stay where they are and age out under that root's own
+            # retention pass; already-promoted clips keep their absolute stored path.
+            _log.info("storage target changed: %s -> %s", self._media_root, media_root)
+            for camera_id in list(self._children):
+                await self._stop_child(camera_id)
+            self._backoff_until.clear()
+        self._media_root = media_root
         # Reap children that exited (stream dropped / camera outage); back off before respawn.
         for camera_id, proc in list(self._children.items()):
             if proc.returncode is not None:
@@ -105,7 +121,7 @@ class RecorderSupervisor:
                 continue
             if now < self._backoff_until.get(camera_id, 0.0):
                 continue
-            await self._spawn(camera_id)
+            await self._spawn(camera_id, media_root)
 
     async def run(self) -> None:
         try:
