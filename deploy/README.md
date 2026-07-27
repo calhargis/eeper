@@ -52,6 +52,7 @@ Later phases add more optional profiles (`audio`, `sensors`, `pulseox`, `accel-*
 - `.env.example` — template (real values live in the generated `.env`).
 - `caddy/` — the edge proxy image + `Caddyfile`.
 - `eeper-update.sh` — pull, rebuild **every** image (thermal node included), restart, verify.
+- `PRESENCE-STREAMING.md` — stop the camera when the crib is empty (needs a presence input).
 - `STORAGE.md` — pointing recordings at an external disk (host prep + the picker in Settings).
 - `storage.example.yml` — the override blocks that declare an external disk to `api` + `recorder`.
 - `LITE.md` — the low-RAM "live-monitor lite" deployment.

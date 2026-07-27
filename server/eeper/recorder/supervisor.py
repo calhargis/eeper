@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from eeper.api.config import Settings
 from eeper.api.models import Camera
 from eeper.api.recording_settings import is_recording_enabled, read_media_root
+from eeper.api.stream_gating import read_gate
 from eeper.recorder.layout import seg_dir
 from eeper.recorder.record import segment_command
 
@@ -57,6 +58,11 @@ class RecorderSupervisor:
         async with self._sessionmaker() as session:
             root = await read_media_root(session, self._settings)
             if not await is_recording_enabled(session):
+                return root, set()
+            # Presence gating covers recording too: writing ten-second segments of an empty
+            # crib burns disk and the retention budget for footage nobody will ever want.
+            # The gate fails open, so any uncertainty keeps recording (stream_gating.py).
+            if not (await read_gate(session)).should_stream:
                 return root, set()
             result = await session.execute(select(Camera.id).where(Camera.enabled))
             return root, set(result.scalars().all())

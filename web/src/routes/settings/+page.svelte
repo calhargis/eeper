@@ -13,6 +13,9 @@
     type User,
     fetchRecordingSettings,
     fetchStorageTargets,
+    fetchStreamGating,
+    updateStreamGating,
+    type StreamGating,
     updateRecordingSettings,
     type RecordingSettings,
     type StorageTarget,
@@ -48,6 +51,24 @@
   // can't discover or mount disks itself), re-probed on each load for free space and
   // whether the disk is actually there.
   let storage = $state<StorageTargets | null>(null);
+  // Presence gating. `null` = the endpoint is unavailable; the card stays hidden rather than
+  // offering a control that cannot work.
+  let gating = $state<StreamGating | null>(null);
+  let gateSaving = $state(false);
+  let gateErr = $state('');
+
+  async function toggleGating(enabled: boolean): Promise<void> {
+    gateErr = '';
+    gateSaving = true;
+    try {
+      gating = await updateStreamGating(enabled);
+    } catch (e) {
+      gateErr = e instanceof Error ? e.message : 'Could not save the setting.';
+      gating = await fetchStreamGating().catch(() => gating);
+    } finally {
+      gateSaving = false;
+    }
+  }
   let savingTarget = $state('');
 
   async function toggleRecording(enabled: boolean): Promise<void> {
@@ -202,6 +223,7 @@
         pulseoxProfile = (await fetchPulseoxStatus()).profile_enabled;
         recording = await fetchRecordingSettings().catch(() => null);
         storage = await fetchStorageTargets().catch(() => null);
+        gating = await fetchStreamGating().catch(() => null);
       } catch {
         pulseoxProfile = false;
       }
@@ -437,6 +459,32 @@
         {/if}
 
         {#if recErr}<p class="pw-err" role="alert" data-testid="recording-error">{recErr}</p>{/if}
+      </section>
+    {/if}
+
+    {#if gating && gating.available}
+      <!-- Hidden entirely without a presence-capable input: a toggle that cannot work is
+           worse than an absent one, because it implies the camera will come back on when
+           something detects a baby that does not exist. -->
+      <section class="card" data-testid="settings-presence-gating">
+        <h2>Camera</h2>
+        <label class="row">
+          <input
+            type="checkbox"
+            data-testid="gating-toggle"
+            checked={gating.enabled}
+            disabled={gateSaving}
+            onchange={(e) => void toggleGating(e.currentTarget.checked)}
+          />
+          <span>Only stream when the crib is occupied</span>
+        </label>
+        <p class="hint">
+          Turns the camera and clip recording off while the crib is empty, and back on by itself
+          when the thermal sensor sees someone. Live view offers a
+          <strong>Start anyway</strong> button whenever you want to look regardless. If the sensor stops
+          reporting, the camera stays on.
+        </p>
+        {#if gateErr}<p class="pw-err" role="alert" data-testid="gating-error">{gateErr}</p>{/if}
       </section>
     {/if}
 

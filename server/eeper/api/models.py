@@ -378,6 +378,33 @@ class ThermalFeaturesReading(Base):
     centroid_col: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class StreamGating(Base):
+    """Household-scoped "only stream when someone is in the crib" controls.
+
+    A SEPARATE table from ``recording_settings`` rather than two more columns on it, because
+    ``create_all`` never ALTERs an existing table — a new column would silently not appear on
+    a deployment that already has the row, while a new table is created cleanly. (The
+    ``_EVENT_COLUMN_MIGRATION`` in db.py is what adding a column actually costs.)
+
+    A MISSING ROW MEANS DISABLED. This feature turns a baby monitor's camera OFF, so it must
+    never switch itself on during an upgrade — an operator opts in deliberately.
+
+    ``override_until`` is the "Start anyway" escape hatch: an absolute expiry rather than a
+    boolean, so a forgotten override lapses on its own instead of silently disabling the
+    gating forever. A parent who wants to watch an empty crib always can.
+    """
+
+    __tablename__ = "stream_gating"
+
+    household_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    override_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_by: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class RecordingSettings(Base):
     """Household-scoped recording controls, set by an admin in Settings.
 

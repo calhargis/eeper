@@ -35,6 +35,7 @@ from eeper.api.routers import (
     fusion,
     pulseox,
     recording,
+    streaming,
     system,
     thermal,
     tokens,
@@ -154,6 +155,7 @@ if not _LITE:
     v1.include_router(trends.router)
     v1.include_router(pulseox.router)
     v1.include_router(recording.router)
+    v1.include_router(streaming.router)
     v1.include_router(thermal.router)
 
 app.include_router(v1)

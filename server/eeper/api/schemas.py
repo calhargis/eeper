@@ -340,6 +340,43 @@ class NotificationPreferencesIn(BaseModel):
     timezone: str | None = Field(default=None, min_length=1, max_length=64)
 
 
+class PresenceOut(BaseModel):
+    """What the presence inputs can currently say. ``present`` is deliberately nullable:
+    "we cannot tell" (no input, or one that stopped reporting) is a THIRD state, not a
+    synonym for absent — and it is the state in which the camera must keep running."""
+
+    available: bool
+    present: bool | None = None
+    stale: bool = False
+    last_seen: datetime | None = None
+    confidence: float | None = None
+
+
+class StreamGatingOut(BaseModel):
+    """Whether the camera is being gated on presence, and what it is doing right now."""
+
+    enabled: bool
+    available: bool  # is a presence-capable input paired at all
+    streaming: bool  # is the camera live right now
+    reason: str  # streaming | no_presence | override | disabled | unavailable | unknown
+    override_until: datetime | None = None
+    presence: PresenceOut
+    updated_at: datetime | None = None
+
+
+class StreamGatingIn(BaseModel):
+    """Partial update — an absent field is left untouched."""
+
+    enabled: bool | None = None
+
+
+class StreamOverrideIn(BaseModel):
+    """ "Start anyway": watch an empty crib regardless of the gate. An expiry rather than a
+    flag, so a forgotten override lapses instead of disabling the feature forever."""
+
+    minutes: int = Field(default=30, ge=1, le=480)
+
+
 class StorageTargetOut(BaseModel):
     """One place recordings may be written, with what the server could observe about it.
 
