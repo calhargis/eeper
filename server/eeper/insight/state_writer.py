@@ -16,6 +16,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from eeper.api.models import Event, StateHistory
+from eeper.api.recording_settings import is_recording_enabled
 
 _log = logging.getLogger("eeper.insight.state_writer")
 # Bound the write so a silently-partitioned DB connection (a hung commit that never
@@ -55,6 +56,16 @@ class StateWriter:
         try:
             async with asyncio.timeout(_WRITE_TIMEOUT_SECONDS):
                 async with self._sessionmaker() as session:
+                    # Only promise a clip if recording is actually on. Otherwise the event
+                    # would sit "clip pending" forever waiting for segments that will never
+                    # be written — the exact failure the Tonight view used to surface. Push
+                    # and broadcast are unaffected: a parent still gets told about the cry,
+                    # there just isn't a clip to attach.
+                    clip_delivery = (
+                        delivery
+                        if delivery == "skip" or await is_recording_enabled(session)
+                        else "skip"
+                    )
                     session.add(
                         StateHistory(
                             ts=ts,
@@ -73,7 +84,7 @@ class StateWriter:
                             value=value,
                             previous_value=previous,
                             confidence=confidence,
-                            clip_status=delivery,
+                            clip_status=clip_delivery,
                             nudge_status=delivery,
                             broadcast_status=delivery,
                         )

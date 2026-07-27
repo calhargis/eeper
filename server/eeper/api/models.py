@@ -378,6 +378,32 @@ class ThermalFeaturesReading(Base):
     centroid_col: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class RecordingSettings(Base):
+    """Household-scoped recording controls, set by an admin in Settings.
+
+    A singleton row per household. Deliberately a *setting the recorder reads*, not
+    container orchestration: the api is hardened (non-root, read-only rootfs, no Docker
+    socket) and must never gain the ability to start or stop containers. The recorder polls
+    this on its normal reconcile tick and stops/starts its ffmpeg children accordingly.
+
+    A MISSING ROW MEANS ENABLED. Readers must apply that default themselves rather than
+    requiring a row, so an upgrade preserves today's behaviour and a fresh install records
+    out of the box. ``storage_target_id`` names one of the storage targets the operator has
+    made available (see the storage router); it is validated against that allow-list, never
+    used as a raw path.
+    """
+
+    __tablename__ = "recording_settings"
+
+    household_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    recording_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    storage_target_id: Mapped[str] = mapped_column(String(32), nullable=False, default="internal")
+    updated_by: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class PulseOxConsent(Base):
     """An admin's acknowledgment of the pulse-ox disclaimer for a household (M4.2).
 

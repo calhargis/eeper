@@ -329,3 +329,26 @@ export async function fetchPulseoxTrend(): Promise<PulseOxTrendPoint[]> {
   if (!res.ok) throw new Error(`could not load pulse-ox trend (${res.status})`);
   return (await res.json()) as PulseOxTrendPoint[];
 }
+
+// ── recording controls (admin toggle the recorder reads) ─────────────────────
+
+export type RecordingSettings = {
+  recording_enabled: boolean;
+  storage_target_id: string;
+  updated_at?: string | null;
+};
+
+export async function fetchRecordingSettings(): Promise<RecordingSettings> {
+  const res = await api('/recording/settings');
+  if (!res.ok) throw new Error(`could not load recording settings (${res.status})`);
+  return (await res.json()) as RecordingSettings;
+}
+
+/** Partial update — omitted fields are left untouched by the server. Admin-only. */
+export async function updateRecordingSettings(
+  patch: Partial<Pick<RecordingSettings, 'recording_enabled' | 'storage_target_id'>>,
+): Promise<RecordingSettings> {
+  const res = await api('/recording/settings', { method: 'PATCH', body: JSON.stringify(patch) });
+  if (!res.ok) throw new Error(await detail(res, 'Could not save recording settings.'));
+  return (await res.json()) as RecordingSettings;
+}

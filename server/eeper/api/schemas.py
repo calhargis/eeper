@@ -340,6 +340,24 @@ class NotificationPreferencesIn(BaseModel):
     timezone: str | None = Field(default=None, min_length=1, max_length=64)
 
 
+class RecordingSettingsOut(BaseModel):
+    """Household recording controls. ``storage_target_id`` refers to a target from
+    ``GET /system/storage`` — never a raw filesystem path."""
+
+    recording_enabled: bool
+    storage_target_id: str
+    updated_at: datetime | None = None
+
+
+class RecordingSettingsIn(BaseModel):
+    """Partial update — only the provided fields change. ``storage_target_id`` is
+    additionally checked against the live allow-list in the router; the pattern here just
+    keeps obviously-bad input (paths, traversal) from reaching that lookup."""
+
+    recording_enabled: bool | None = None
+    storage_target_id: str | None = Field(default=None, pattern=r"^[a-z0-9_-]{1,32}$")
+
+
 # ── devices + the MQTT sensor contract (M3.1) ────────────────────────────────
 
 DeviceKind = Literal["mmwave", "pir", "thermal", "other"]

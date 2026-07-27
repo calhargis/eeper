@@ -157,7 +157,7 @@ services:
     build:
       context: ../server
     image: eeper-api:dev
-    profiles: [record]
+    profiles: [record] # selected by eeper-up.sh; idles unless Settings > Recording is on
     user: '10001:10001'
     # tini as PID 1 forwards SIGTERM to the Python process (which runs as the
     # container's PID 1 otherwise, where the default SIG_DFL disposition is ignored)
@@ -185,6 +185,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # Start after the api, not alongside it. Both mount the shared media-data volume,
+      # and Docker seeds a fresh named volume from the image on container create — two
+      # containers doing that concurrently race and one dies with
+      # "failed to mkdir /media/clips: file exists". Ordering them removes the race.
+      api:
+        condition: service_started
 
   # Insight engine (M2.1, `insight` profile). Reuses the api image with a command
   # override, like the recorder. M2.1 stage = audio extraction: one ffmpeg

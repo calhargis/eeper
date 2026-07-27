@@ -11,6 +11,9 @@
     fetchSession,
     fetchStatus,
     type User,
+    fetchRecordingSettings,
+    updateRecordingSettings,
+    type RecordingSettings,
   } from '$lib/api';
   import {
     CATEGORIES,
@@ -32,6 +35,23 @@
   let user = $state<User | null>(null);
   let version = $state('');
   let pulseoxProfile = $state(false);
+  // Recording controls. `null` means we couldn't load them (older API, or lite mode, which
+  // has no recorder) — the card stays hidden rather than showing a toggle that does nothing.
+  let recording = $state<RecordingSettings | null>(null);
+  let recSaving = $state(false);
+  let recErr = $state('');
+
+  async function toggleRecording(enabled: boolean): Promise<void> {
+    recErr = '';
+    recSaving = true;
+    try {
+      recording = await updateRecordingSettings({ recording_enabled: enabled });
+    } catch (e) {
+      recErr = e instanceof Error ? e.message : 'Could not save the setting.';
+    } finally {
+      recSaving = false;
+    }
+  }
 
   // ── appearance / theming ──
   // activeId is the selected preset id, 'custom', or 'system' (follow the OS).
@@ -133,6 +153,7 @@
       try {
         version = (await fetchStatus()).version;
         pulseoxProfile = (await fetchPulseoxStatus()).profile_enabled;
+        recording = await fetchRecordingSettings().catch(() => null);
       } catch {
         pulseoxProfile = false;
       }
@@ -319,6 +340,27 @@
         {activeId === 'system' ? 'Following system theme' : 'Reset to system default'}
       </button>
     </section>
+
+    {#if recording}
+      <section class="card" data-testid="settings-recording">
+        <h2>Recording</h2>
+        <label class="row">
+          <input
+            type="checkbox"
+            data-testid="recording-toggle"
+            checked={recording.recording_enabled}
+            disabled={recSaving}
+            onchange={(e) => void toggleRecording(e.currentTarget.checked)}
+          />
+          <span>Record clips</span>
+        </label>
+        <p class="hint">
+          Saves short video around detected sounds so you can play them back in Tonight. When this
+          is off, nothing is written to disk and Tonight shows those moments without a clip.
+        </p>
+        {#if recErr}<p class="pw-err" role="alert" data-testid="recording-error">{recErr}</p>{/if}
+      </section>
+    {/if}
 
     <section class="card">
       <h2>Manage</h2>
