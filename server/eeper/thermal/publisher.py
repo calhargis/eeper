@@ -18,6 +18,7 @@ entrypoint (M6.1 slice 2) wires the real MLX90640 + paho MQTT over TLS on top.
 
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -27,11 +28,19 @@ from eeper.api.schemas import (
     ThermalFeaturesMessage,
     ThermalGridMessage,
 )
-from eeper.thermal.features import FeatureParams, derive_features
+from eeper.thermal.features import (
+    DEFAULT_GATE_PARAMS,
+    FeatureParams,
+    GateParams,
+    PresenceGate,
+    derive_features,
+)
 from eeper.thermal.sensor import ThermalSensor
 
 GRID_METRIC = "thermal"
 FEATURES_METRIC = "thermal_features"
+_log = logging.getLogger("eeper.thermal.publisher")
+
 MAX_HZ = 4.0
 _MIN_INTERVAL_S = 1.0 / MAX_HZ
 
@@ -76,11 +85,19 @@ class ThermalPublisher:
     publish: Callable[[str, dict[str, object]], None]  # (metric, payload) sink
     clock: Callable[[], float]  # unix seconds; used for both the rate gate and message ts
     feature_params: FeatureParams = field(default_factory=FeatureParams)
+    gate_params: GateParams = field(default_factory=lambda: DEFAULT_GATE_PARAMS)
     # §4.5: the grid is 2–4 Hz for characterization; the derived features are LOW-rate.
     features_min_interval_s: float = 1.0
     stats: PublishStats = field(default_factory=PublishStats)
     _last_publish: float = -1e18
     _last_features: float = -1e18
+    _gate: PresenceGate = field(init=False)
+
+    def __post_init__(self) -> None:
+        # Debounces the per-frame verdict. It lives HERE, on the node, so every consumer
+        # downstream — the stored history, fusion, the UI — sees one already-stable answer
+        # instead of each having to re-derive its own idea of what a flicker means.
+        self._gate = PresenceGate(self.feature_params, self.gate_params)
 
     def tick(self) -> bool:
         """Read + maybe publish one frame. Returns True iff a grid was published."""
@@ -118,11 +135,30 @@ class ThermalPublisher:
         # Derived features ride at their own (lower) cadence — the only signal fusion reads.
         if now - self._last_features >= self.features_min_interval_s:
             feats = derive_features(temps, self.feature_params)
-            centroid = list(feats.warm_region_centroid) if feats.warm_region_centroid else None
+            was_present = self._gate.state
+            presence = self._gate.update(feats, now)
+            if presence != was_present:
+                # Only on a transition, so this stays quiet in steady state while still
+                # giving an operator the two numbers they need to tune the thresholds
+                # against their own room (see docs/thermal-node.md).
+                _log.info(
+                    "presence %s (contrast %.1f C, warm area %.3f)",
+                    "detected" if presence else "cleared",
+                    feats.contrast_c,
+                    feats.warm_region_area,
+                )
+            # Shape follows the presence actually being REPORTED: publishing a centroid while
+            # presence is false would let a consumer resurrect the very blip the gate just
+            # suppressed. Confidence is the live evidence either way — during the release
+            # hold after a baby is lifted out it correctly falls to zero while presence is
+            # still held, which reads as "still reporting present, no longer seeing anything"
+            # rather than as certainty the detector does not have.
+            centroid_src = feats.warm_region_centroid if presence else None
+            centroid = list(centroid_src) if centroid_src else None
             feat_msg = ThermalFeaturesMessage(
                 ts=now,
-                presence=feats.presence,
-                presence_confidence=feats.presence_confidence,
+                presence=presence,
+                presence_confidence=feats.presence_confidence if presence else 0.0,
                 warm_region_area=feats.warm_region_area,
                 warm_region_centroid=centroid,
             )

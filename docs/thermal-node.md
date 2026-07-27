@@ -40,11 +40,37 @@ export EEPER_MQTT_PASSWORD=<paste-the-once-shown-password>
 # optional tuning:
 export EEPER_THERMAL_GRID_HZ=4               # grid rate, capped at 4 Hz
 export EEPER_THERMAL_FEATURES_INTERVAL_S=1   # low-rate features cadence
+export EEPER_THERMAL_ENTER_CONTRAST_C=4.0    # °C above room needed to call presence
+export EEPER_THERMAL_MIN_ON_S=8              # sustain before presence is reported
+export EEPER_THERMAL_MIN_OFF_S=45            # sustain before presence is withdrawn
 
 python -m eeper.thermal
 ```
 
 The node publishes the grid to `eeper/dev/<id>/thermal` (2–4 Hz) and the derived features to `eeper/dev/<id>/thermal_features` (low-rate). A checksum/read failure degrades health rather than emitting a bad grid; the node reads **offline** in the Devices view if it stops publishing.
+
+## How presence is decided
+
+A body puts the hottest part of the scene well above the room; an empty crib has nothing to
+separate, so the hottest cells sit close to the background. That **contrast** — not the raw
+temperature, and not a count of warm cells — is what tells occupied from empty. Measured on a
+live deployment, an occupied crib held 5.9–8.3 °C of contrast continuously (background ~24 °C,
+peak ~32 °C), so the 4.0 °C default has real margin on both sides.
+
+Two kinds of hysteresis keep the answer steady:
+
+- **Contrast** — 4.0 °C to acquire presence, but only 2.8 °C to keep it. A baby who settles
+  deeper under a blanket radiates less through it, and losing them at the same number that
+  found them would report an empty crib for a child who never moved.
+- **Time** — presence must hold for `MIN_ON_S` before it is reported, and absence for
+  `MIN_OFF_S` before it is withdrawn. Releasing is deliberately several times slower than
+  acquiring. (Before this, presence flipped with a median run of **2.3 seconds** while genuine
+  occupancies lasted hours — the tunables exist because that dithering is what they fix.)
+
+Tune only if the defaults misread your room. If presence never latches, lower
+`EEPER_THERMAL_ENTER_CONTRAST_C` — a very warm nursery, or a sensor mounted far from the crib,
+shrinks the gap. If an empty crib still reports presence, raise it. Watch the node log: it
+reports the contrast it measured.
 
 ## Notes
 
