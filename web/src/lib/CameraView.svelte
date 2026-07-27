@@ -20,6 +20,12 @@
     pickFullscreenStrategy,
     requestNativeFullscreen,
   } from '$lib/fullscreen';
+  import {
+    cssTransform,
+    fitScale,
+    loadTransform,
+    type CameraTransform,
+  } from '$lib/camera-transform';
 
   let { camera }: { camera: Camera } = $props();
 
@@ -40,7 +46,29 @@
 
   // Fullscreen. Native where the browser has the Element Fullscreen API; a CSS
   // viewport-filling stage on iPhone Safari, which doesn't (see $lib/fullscreen).
+  let transformCleanup: (() => void) | undefined;
   let fullscreen = $state(false);
+
+  // Orientation is a per-device display preference (see $lib/camera-transform). `transform`
+  // is re-read on the `camera-transform` event so the Settings preview updates live while
+  // the buttons are being pressed.
+  // Bumped by the `camera-transform` event; reading it inside the derived is what makes the
+  // preview update live while the Settings buttons are pressed, without CameraView having to
+  // own the value. Deriving (rather than initialising once) also re-reads when the camera
+  // prop itself changes.
+  let transformVersion = $state(0);
+  const transform: CameraTransform = $derived.by(() => {
+    void transformVersion; // read it so the derived re-runs when the event fires
+    return loadTransform(camera.id);
+  });
+  // A quarter turn swaps the video's bounding box, so it has to be scaled to keep fitting.
+  // The factor depends on the CURRENT box, which changes with fullscreen and rotation of the
+  // device itself — hence a ResizeObserver rather than a constant.
+  let stageW = $state(0);
+  let stageH = $state(0);
+  const videoTransform = $derived(
+    cssTransform(transform, fitScale(transform.rotation, stageW, stageH)),
+  );
   let fauxFullscreen = $state(false);
 
   async function toggleFullscreen(): Promise<void> {
@@ -106,6 +134,30 @@
   });
 
   onMount(() => {
+    // Keep the fit-scale honest across fullscreen toggles and device rotation.
+    const ro = new ResizeObserver(([entry]) => {
+      stageW = entry.contentRect.width;
+      stageH = entry.contentRect.height;
+    });
+    if (stageEl) {
+      // Seed from the current box as well as observing. ResizeObserver does fire an initial
+      // callback, but if it ever didn't the fit-scale would stay at its 0-size fallback of 1
+      // and a quarter-turned picture would silently overflow its box — cheap insurance.
+      const r = stageEl.getBoundingClientRect();
+      stageW = r.width;
+      stageH = r.height;
+      ro.observe(stageEl);
+    }
+    const onTransform = (e: Event) => {
+      const id = (e as CustomEvent<{ cameraId: number }>).detail?.cameraId;
+      if (id === undefined || id === camera.id) transformVersion += 1;
+    };
+    window.addEventListener('camera-transform', onTransform);
+    transformCleanup = () => {
+      ro.disconnect();
+      window.removeEventListener('camera-transform', onTransform);
+    };
+
     stopFullscreenWatch = onFullscreenChange(() => {
       if (!fauxFullscreen) fullscreen = isNativeFullscreen(stageEl);
     });
@@ -133,6 +185,7 @@
   });
 
   onDestroy(() => {
+    transformCleanup?.();
     destroyed = true;
     if (statsTimer) clearInterval(statsTimer);
     stopFullscreenWatch?.();
@@ -154,6 +207,7 @@
 <div class="stage" class:fs={fauxFullscreen} bind:this={stageEl} data-fullscreen={fullscreen}>
   <video
     bind:this={videoEl}
+    style:transform={videoTransform}
     autoplay
     playsinline
     muted
@@ -180,58 +234,65 @@
     {/if}
   </div>
 
-  <button
-    type="button"
-    class="fs-btn"
-    data-testid="camera-fullscreen"
-    aria-pressed={fullscreen}
-    aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-    title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-    onclick={() => void toggleFullscreen()}
-  >
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      {#if fullscreen}
-        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-      {:else}
-        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-      {/if}
-    </svg>
-  </button>
-
-  {#if camera.has_audio}
-    <div class="audio-controls">
-      <button
-        type="button"
-        class="listen"
-        class:on={listening}
-        data-testid="listen-toggle"
-        aria-pressed={listening}
-        onclick={() => (listening = !listening)}
-      >
-        {listening ? '🔊 Listening' : '🔈 Listen in'}
-      </button>
-      {#if listening}
-        <input
-          type="range"
-          class="volume"
-          min="0"
-          max="100"
-          step="1"
-          bind:value={volume}
-          data-testid="camera-volume"
-          aria-label="Volume"
-        />
+  <!-- One control bar along the BOTTOM. The fullscreen button used to sit in the top-right
+       corner, which on an iPhone lands under the status bar / clock: the OS wins the tap, so
+       once you were fullscreen you could not get out. Bottom-anchored also puts everything in
+       thumb reach one-handed, and the safe-area insets keep it clear of the notch in
+       landscape and the home indicator in portrait. -->
+  <div class="controls">
+    <div class="controls__left">
+      {#if camera.has_audio}
+        <button
+          type="button"
+          class="ctl listen"
+          class:on={listening}
+          data-testid="listen-toggle"
+          aria-pressed={listening}
+          onclick={() => (listening = !listening)}
+        >
+          {listening ? '🔊 Listening' : '🔈 Listen in'}
+        </button>
+        {#if listening}
+          <input
+            type="range"
+            class="volume"
+            min="0"
+            max="100"
+            step="1"
+            bind:value={volume}
+            data-testid="camera-volume"
+            aria-label="Volume"
+          />
+        {/if}
       {/if}
     </div>
-  {/if}
+
+    <button
+      type="button"
+      class="ctl fs-btn"
+      data-testid="camera-fullscreen"
+      aria-pressed={fullscreen}
+      aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+      title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+      onclick={() => void toggleFullscreen()}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        {#if fullscreen}
+          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+        {:else}
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+        {/if}
+      </svg>
+    </button>
+  </div>
 </div>
 
 {#if errorMsg}<p class="error" role="alert">{errorMsg}</p>{/if}
@@ -267,20 +328,9 @@
       env(safe-area-inset-left);
   }
   .fs-btn {
-    position: absolute;
-    top: var(--sp-2);
-    right: var(--sp-2);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    flex: none;
     width: var(--tap);
-    height: var(--tap);
     padding: 0;
-    border: none;
-    border-radius: var(--r-pill);
-    background: rgba(0, 0, 0, 0.6);
-    color: var(--overlay-ink);
-    cursor: pointer;
   }
   .fs-btn svg {
     width: 22px;
@@ -306,26 +356,52 @@
   .badge.on {
     color: var(--ok);
   }
-  .audio-controls {
+  /* The control bar. Anchored to the BOTTOM and inset by the safe area, so it clears the
+     iPhone status bar/clock (which used to swallow taps on the corner fullscreen button),
+     the notch in landscape, and the home indicator in portrait. */
+  .controls {
     position: absolute;
-    bottom: var(--sp-2);
-    right: var(--sp-2);
-    left: var(--sp-2);
+    inset: auto 0 0 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: var(--sp-3);
+    padding: var(--sp-2);
+    padding-right: max(var(--sp-2), env(safe-area-inset-right));
+    padding-left: max(var(--sp-2), env(safe-area-inset-left));
+    padding-bottom: max(var(--sp-2), env(safe-area-inset-bottom));
+    /* A scrim rather than per-control backgrounds: keeps every label legible over a bright
+       frame without boxing each one. pointer-events stay on the controls themselves so the
+       gradient never eats a tap meant for the video. */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+    pointer-events: none;
   }
-  .listen {
+  .controls > *,
+  .controls__left > * {
+    pointer-events: auto;
+  }
+  .controls__left {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex: 1;
+    min-width: 0;
+  }
+  .ctl {
     min-height: var(--tap);
-    font-size: var(--fs-sm);
-    font-weight: 650;
-    padding: var(--sp-2) var(--sp-4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     border-radius: var(--r-pill);
     background: rgba(0, 0, 0, 0.6);
     color: var(--overlay-ink);
     cursor: pointer;
+  }
+  .listen {
+    font-size: var(--fs-sm);
+    font-weight: 650;
+    padding: var(--sp-2) var(--sp-4);
   }
   .listen.on {
     background: var(--accent);
@@ -333,9 +409,21 @@
   }
   .volume {
     flex: 1;
+    min-width: 4rem;
     max-width: 12rem;
     accent-color: var(--accent);
     cursor: pointer;
+  }
+  /* Landscape on a phone: very little vertical room, so shrink the bar rather than let it
+     eat the picture. */
+  @media (max-height: 480px) {
+    .controls {
+      padding-top: var(--sp-1);
+      gap: var(--sp-2);
+    }
+    .listen {
+      padding: var(--sp-1) var(--sp-3);
+    }
   }
   .error {
     color: var(--danger);
