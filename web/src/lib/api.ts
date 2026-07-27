@@ -374,3 +374,53 @@ export async function fetchStorageTargets(): Promise<StorageTargets> {
   if (!res.ok) throw new Error(`could not load storage targets (${res.status})`);
   return (await res.json()) as StorageTargets;
 }
+
+/** Presence-gated streaming. `reason` explains a dark screen so the UI can say WHY rather
+ * than showing a blank frame: `no_presence` is the only one that means the camera is off on
+ * purpose — `unknown`, `unavailable` and `disabled` all mean it is still live. */
+export type StreamGating = {
+  enabled: boolean;
+  available: boolean;
+  streaming: boolean;
+  reason: 'streaming' | 'no_presence' | 'override' | 'disabled' | 'unavailable' | 'unknown';
+  override_until?: string | null;
+  presence: {
+    available: boolean;
+    present?: boolean | null;
+    stale?: boolean;
+    last_seen?: string | null;
+    confidence?: number | null;
+  };
+};
+
+export async function fetchStreamGating(): Promise<StreamGating> {
+  const res = await api('/streaming/status');
+  if (!res.ok) throw new Error(`could not load streaming status (${res.status})`);
+  return (await res.json()) as StreamGating;
+}
+
+/** Admin-only: turn presence gating on or off. */
+export async function updateStreamGating(enabled: boolean): Promise<StreamGating> {
+  const res = await api('/streaming/settings', {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  });
+  if (!res.ok) throw new Error(await detail(res, 'Could not save the setting.'));
+  return (await res.json()) as StreamGating;
+}
+
+/** "Start anyway" — any member may watch an empty crib on purpose. */
+export async function startStreamAnyway(minutes = 30): Promise<StreamGating> {
+  const res = await api('/streaming/override', {
+    method: 'POST',
+    body: JSON.stringify({ minutes }),
+  });
+  if (!res.ok) throw new Error(await detail(res, 'Could not start the stream.'));
+  return (await res.json()) as StreamGating;
+}
+
+export async function stopStreamOverride(): Promise<StreamGating> {
+  const res = await api('/streaming/override', { method: 'DELETE' });
+  if (!res.ok) throw new Error(await detail(res, 'Could not stop the stream.'));
+  return (await res.json()) as StreamGating;
+}

@@ -10,6 +10,9 @@
   import {
     fetchAudioAvailable,
     fetchCameras,
+    fetchStreamGating,
+    startStreamAnyway,
+    type StreamGating,
     fetchDevices,
     fetchSession,
     type Camera,
@@ -101,6 +104,40 @@
     }
   }
 
+  // Presence-gated streaming. `null` means the endpoint is unavailable (older api, or lite
+  // mode) — the camera then renders exactly as it always did.
+  let gating = $state<StreamGating | null>(null);
+  let starting = $state(false);
+  let gateErr = $state('');
+  let gatePoll: ReturnType<typeof setInterval> | undefined;
+
+  // Only a deliberate "camera is off" gets the placeholder. `unknown`, `unavailable` and
+  // `disabled` all mean the stream is still live, so treating them as off would blank a
+  // working picture — the opposite of what this feature is for.
+  const cameraGatedOff = $derived(
+    gating !== null && gating.enabled && !gating.streaming && gating.reason === 'no_presence',
+  );
+
+  async function refreshGating(): Promise<void> {
+    gating = await fetchStreamGating().catch(() => null);
+  }
+
+  async function startAnyway(): Promise<void> {
+    gateErr = '';
+    starting = true;
+    try {
+      gating = await startStreamAnyway(30);
+      // The camera monitor re-registers the stream on its next reconcile tick, so give it a
+      // moment before remounting the player rather than failing on a stream that isn't back.
+      await new Promise((r) => setTimeout(r, 2500));
+      await refreshGating();
+    } catch (e) {
+      gateErr = e instanceof Error ? e.message : 'Could not start the stream.';
+    } finally {
+      starting = false;
+    }
+  }
+
   onMount(() => {
     void (async () => {
       const session = await fetchSession();
@@ -109,6 +146,9 @@
         return;
       }
       user = session;
+      await refreshGating();
+      // Poll so the picture comes back on its own when the baby is put down.
+      gatePoll = setInterval(() => void refreshGating(), 10_000);
       ready = true;
       await tick();
       await loadInputs();
@@ -121,6 +161,7 @@
 
   onDestroy(() => {
     destroyed = true;
+    if (gatePoll) clearInterval(gatePoll);
     if (healthTimer) clearInterval(healthTimer);
   });
 </script>
@@ -174,7 +215,25 @@
 
     <div class="view" data-testid="live-view" data-kind={selected?.kind}>
       {#key selected?.key}
-        {#if selected?.kind === 'camera'}
+        {#if selected?.kind === 'camera' && cameraGatedOff}
+          <div class="gated" data-testid="stream-gated">
+            <p class="gated__title">No baby detected in crib</p>
+            <p class="gated__hint">
+              The camera is off to save power. It starts again on its own as soon as the thermal
+              sensor sees someone.
+            </p>
+            <button
+              type="button"
+              class="btn"
+              data-testid="start-anyway"
+              disabled={starting}
+              onclick={() => void startAnyway()}
+            >
+              {starting ? 'Starting…' : 'Start anyway'}
+            </button>
+            {#if gateErr}<p class="error" role="alert">{gateErr}</p>{/if}
+          </div>
+        {:else if selected?.kind === 'camera'}
           <CameraView camera={selected.camera} />
         {:else if selected?.kind === 'thermal'}
           <ThermalHeatmap deviceId={selected.device.id} />
@@ -300,6 +359,27 @@
   }
   .dot.online {
     background: var(--ok);
+  }
+  .gated {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    min-height: 40vh;
+    padding: var(--sp-5);
+    text-align: center;
+  }
+  .gated__title {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: 700;
+  }
+  .gated__hint {
+    margin: 0;
+    max-width: 34ch;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
   }
   .dot.offline {
     background: var(--danger);
