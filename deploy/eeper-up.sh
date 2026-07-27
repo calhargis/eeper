@@ -14,7 +14,9 @@
 set -uo pipefail
 
 # ── the compose profiles this deployment runs ───────────────────────────────
-PROFILES=(core video insight)
+# `record` runs the segment recorder so the in-app Recording toggle has something to
+# drive; it idles with no ffmpeg children while the setting is off.
+PROFILES=(core video insight record)
 
 # Lite mode (EEPER_LITE=1 ./eeper-up.sh): a stripped, low-RAM deployment for hardware like a
 # Raspberry Pi 3 / 1GB — login + camera + room audio only, no ML/fusion/trends/sensors, on a
