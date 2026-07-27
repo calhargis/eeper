@@ -22,6 +22,7 @@ from eeper.api.config import Settings
 from eeper.api.gateway import GatewayError, Go2rtcClient
 from eeper.api.models import Camera
 from eeper.api.probe import ProbeError, probe_video
+from eeper.api.stream_gating import read_gate
 
 _log = logging.getLogger("eeper.camera_monitor")
 
@@ -111,20 +112,54 @@ class CameraMonitor:
         finally:
             self._in_flight.discard(camera_id)
 
+    async def _should_stream(self) -> bool:
+        """Whether cameras should be live at all. Off only when a working presence input
+        actively reports an empty crib; every uncertain case keeps the monitor running (see
+        stream_gating.read_gate). Any failure to consult it also keeps streaming — this
+        decision may switch a camera OFF, so it must fail open."""
+        try:
+            async with self._sessionmaker() as session:
+                return (await read_gate(session)).should_stream
+        except Exception:  # noqa: BLE001 — never let a gate failure blind the monitor
+            _log.exception("could not read the streaming gate; keeping cameras live")
+            return True
+
     async def reconcile(self) -> None:
-        """Re-register any enabled camera whose stream is missing from go2rtc, and
-        (re)register the standalone host-mic stream for camera-independent listen-in."""
+        """Converge go2rtc onto the streams that should exist right now: re-register any that
+        went missing (e.g. after a gateway restart), and tear them down when presence gating
+        says the crib is empty.
+
+        Registration is the ONLY lever here. The api is hardened with no Docker socket, so it
+        cannot stop the camera container — removing the stream stops go2rtc pulling RTSP,
+        which lets an on-demand adapter idle its encoder. That is the power saving; the
+        adapter process itself keeps running."""
         try:
             existing = await self._gateway.stream_names()
         except GatewayError:
             existing = set()
+        cameras = await self._enabled_cameras()
+
+        if not await self._should_stream():
+            for camera in cameras:
+                name = stream_name(camera.id)
+                if name in existing:
+                    try:
+                        await self._gateway.remove_stream(name)
+                        _log.info("no presence detected — stopped streaming camera %s", camera.id)
+                    except GatewayError:
+                        _log.warning("could not stop camera %s in gateway", camera.id)
+            # The room mic is left alone on purpose: listening costs almost nothing next to
+            # video, and hearing the room is the one thing a parent still wants when the
+            # picture is off.
+            return
+
         mic = self._settings.mic_stream_name
         if self._settings.audio_source_url and mic not in existing:
             try:
                 await self._gateway.add_stream(mic, [self._settings.audio_source_url])
             except GatewayError:
                 _log.warning("could not register the host mic stream in gateway")
-        for camera in await self._enabled_cameras():
+        for camera in cameras:
             if stream_name(camera.id) not in existing:
                 try:
                     await self.register(camera)
