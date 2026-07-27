@@ -52,6 +52,9 @@ Later phases add more optional profiles (`audio`, `sensors`, `pulseox`, `accel-*
 - `.env.example` — template (real values live in the generated `.env`).
 - `caddy/` — the edge proxy image + `Caddyfile`.
 - `eeper-update.sh` — pull, rebuild **every** image (thermal node included), restart, verify.
+  Untracked files that block the pull are named individually; deployment-local files
+  (`docker-compose.override.yml`, `thermal-node.env`, certs) are untracked on purpose and
+  must never be swept up in a cleanup.
 - `PRESENCE-STREAMING.md` — stop the camera when the crib is empty (needs a presence input).
 - `STORAGE.md` — pointing recordings at an external disk (host prep + the picker in Settings).
 - `storage.example.yml` — the override blocks that declare an external disk to `api` + `recorder`.

@@ -131,8 +131,24 @@ if [ "$PULL" -eq 1 ]; then
   UPSTREAM=$(git_ rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) \
     || die "$(git_ rev-parse --abbrev-ref HEAD) has no upstream branch — set one, or use --no-pull."
   git_ fetch --quiet "${UPSTREAM%%/*}" || die "could not fetch from ${UPSTREAM%%/*}"
-  git_ merge --ff-only "$UPSTREAM" --quiet \
-    || die "cannot fast-forward onto $UPSTREAM — the local branch has diverged; resolve it by hand"
+  # Capture git's own diagnosis rather than replacing it with a guess. A fast-forward has
+  # more than one way to fail, and the previous blanket "the local branch has diverged" sent
+  # an operator hunting for a divergence that did not exist — the real cause was untracked
+  # files sitting where incoming tracked ones had to land.
+  if ! merge_err=$(git_ merge --ff-only "$UPSTREAM" 2>&1); then
+    if printf '%s' "$merge_err" | grep -q 'untracked working tree files would be overwritten'; then
+      printf '\n  %s%s Untracked files are blocking the update%s\n\n' "$R" "$NO" "$Z"
+      printf '  The incoming version adds files that already exist here untracked:\n\n'
+      printf '%s\n' "$merge_err" | sed -n 's/^\t/    /p'
+      printf '\n  Move or delete THOSE FILES ONLY, then re-run. Check each one first — this\n'
+      printf '  directory also holds deployment-local files that are untracked on purpose\n'
+      printf '  (docker-compose.override.yml, thermal-node.env, certs). Deleting those would\n'
+      printf '  take the deployment apart, so do not blanket-clean untracked files here.\n\n'
+      exit 1
+    fi
+    printf '%s\n' "$merge_err" | sed 's/^/        /'
+    die "cannot fast-forward onto $UPSTREAM (git's message above)"
+  fi
   note "pulled $(git_ rev-parse --abbrev-ref HEAD) from $UPSTREAM"
 else
   warn "skipping the pull (--no-pull) — rebuilding what is checked out"
