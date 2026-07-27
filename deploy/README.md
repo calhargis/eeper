@@ -51,4 +51,7 @@ Later phases add more optional profiles (`audio`, `sensors`, `pulseox`, `accel-*
 - `install.sh` — prereq check, secret generation, build+up, CA extraction.
 - `.env.example` — template (real values live in the generated `.env`).
 - `caddy/` — the edge proxy image + `Caddyfile`.
+- `STORAGE.md` — pointing recordings at an external disk (host prep + the picker in Settings).
+- `storage.example.yml` — the override blocks that declare an external disk to `api` + `recorder`.
+- `LITE.md` — the low-RAM "live-monitor lite" deployment.
 - `tests/` — integration tests asserting the M0.2 criteria (run by CI's `stack` workflow).

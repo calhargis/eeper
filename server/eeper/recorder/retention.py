@@ -10,6 +10,12 @@ load-bearing invariant is that ffmpeg only ever writes the highest-strftime file
 so never deleting that file is what keeps eviction off the active segment. Both
 policies operate only on that finalized set, so neither can touch the active segment.
 ``/media/clips`` is never scanned/evicted, so promoted clips survive by construction.
+
+Eviction sweeps EVERY declared storage target, not just the selected one. Switching the
+recording disk in Settings leaves segments behind on the old one, and a root nobody scans is
+a root that fills up forever. Each target carries the byte budget independently — the quota
+is "how much of this disk eeper may use", which is the only reading that still means
+something once there is more than one disk.
 """
 
 from __future__ import annotations
@@ -19,6 +25,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 from eeper.api.config import Settings
+from eeper.api.recording_settings import declared_targets
 from eeper.recorder.layout import SegmentFile, rec_root, scan_segments
 
 _log = logging.getLogger("eeper.recorder.retention")
@@ -39,10 +46,20 @@ def _evict(seg: SegmentFile) -> int:
 
 
 def evict_once(settings: Settings, now: datetime | None = None) -> None:
-    root = rec_root(settings.media_root)
+    """Apply both retention policies to every declared storage target."""
+    now = now or datetime.now(UTC)
+    for target in declared_targets(settings):
+        try:
+            _evict_root(settings, target.path, now)
+        except OSError:
+            # An unplugged or unreadable disk must not stop the selected one being swept.
+            _log.warning("retention skipped storage target %s (%s)", target.id, target.path)
+
+
+def _evict_root(settings: Settings, media_root: str, now: datetime) -> None:
+    root = rec_root(media_root)
     if not root.exists():
         return
-    now = now or datetime.now(UTC)
     total = 0
     finalized: list[SegmentFile] = []
     for cam_dir in root.iterdir():
@@ -52,7 +69,7 @@ def evict_once(settings: Settings, now: datetime | None = None) -> None:
             camera_id = int(cam_dir.name[len("cam") :])
         except ValueError:
             continue
-        segs = scan_segments(settings.media_root, camera_id)
+        segs = scan_segments(media_root, camera_id)
         for i, seg in enumerate(segs):
             total += seg.size
             if i < len(segs) - 1:  # exclude the newest (active/truncatable) segment

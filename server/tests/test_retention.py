@@ -142,3 +142,37 @@ def test_no_policy_pressure_is_a_noop(tmp_path: Path) -> None:
     b = _seg(tmp_path, 0, 0, 100)
     evict_once(_settings(tmp_path, quota=10**12, max_age_s=0), now=_NOW)
     assert a.exists() and b.exists()
+
+
+def test_retention_sweeps_every_declared_storage_target(tmp_path: Path) -> None:
+    """Switching the recording disk in Settings leaves segments behind on the old one. A
+    root nobody scans is a root that fills up forever, so eviction covers every declared
+    target — not just the selected one."""
+    internal, ssd = tmp_path / "media", tmp_path / "ssd"
+    old = _seg(ssd, 0, 30, 100)  # left behind after switching back to internal
+    old_active = _seg(ssd, 0, 0, 100)
+    live = _seg(internal, 0, 30, 100)
+    live_active = _seg(internal, 0, 0, 100)
+
+    settings = _settings(internal, quota=150)
+    settings.storage_targets = f"ssd:External SSD:{ssd}"
+    evict_once(settings, now=_NOW)
+
+    assert not live.exists(), "the selected root is still swept"
+    assert not old.exists(), "the deselected root must be swept too, or it fills forever"
+    # Each target carries the quota independently, and each keeps its own active segment.
+    assert live_active.exists() and old_active.exists()
+
+
+def test_a_missing_storage_target_does_not_stop_the_others(tmp_path: Path) -> None:
+    """An unplugged disk must degrade to "nothing to evict there", never abort the sweep of
+    the disk that is actually recording."""
+    internal = tmp_path / "media"
+    old = _seg(internal, 0, 30, 100)
+    active = _seg(internal, 0, 0, 100)
+
+    settings = _settings(internal, quota=150)
+    settings.storage_targets = f"ssd:External SSD:{tmp_path / 'unplugged'}"
+    evict_once(settings, now=_NOW)
+
+    assert not old.exists() and active.exists()

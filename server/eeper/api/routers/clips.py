@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from eeper.api.clip_service import ClipPromotionError, promote_clip_for_window
 from eeper.api.dependencies import AdminUser, CurrentUser, SessionDep, SettingsDep
 from eeper.api.models import Camera, Clip, User
+from eeper.api.recording_settings import read_media_root
 from eeper.api.schemas import ClipCreate, ClipOut, MessageOut
 
 router = APIRouter(tags=["clips"])
@@ -76,7 +77,7 @@ async def promote_clip(
     try:
         clip = await promote_clip_for_window(
             session=session,
-            media_root=settings.media_root,
+            media_root=await read_media_root(session, settings, camera.household_id),
             clip_max_seconds=settings.clip_max_seconds,
             household_id=camera.household_id,
             camera_id=camera_id,

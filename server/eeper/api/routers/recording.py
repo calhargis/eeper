@@ -12,15 +12,23 @@ was and a fresh install records out of the box.
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+import asyncio
+
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from eeper.api.dependencies import AdminUser, CurrentUser, SessionDep
+from eeper.api import storage
+from eeper.api.dependencies import AdminUser, CurrentUser, SessionDep, SettingsDep
 from eeper.api.models import RecordingSettings
-from eeper.api.recording_settings import read_recording_config
-from eeper.api.schemas import RecordingSettingsIn, RecordingSettingsOut
+from eeper.api.recording_settings import declared_targets, read_recording_config
+from eeper.api.schemas import (
+    RecordingSettingsIn,
+    RecordingSettingsOut,
+    StorageTargetOut,
+    StorageTargetsOut,
+)
 
 router = APIRouter(prefix="/recording", tags=["recording"])
 
@@ -44,12 +52,41 @@ async def get_recording_settings(user: CurrentUser, session: SessionDep) -> Reco
     return await read_settings(session, user.household_id)
 
 
+@router.get("/storage-targets", response_model=StorageTargetsOut)
+async def list_storage_targets(
+    user: CurrentUser, session: SessionDep, settings: SettingsDep
+) -> StorageTargetsOut:
+    """Where this deployment may record, and which of those is selected.
+
+    The list comes from the operator's ``EEPER_STORAGE_TARGETS`` declaration, not from
+    disk discovery — the api has no ``/dev``, no ``/sys/block`` and no ``CAP_SYS_ADMIN``,
+    so it cannot enumerate, mount, or format anything. Free space is probed per request
+    (statvfs + a create/unlink test) in a worker thread, since both touch the disk.
+    """
+    targets = declared_targets(settings)
+    statuses = await asyncio.to_thread(lambda: [storage.probe(t) for t in targets])
+    cfg = await read_recording_config(session, user.household_id)
+    return StorageTargetsOut(
+        selected_id=cfg.storage_target_id,
+        targets=[StorageTargetOut(**vars(s)) for s in statuses],
+    )
+
+
 @router.patch("/settings", response_model=RecordingSettingsOut)
 async def update_recording_settings(
-    body: RecordingSettingsIn, admin: AdminUser, session: SessionDep
+    body: RecordingSettingsIn, admin: AdminUser, session: SessionDep, settings: SettingsDep
 ) -> RecordingSettingsOut:
     """Partial update, admin-only. Absent fields are left untouched, so a client that only
     knows about one field can't silently reset the others."""
+    if body.storage_target_id is not None and not any(
+        t.id == body.storage_target_id for t in declared_targets(settings)
+    ):
+        # Reject rather than store-and-fall-back: a selection that silently did nothing
+        # would read back as accepted while recordings kept landing on the old disk.
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            f"Unknown storage target '{body.storage_target_id}'.",
+        )
     current = await read_settings(session, admin.household_id)
     enabled = (
         current.recording_enabled if body.recording_enabled is None else body.recording_enabled

@@ -33,7 +33,7 @@ from eeper.api.clip_service import ClipPromotionError, promote_clip_for_window
 from eeper.api.config import Settings
 from eeper.api.event_hub import EventHub, event_message
 from eeper.api.models import Event, NotificationPreferences, PushSubscription, User
-from eeper.api.recording_settings import is_recording_enabled
+from eeper.api.recording_settings import is_recording_enabled, read_media_root
 
 _log = logging.getLogger("eeper.api.nudge_worker")
 _NOTIFY_CHANNEL = "eeper_new_event"
@@ -223,7 +223,7 @@ class NudgeWorker:
         try:
             clip = await promote_clip_for_window(
                 session=session,
-                media_root=self._settings.media_root,
+                media_root=await read_media_root(session, self._settings, ev.household_id),
                 clip_max_seconds=self._settings.clip_max_seconds,
                 household_id=ev.household_id,
                 camera_id=ev.camera_id,

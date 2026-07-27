@@ -10,6 +10,12 @@ eeper keeps all durable state in two places, and a backup captures both:
 Both scripts live in `deploy/` and run against the Compose stack — no extra tooling
 beyond Docker.
 
+> **If you record to an external disk** (see [deploy/STORAGE.md](../../deploy/STORAGE.md)),
+> `media.tar.gz` only covers the built-in `media-data` volume — segments and clips written to
+> the external target are **not** in the backup. Back that path up with your normal
+> file-level tooling, or accept losing it: the database (which holds every event, session,
+> and trend) is captured either way, and clips are replayable footage, not primary state.
+
 ## Back up
 
 ```bash

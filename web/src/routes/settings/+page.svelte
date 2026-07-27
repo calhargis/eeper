@@ -12,8 +12,11 @@
     fetchStatus,
     type User,
     fetchRecordingSettings,
+    fetchStorageTargets,
     updateRecordingSettings,
     type RecordingSettings,
+    type StorageTarget,
+    type StorageTargets,
   } from '$lib/api';
   import {
     CATEGORIES,
@@ -41,6 +44,12 @@
   let recSaving = $state(false);
   let recErr = $state('');
 
+  // Where recordings go. The list is whatever the operator declared on the host (eeper
+  // can't discover or mount disks itself), re-probed on each load for free space and
+  // whether the disk is actually there.
+  let storage = $state<StorageTargets | null>(null);
+  let savingTarget = $state('');
+
   async function toggleRecording(enabled: boolean): Promise<void> {
     recErr = '';
     recSaving = true;
@@ -51,6 +60,44 @@
     } finally {
       recSaving = false;
     }
+  }
+
+  async function selectTarget(id: string): Promise<void> {
+    if (!storage || storage.selected_id === id) return;
+    recErr = '';
+    savingTarget = id;
+    try {
+      recording = await updateRecordingSettings({ storage_target_id: id });
+      // Re-probe: the free space that matters now is the new disk's.
+      storage = await fetchStorageTargets();
+    } catch (e) {
+      recErr = e instanceof Error ? e.message : 'Could not change where clips are saved.';
+    } finally {
+      savingTarget = '';
+    }
+  }
+
+  function fmtBytes(n?: number | null): string {
+    if (n == null) return '—';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let v = n;
+    let i = 0;
+    while (v >= 1024 && i < units.length - 1) {
+      v /= 1024;
+      i++;
+    }
+    return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
+  }
+
+  /** What to say under a target's name — free space when it's usable, why not when it
+   * isn't. A declared target that exists but isn't a mount point is the subtle one: writes
+   * succeed, they just land on the internal card instead of the disk. */
+  function targetNote(t: StorageTarget): string {
+    if (t.error === 'not_mounted') return 'Not connected';
+    if (t.error === 'not_writable') return 'Connected, but eeper cannot write to it';
+    if (t.error) return 'Could not be read';
+    if (!t.mounted) return `${fmtBytes(t.free_bytes)} free — warning: no disk mounted here`;
+    return `${fmtBytes(t.free_bytes)} free of ${fmtBytes(t.total_bytes)}`;
   }
 
   // ── appearance / theming ──
@@ -154,6 +201,7 @@
         version = (await fetchStatus()).version;
         pulseoxProfile = (await fetchPulseoxStatus()).profile_enabled;
         recording = await fetchRecordingSettings().catch(() => null);
+        storage = await fetchStorageTargets().catch(() => null);
       } catch {
         pulseoxProfile = false;
       }
@@ -358,6 +406,36 @@
           Saves short video around detected sounds so you can play them back in Tonight. When this
           is off, nothing is written to disk and Tonight shows those moments without a clip.
         </p>
+
+        {#if storage && storage.targets.length > 1}
+          <!-- Only worth showing when there is an actual choice: with one target this is a
+               picker with nothing to pick. -->
+          <div class="sub" data-testid="storage-targets">
+            <h3>Where clips are saved</h3>
+            {#each storage.targets as t (t.id)}
+              <label class="target" class:target--bad={!t.writable}>
+                <input
+                  type="radio"
+                  name="storage-target"
+                  value={t.id}
+                  checked={storage.selected_id === t.id}
+                  disabled={!t.writable || savingTarget !== ''}
+                  onchange={() => void selectTarget(t.id)}
+                  data-testid="storage-target-{t.id}"
+                />
+                <span class="target__text">
+                  <span class="target__label">{t.label}</span>
+                  <span class="target__note">{targetNote(t)}</span>
+                </span>
+              </label>
+            {/each}
+            <p class="hint hint--tight">
+              Recordings and saved clips move together — new ones go to the disk you pick here.
+              Anything already recorded stays where it is and still plays back.
+            </p>
+          </div>
+        {/if}
+
         {#if recErr}<p class="pw-err" role="alert" data-testid="recording-error">{recErr}</p>{/if}
       </section>
     {/if}
@@ -446,6 +524,43 @@
     color: var(--ok);
     font-size: var(--fs-sm);
   }
+  /* ── storage target picker ── */
+  .sub {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--border);
+  }
+  .sub h3 {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-base);
+    font-weight: 700;
+  }
+  .target {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+    min-height: var(--tap);
+  }
+  .target__text {
+    display: flex;
+    flex-direction: column;
+  }
+  .target__label {
+    font-size: var(--fs-base);
+  }
+  .target__note {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+  }
+  .target--bad .target__note {
+    color: var(--danger);
+  }
+  .hint--tight {
+    margin: var(--sp-2) 0 0;
+    font-size: var(--fs-xs);
+  }
+
   .link {
     display: block;
     padding: var(--sp-3) 0;

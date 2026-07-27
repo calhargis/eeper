@@ -352,3 +352,25 @@ export async function updateRecordingSettings(
   if (!res.ok) throw new Error(await detail(res, 'Could not save recording settings.'));
   return (await res.json()) as RecordingSettings;
 }
+
+/** One place recordings may be written, as the server observed it just now. `mounted`,
+ * `writable` and the byte counts are live measurements, not configuration — a disk that has
+ * been unplugged is still listed, with `error: 'not_mounted'`. */
+export type StorageTarget = {
+  id: string;
+  label: string;
+  path: string;
+  mounted: boolean;
+  writable: boolean;
+  total_bytes?: number | null;
+  free_bytes?: number | null;
+  error?: string | null;
+};
+
+export type StorageTargets = { selected_id: string; targets: StorageTarget[] };
+
+export async function fetchStorageTargets(): Promise<StorageTargets> {
+  const res = await api('/recording/storage-targets');
+  if (!res.ok) throw new Error(`could not load storage targets (${res.status})`);
+  return (await res.json()) as StorageTargets;
+}
