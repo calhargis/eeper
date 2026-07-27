@@ -103,13 +103,26 @@ group audio`:
 audio-adapter:
   image: ghcr.io/calhargis/eeper/audio:latest
   environment: { ALSA_DEVICE: plughw:CARD=microphone,DEV=0 }
-  devices: ['/dev/snd']
+  # BIND-MOUNT /dev/snd rather than `devices: ['/dev/snd']`. Compose's `devices:` is a
+  # SNAPSHOT of the device nodes taken when the container is created, so a microphone
+  # plugged in later never appears inside a running container — ffmpeg fails with
+  # "cannot open audio device … (No such device)" and the `mic` stream stays empty
+  # until you recreate the container. A bind mount reflects the host live, and the
+  # cgroup rule grants the ALSA char-device major (116) that the mount alone doesn't.
+  volumes: ['/dev/snd:/dev/snd']
+  device_cgroup_rules: ['c 116:* rmw']
   group_add: ['${EEPER_AUDIO_GID:-29}'] # host `audio` gid varies — check `getent group audio`
   read_only: true
   security_opt: [no-new-privileges:true]
   cap_drop: [ALL]
   tmpfs: [/tmp]
 ```
+
+> **Hot-plug:** with the wiring above, a USB mic connected *after* the stack is
+> already running is picked up automatically — the adapter's ffmpeg retry loop
+> opens it on its next attempt. With `devices:` instead, you must recreate the
+> container (`docker compose up -d --force-recreate audio-adapter`) every time the
+> mic is plugged in after start.
 
 No `--privileged`, no added capabilities.
 
