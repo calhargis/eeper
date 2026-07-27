@@ -4,6 +4,16 @@
   // redirected away from here. Notification preferences live on the Tonight view (so a
   // viewer can still manage their own), and this page links to them.
   import { onMount } from 'svelte';
+  import CameraView from '$lib/CameraView.svelte';
+  import {
+    IDENTITY,
+    describe as describeTransform,
+    isIdentity,
+    loadTransform,
+    nextRotation,
+    saveTransform,
+    type CameraTransform,
+  } from '$lib/camera-transform';
   import { goto } from '$app/navigation';
   import {
     changePassword,
@@ -13,8 +23,10 @@
     type User,
     fetchRecordingSettings,
     fetchStorageTargets,
+    fetchCameras,
     fetchStreamGating,
     updateStreamGating,
+    type Camera,
     type StreamGating,
     updateRecordingSettings,
     type RecordingSettings,
@@ -56,6 +68,21 @@
   let gating = $state<StreamGating | null>(null);
   let gateSaving = $state(false);
   let gateErr = $state('');
+
+  // Camera orientation. A per-device display preference (localStorage, like the theme), so
+  // there is no server round-trip and the preview reacts the instant a button is pressed.
+  let cameras = $state<Camera[]>([]);
+  let previewFor = $state<number | null>(null);
+  let transforms = $state<Record<number, CameraTransform>>({});
+
+  function applyTransform(cameraId: number, next: CameraTransform): void {
+    transforms = { ...transforms, [cameraId]: next };
+    saveTransform(cameraId, next);
+    // Tell any mounted CameraView (including the preview right below) to re-read. A plain
+    // event rather than a store because the preview is a separate component instance that
+    // owns its own WebRTC session; it must not be torn down and reconnected on every tap.
+    window.dispatchEvent(new CustomEvent('camera-transform', { detail: { cameraId } }));
+  }
 
   async function toggleGating(enabled: boolean): Promise<void> {
     gateErr = '';
@@ -224,6 +251,8 @@
         recording = await fetchRecordingSettings().catch(() => null);
         storage = await fetchStorageTargets().catch(() => null);
         gating = await fetchStreamGating().catch(() => null);
+        cameras = await fetchCameras().catch(() => []);
+        transforms = Object.fromEntries(cameras.map((c) => [c.id, loadTransform(c.id)]));
       } catch {
         pulseoxProfile = false;
       }
@@ -488,6 +517,84 @@
       </section>
     {/if}
 
+    {#if cameras.length > 0}
+      <section class="card" data-testid="settings-orientation">
+        <h2>Camera orientation</h2>
+        <p class="hint">
+          Correct a camera that is mounted sideways or upside down. This changes how the picture is
+          shown on <em>this device</em> — it does not re-encode anything, and saved clips keep the camera's
+          own orientation.
+        </p>
+
+        {#each cameras as cam (cam.id)}
+          {@const tf = transforms[cam.id] ?? IDENTITY}
+          <div class="orient" data-testid="orient-{cam.id}">
+            <div class="orient__head">
+              <span class="orient__name">{cam.name}</span>
+              <span class="orient__state">{describeTransform(tf)}</span>
+            </div>
+            <div class="orient__btns">
+              <button
+                type="button"
+                class="btn btn--ghost"
+                class:on={tf.flipH}
+                aria-pressed={tf.flipH}
+                data-testid="flip-h-{cam.id}"
+                onclick={() => applyTransform(cam.id, { ...tf, flipH: !tf.flipH })}
+              >
+                ↔ Mirror
+              </button>
+              <button
+                type="button"
+                class="btn btn--ghost"
+                class:on={tf.flipV}
+                aria-pressed={tf.flipV}
+                data-testid="flip-v-{cam.id}"
+                onclick={() => applyTransform(cam.id, { ...tf, flipV: !tf.flipV })}
+              >
+                ↕ Flip
+              </button>
+              <button
+                type="button"
+                class="btn btn--ghost"
+                data-testid="rotate-{cam.id}"
+                onclick={() =>
+                  applyTransform(cam.id, { ...tf, rotation: nextRotation(tf.rotation) })}
+              >
+                ⟳ Rotate
+              </button>
+              <button
+                type="button"
+                class="btn btn--ghost"
+                disabled={isIdentity(tf)}
+                data-testid="reset-{cam.id}"
+                onclick={() => applyTransform(cam.id, { ...IDENTITY })}
+              >
+                Reset
+              </button>
+            </div>
+            <button
+              type="button"
+              class="link preview-toggle"
+              data-testid="preview-{cam.id}"
+              onclick={() => (previewFor = previewFor === cam.id ? null : cam.id)}
+            >
+              {previewFor === cam.id ? 'Hide preview' : 'Show live preview'}
+            </button>
+            {#if previewFor === cam.id}
+              <!-- The real CameraView, not a mock: the only way to confirm the orientation is
+                   right is to watch the actual stream through the same code path the Live
+                   view uses. It connects on mount and tears its peer connection down on
+                   hide, so a settings visit never leaves a session open. -->
+              <div class="orient__preview">
+                <CameraView camera={cam} />
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </section>
+    {/if}
+
     <section class="card">
       <h2>Manage</h2>
       <a class="link" href="/devices" data-testid="settings-devices"
@@ -609,7 +716,54 @@
     font-size: var(--fs-xs);
   }
 
-  .link {
+  .orient {
+    padding: var(--sp-3) 0;
+    border-top: 1px solid var(--border);
+  }
+  .orient:first-of-type {
+    border-top: none;
+  }
+  .orient__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--sp-3);
+  }
+  .orient__name {
+    font-size: var(--fs-base);
+    font-weight: 650;
+  }
+  .orient__state {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+  }
+  .orient__btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: var(--sp-2);
+  }
+  .orient__btns .btn {
+    flex: 1 1 auto;
+    min-width: 6rem;
+  }
+  .orient__btns .btn.on {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .preview-toggle {
+    border-top: none;
+    padding: var(--sp-2) 0 0;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .orient__preview {
+    margin-top: var(--sp-2);
+  }
+  .hint--tight {
     display: block;
     padding: var(--sp-3) 0;
     color: var(--accent);
