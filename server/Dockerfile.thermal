@@ -1,0 +1,39 @@
+# eeper thermal capture node — the api image plus the MLX90640 hardware drivers.
+#
+# Why a separate image: the CircuitPython/Blinka stack talks to real I²C and only makes
+# sense on a Pi with the sensor wired up. Keeping it out of the server image means those
+# packages never enter the audited runtime dependency set of the network-facing service
+# (docs/thermal-node.md), and the server image stays buildable and scannable on any arch.
+#
+# The presence detector itself is NOT here — it lives in the eeper package inside the base
+# image (eeper/thermal/features.py). That is the important consequence for deployment: a
+# change to the detector requires rebuilding the BASE image and then this one on top. A
+# `docker compose build` alone will never update the thermal node, because this image has
+# no build context in the Compose file. deploy/eeper-update.sh does both in the right order.
+#
+#   docker build -t eeper-thermal-node:dev -f server/Dockerfile.thermal server
+#
+ARG BASE=eeper-api:dev
+FROM ${BASE}
+
+# Root only to install; the process drops back to the unprivileged app user below.
+USER root
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gcc python3-dev \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir \
+      "setuptools<81" \
+      "adafruit-extended-bus>=1.0,<2" \
+      "adafruit-circuitpython-mlx90640>=1.2,<2" \
+      "adafruit-blinka>=8,<9"
+
+# The node runs unprivileged like every other eeper service. Reading /dev/i2c-N (root:i2c,
+# mode 0660) needs the host's `i2c` group, which the deployment grants with `group_add`
+# rather than by running as root — see docs/thermal-node.md. If the node cannot open the
+# bus, that gid is the first thing to check (`getent group i2c`).
+USER app
+
+# No HEALTHCHECK: the node publishes to MQTT and serves no HTTP, so the base image's
+# api healthcheck would never pass. The deployment disables it explicitly; device health
+# is observed server-side from the node's publish cadence (Devices view).
+CMD ["python", "-m", "eeper.thermal"]

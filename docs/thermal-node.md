@@ -49,6 +49,21 @@ python -m eeper.thermal
 
 The node publishes the grid to `eeper/dev/<id>/thermal` (2–4 Hz) and the derived features to `eeper/dev/<id>/thermal_features` (low-rate). A checksum/read failure degrades health rather than emitting a bad grid; the node reads **offline** in the Devices view if it stops publishing.
 
+## Updating the node
+
+The presence detector lives in the **eeper package inside the base api image**, not in the
+node's own layer. So a detector change needs the api image rebuilt and then the node image
+rebuilt on top of it — and `docker compose build` will not do it, because the node has no
+build context in the Compose file. `deploy/eeper-update.sh` does both in the right order and
+then verifies every container is on the image it just built:
+
+```sh
+sudo ./eeper-update.sh
+```
+
+Skipping that rebuild is the failure to watch for: the stack comes up healthy and reports
+success while still running the old detector.
+
 ## How presence is decided
 
 A body puts the hottest part of the scene well above the room; an empty crib has nothing to
