@@ -41,6 +41,12 @@
     cry_detected: 'Possible crying',
   };
   const label = (type: string): string => LABELS[type] ?? 'Nursery activity';
+  // A clip is only "pending" while one is actually still being produced. Anything terminal
+  // (failed / skipped — e.g. recording is off, or the segments were already evicted) must
+  // say so, not sit on "clip pending…" forever. Older servers omit clip_status; treat a
+  // missing value as pending so their behaviour is unchanged.
+  const clipState = (e: EventItem): 'ready' | 'pending' | 'none' =>
+    e.clip_id !== null ? 'ready' : (e.clip_status ?? 'pending') === 'pending' ? 'pending' : 'none';
   const cameraName = (id: number): string => cameraNames[id] ?? `Camera ${id}`;
 
   function fmtTime(iso: string): string {
@@ -283,7 +289,8 @@
           <button class="head" onclick={() => toggleClip(e)} disabled={e.clip_id === null}>
             <span class="label">{label(e.type)}</span>
             <span class="sub">{cameraName(e.camera_id)} · {fmtTime(e.ts)}</span>
-            {#if e.clip_id === null}<span class="pending">clip pending…</span>{/if}
+            {#if clipState(e) === 'pending'}<span class="pending">clip pending…</span>
+            {:else if clipState(e) === 'none'}<span class="no-clip">no clip</span>{/if}
           </button>
           {#if expandedId === e.id && e.clip_id !== null}
             <video
@@ -496,6 +503,12 @@
   }
   .pending {
     color: var(--warn);
+    font-size: var(--fs-xs);
+  }
+  /* Terminal, not in flight — muted rather than the warning colour, so a settled "no clip"
+     doesn't read as something still happening or something wrong. */
+  .no-clip {
+    color: var(--text-muted);
     font-size: var(--fs-xs);
   }
   .clip {

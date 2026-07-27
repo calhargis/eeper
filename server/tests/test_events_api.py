@@ -32,6 +32,7 @@ async def _seed_events(api: Harness) -> None:
                 value="elevated",
                 confidence=0.9,
                 clip_id=77,
+                clip_status="promoted",
             )
         )
         s.add(
@@ -60,6 +61,9 @@ async def test_events_lists_only_nudges_with_clip_ref(api: Harness) -> None:
     assert {e["type"] for e in events} == {"sound_elevated", "cry_detected"}  # movement excluded
     sound = next(e for e in events if e["type"] == "sound_elevated")
     assert sound["clip_id"] == 77
+    # clip_status must be on the wire: without it the client cannot tell "a clip is
+    # still coming" from "no clip will ever arrive", and shows "clip pending" forever.
+    assert sound["clip_status"] == "promoted"
     # Per-camera filter.
     r2 = await api.client.get("/api/v1/cameras/2/events")
     assert [e["type"] for e in r2.json()] == ["cry_detected"]

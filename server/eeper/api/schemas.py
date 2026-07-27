@@ -191,6 +191,10 @@ class EventOut(BaseModel):
     previous_value: str | None
     confidence: float
     clip_id: int | None
+    # skip | pending | promoted | failed. Without this the client can't tell "a clip is
+    # still coming" from "a clip will never exist", so it showed "clip pending…" forever
+    # for events whose clip could never be produced (e.g. no recorder running).
+    clip_status: str
 
 
 class FusedSegmentOut(BaseModel):
