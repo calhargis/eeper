@@ -20,7 +20,9 @@
     pickFullscreenStrategy,
     requestNativeFullscreen,
   } from '$lib/fullscreen';
+  import OrientationControls from '$lib/OrientationControls.svelte';
   import {
+    cameraKey,
     cssTransform,
     fitScale,
     loadTransform,
@@ -59,7 +61,7 @@
   let transformVersion = $state(0);
   const transform: CameraTransform = $derived.by(() => {
     void transformVersion; // read it so the derived re-runs when the event fires
-    return loadTransform(camera.id);
+    return loadTransform(cameraKey(camera.id));
   });
   // A quarter turn swaps the video's bounding box, so it has to be scaled to keep fitting.
   // The factor depends on the CURRENT box, which changes with fullscreen and rotation of the
@@ -266,6 +268,8 @@
         {/if}
       {/if}
     </div>
+
+    <OrientationControls storageKey={cameraKey(camera.id)} label="Camera orientation" />
 
     <button
       type="button"
