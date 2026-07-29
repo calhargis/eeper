@@ -12,6 +12,14 @@
     pickFullscreenStrategy,
     requestNativeFullscreen,
   } from '$lib/fullscreen';
+  import OrientationControls from '$lib/OrientationControls.svelte';
+  import {
+    cssTransform,
+    fitScale,
+    loadTransform,
+    thermalKey,
+    type CameraTransform,
+  } from '$lib/camera-transform';
 
   let { deviceId }: { deviceId: number } = $props();
 
@@ -24,6 +32,44 @@
   // viewport-filling stage on iPhone Safari, which doesn't (see $lib/fullscreen). A canvas
   // has no native video-fullscreen path at all, so the fallback matters here.
   let fullscreen = $state(false);
+
+  // Orientation. A thermal node is mounted over a crib just like a camera and is just as
+  // easy to fit sideways, so it gets the same controls — keyed separately, because a camera
+  // and a node can share a numeric id.
+  let transformVersion = $state(0);
+  let stageW = $state(0);
+  let stageH = $state(0);
+  const transform: CameraTransform = $derived.by(() => {
+    void transformVersion;
+    return loadTransform(thermalKey(deviceId));
+  });
+  const canvasTransform = $derived(
+    cssTransform(transform, fitScale(transform.rotation, stageW, stageH)),
+  );
+
+  // Track the stage box (the quarter-turn fit factor depends on it) and re-read when the
+  // orientation buttons fire. $effect returns its own teardown, so both unwind on unmount.
+  $effect(() => {
+    const el = stageEl;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    stageW = r.width;
+    stageH = r.height;
+    const ro = new ResizeObserver(([entry]) => {
+      stageW = entry.contentRect.width;
+      stageH = entry.contentRect.height;
+    });
+    ro.observe(el);
+    const onTransform = (e: Event) => {
+      const k = (e as CustomEvent<{ storageKey?: string }>).detail?.storageKey;
+      if (k === undefined || k === thermalKey(deviceId)) transformVersion += 1;
+    };
+    window.addEventListener('camera-transform', onTransform);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('camera-transform', onTransform);
+    };
+  });
   let fauxFullscreen = $state(false);
 
   async function toggleFullscreen(): Promise<void> {
@@ -151,6 +197,7 @@
 <div class="stage" class:fs={fauxFullscreen} bind:this={stageEl} data-fullscreen={fullscreen}>
   <canvas
     bind:this={canvas}
+    style:transform={canvasTransform}
     class="heat"
     data-testid="thermal-canvas"
     aria-label="Live thermal heatmap"
@@ -160,31 +207,36 @@
       {connected ? 'Waiting for the first frame…' : 'Connecting…'}
     </div>
   {/if}
-  <button
-    type="button"
-    class="fs-btn"
-    data-testid="thermal-fullscreen"
-    aria-pressed={fullscreen}
-    aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-    title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-    onclick={() => void toggleFullscreen()}
-  >
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
+  <!-- One bottom bar, inset by the safe area: a corner button lands under the iPhone status
+       bar, where the OS wins the tap and fullscreen becomes a one-way trip. -->
+  <div class="controls">
+    <OrientationControls storageKey={thermalKey(deviceId)} label="Thermal orientation" />
+    <button
+      type="button"
+      class="ctl fs-btn"
+      data-testid="thermal-fullscreen"
+      aria-pressed={fullscreen}
+      aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+      title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+      onclick={() => void toggleFullscreen()}
     >
-      {#if fullscreen}
-        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-      {:else}
-        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-      {/if}
-    </svg>
-  </button>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        {#if fullscreen}
+          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+        {:else}
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+        {/if}
+      </svg>
+    </button>
+  </div>
 </div>
 
 <div class="status">
@@ -250,21 +302,38 @@
     max-height: 100%;
     border-radius: 0;
   }
-  .fs-btn {
+  .controls {
     position: absolute;
-    top: var(--sp-2);
-    right: var(--sp-2);
+    inset: auto 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    padding-right: max(var(--sp-2), env(safe-area-inset-right));
+    padding-left: max(var(--sp-2), env(safe-area-inset-left));
+    padding-bottom: max(var(--sp-2), env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+    pointer-events: none;
+  }
+  .controls > :global(*) {
+    pointer-events: auto;
+  }
+  :global(.ctl) {
+    min-height: var(--tap);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: var(--tap);
-    height: var(--tap);
-    padding: 0;
     border: none;
     border-radius: var(--r-pill);
     background: rgba(0, 0, 0, 0.6);
     color: var(--overlay-ink);
     cursor: pointer;
+  }
+  .fs-btn {
+    flex: none;
+    width: var(--tap);
+    padding: 0;
   }
   .fs-btn svg {
     width: 22px;

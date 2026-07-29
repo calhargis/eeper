@@ -9,8 +9,10 @@
  * orientation. For a camera that is permanently mounted upside down, flipping it at the
  * adapter (the CSI adapter's HFLIP/VFLIP) fixes the footage too; this fixes the picture.
  *
- * Stored per camera in localStorage alongside the theme, so it is a per-device preference
- * rather than a household setting — two people can hold their phones differently.
+ * Stored per INPUT in localStorage alongside the theme, so it is a per-device preference
+ * rather than a household setting — two people can hold their phones differently. Inputs are
+ * keyed by kind as well as id (`cam:2`, `thermal:1`) because a camera and a thermal node can
+ * share an id and would otherwise overwrite each other's orientation.
  */
 
 export type Rotation = 0 | 90 | 180 | 270;
@@ -24,6 +26,15 @@ export type CameraTransform = {
 export const IDENTITY: CameraTransform = { flipH: false, flipV: false, rotation: 0 };
 
 const KEY = 'eeper:camera-transform';
+
+/** Storage keys. Namespaced by kind so a camera and a thermal node with the same numeric id
+ * cannot collide — they are different devices with different mountings. */
+export function cameraKey(id: number): string {
+  return `cam:${id}`;
+}
+export function thermalKey(id: number): string {
+  return `thermal:${id}`;
+}
 const ROTATIONS: Rotation[] = [0, 90, 180, 270];
 
 type Stored = Record<string, CameraTransform>;
@@ -45,8 +56,8 @@ function isRotation(v: unknown): v is Rotation {
 /** The saved transform for a camera, or the identity. Never throws and never returns a
  * partially-valid object: a hand-edited localStorage entry falls back to identity rather than
  * producing a NaN in a CSS transform, which would blank the picture. */
-export function loadTransform(cameraId: number): CameraTransform {
-  const entry = readAll()[String(cameraId)];
+export function loadTransform(key: string): CameraTransform {
+  const entry = readAll()[key];
   if (!entry || typeof entry !== 'object') return { ...IDENTITY };
   return {
     flipH: entry.flipH === true,
@@ -55,13 +66,13 @@ export function loadTransform(cameraId: number): CameraTransform {
   };
 }
 
-export function saveTransform(cameraId: number, t: CameraTransform): void {
+export function saveTransform(key: string, t: CameraTransform): void {
   if (typeof localStorage === 'undefined') return;
   const all = readAll();
   if (t.flipH === false && t.flipV === false && t.rotation === 0) {
-    delete all[String(cameraId)]; // don't persist the default
+    delete all[key]; // don't persist the default
   } else {
-    all[String(cameraId)] = t;
+    all[key] = t;
   }
   try {
     localStorage.setItem(KEY, JSON.stringify(all));
