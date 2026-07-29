@@ -36,10 +36,10 @@ cd "$(cd "$(dirname "$(readlink -f "$0")")" && pwd)" || exit 1
 
 # ── presentation ────────────────────────────────────────────────────────────
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
-  G=$'\033[32m'; R=$'\033[31m'; D=$'\033[2m'; B=$'\033[1m'; Z=$'\033[0m'; K=$'\033[K'
+  G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; D=$'\033[2m'; B=$'\033[1m'; Z=$'\033[0m'; K=$'\033[K'
   OK='✓'; NO='✗'; SPIN='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 else
-  G=''; R=''; D=''; B=''; Z=''; K=''; OK='[ok]'; NO='[!!]'; SPIN='|/-\'
+  G=''; R=''; Y=''; D=''; B=''; Z=''; K=''; OK='[ok]'; NO='[!!]'; SPIN='|/-\'
 fi
 FAILED=0
 PA=(); for p in "${PROFILES[@]}"; do PA+=(--profile "$p"); done
@@ -127,6 +127,49 @@ done
 # 4) end-to-end: the real site URL answers over HTTPS (-k: the cert is from the local
 #    CA, which curl doesn't trust — a browser shows a one-time warning for the same reason)
 wait_for "Site reachable" 30 curl -fsSk -o /dev/null "$URL"
+
+# 4b) ...and separately, whether TLS actually VERIFIES. This is deliberately not a failure:
+#     the local CA is not in a host trust store by default, so -k is the right check for
+#     "is the stack up". But -k also means the reachability check above can never see a
+#     trust problem — and a browser sees nothing else. That gap is worth naming out loud,
+#     because from the outside it looks like the monitor is down: the site answers, every
+#     container is healthy, and only the browser refuses.
+if [ "$FAILED" -eq 0 ] && ! curl -fsS -o /dev/null --max-time 10 "$URL" 2>/dev/null; then
+  printf '  %s!%s TLS is not trusted by this host — browsers will refuse until each device\n' "$Y" "$Z"
+  printf '    trusts the local CA. Caddy rotates the leaf certificate every 12 hours, so\n'
+  printf '    clicking through the warning only lasts until the next rotation.\n'
+  printf '    %sTrust deploy/eeper-local-ca.crt, or enable Tailscale HTTPS certificates.%s\n' "$D" "$Z"
+fi
+
+# 5) keep the exported local CA in step with the one Caddy is actually using.
+#
+#    install.sh writes this file ONCE. If Caddy's PKI is ever regenerated (a reset
+#    caddy-data volume, a fresh install over an old checkout) the file silently goes stale,
+#    and every device trusting it starts failing TLS while the stack looks perfectly
+#    healthy. That failure is genuinely hard to read from the outside: the site answers
+#    `curl -k` fine and only a real browser rejects it.
+#
+#    Re-exporting on every bring-up makes drift impossible, and SAYING SO when the
+#    fingerprint changes is the part that matters — a changed root means every device has
+#    to trust the new one, and nothing else in the system will tell you.
+CA_OUT="$(pwd)/eeper-local-ca.crt"
+if [ "$FAILED" -eq 0 ]; then
+  CA_OLD=""
+  [ -s "$CA_OUT" ] && CA_OLD=$(openssl x509 -in "$CA_OUT" -noout -fingerprint -sha256 2>/dev/null)
+  if docker compose "${COMPOSE_FILES[@]}" "${PA[@]}" exec -T caddy \
+       cat /data/caddy/pki/authorities/local/root.crt > "$CA_OUT.tmp" 2>/dev/null \
+     && [ -s "$CA_OUT.tmp" ]; then
+    mv "$CA_OUT.tmp" "$CA_OUT"
+    CA_NEW=$(openssl x509 -in "$CA_OUT" -noout -fingerprint -sha256 2>/dev/null)
+    if [ -n "$CA_OLD" ] && [ "$CA_OLD" != "$CA_NEW" ]; then
+      printf '\n  %s!%s %sThe local CA changed.%s Every device must trust the new certificate\n' "$Y" "$Z" "$B" "$Z"
+      printf '    before it can connect again — browsers will refuse until then.\n'
+      printf '    %s%s%s\n' "$D" "$CA_OUT" "$Z"
+    fi
+  else
+    rm -f "$CA_OUT.tmp"
+  fi
+fi
 
 echo
 if [ "$FAILED" -eq 0 ]; then
