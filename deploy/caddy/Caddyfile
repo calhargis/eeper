@@ -13,7 +13,24 @@
 # The site address defaults to localhost (dev/CI). Self-hosters set EEPER_DOMAIN
 # to their LAN hostname/IP in .env. `tls internal` issues a cert from the local CA.
 {$EEPER_DOMAIN:localhost} {
-	tls internal
+	# The local CA's leaf certificate. Caddy's default lifetime is 12 HOURS, which is the
+	# single biggest usability problem in a LAN-only deployment: a device that has not
+	# trusted the CA gets by tapping through the browser's warning, and that exception is
+	# tied to the specific certificate — so every rotation locks it out again, twice a day.
+	#
+	# It is worse than an inconvenience on iOS. An installed PWA runs standalone with no
+	# certificate-warning UI at all, so it cannot be tapped through: the fetch simply fails
+	# and the only way back in is to re-add the app to the home screen.
+	#
+	# 30 days keeps that to something rare rather than daily, and stays far inside Apple's
+	# 398-day cap on TLS server certificates. It is not a substitute for trusting the CA
+	# (see deploy/README.md) or for Tailscale HTTPS certificates, either of which removes
+	# the problem entirely — it just stops the default from being hostile.
+	tls {
+		issuer internal {
+			lifetime 720h
+		}
+	}
 
 	# Baseline security headers on every response.
 	header {
