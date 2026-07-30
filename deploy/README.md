@@ -42,6 +42,13 @@ Later phases add more optional profiles (`audio`, `sensors`, `pulseox`, `accel-*
 - **Every container** runs non-root, read-only rootfs, `cap_drop: ALL`,
   `no-new-privileges`. Caddy binds unprivileged 8080/8443 inside the container
   (host 80/443 map onto them), so it needs zero capabilities.
+- **The local CA's leaf certificate lasts 30 days**, not Caddy's 12-hour default. A device
+  that has not trusted the CA gets by tapping through the browser warning, and that exception
+  is tied to the specific certificate — so a short lifetime locks it out twice a day. On iOS
+  it is worse: an installed PWA has no certificate-warning UI at all, so it cannot be tapped
+  through and the only way back in is re-adding it to the home screen. Trusting the CA (or
+  enabling Tailscale HTTPS certificates) removes the problem entirely; this just stops the
+  default from being hostile.
 - **No default credentials.** `install.sh` generates `deploy/.env` (git-ignored);
   the first-boot wizard forces admin creation.
 
