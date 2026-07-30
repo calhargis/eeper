@@ -5,9 +5,23 @@
 	root * /srv
 	encode gzip zstd
 
-	# SPA fallback: unknown paths return the app shell for client-side routing.
-	try_files {path} /index.html
-	file_server
+	# Content-hashed build assets must 404 when they are missing — NEVER fall back to the
+	# app shell. Every deploy renames these files, and an installed PWA holding an older
+	# shell asks for the old names. With a blanket try_files it received `200 OK` with
+	# text/html, so the browser tried to execute the app shell as JavaScript, and the
+	# service worker cached that 200 as a valid asset. The result survives restarts and is
+	# clearable only by reinstalling the PWA — which is exactly the symptom this deployment
+	# kept hitting. A 404 lets the client fail honestly and fetch the new shell instead.
+	@assets path /_app/*
+	handle @assets {
+		file_server
+	}
+
+	# Everything else: SPA fallback, so client-side routes deep-link correctly.
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
 
 	header {
 		# Conservative defaults; the edge proxy adds the full security header set.
