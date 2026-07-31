@@ -232,3 +232,30 @@ async def test_disabling_the_gate_clears_a_stale_override(api: Harness) -> None:
     back_on = (await api.client.patch("/api/v1/streaming/settings", json={"enabled": True})).json()
     assert back_on["streaming"] is False, "the empty crib must gate again immediately"
     assert back_on["reason"] == "no_presence"
+
+
+async def test_the_mic_stops_with_the_camera(api: Harness) -> None:
+    """ "Stop the stream" that leaves a live microphone running is not what it says. The mic
+    was previously exempted on the reasoning that listening is nearly free next to video —
+    but an always-on nursery mic is a privacy question, not only a power one."""
+    from unittest.mock import AsyncMock
+
+    from eeper.api.camera_monitor import CameraMonitor
+
+    await _sign_in_admin(api)
+    await _seed(api, presence=False, enabled=True)  # working sensor, empty crib
+
+    engine, sm = _sessionmaker(api)
+    try:
+        gateway = AsyncMock()
+        gateway.stream_names.return_value = {"cam1", "mic"}
+        settings = api.settings
+        settings.audio_source_url = "rtsp://audio:8554/mic"
+        monitor = CameraMonitor(gateway, sm, settings)
+        await monitor.reconcile()
+    finally:
+        await engine.dispose()
+
+    removed = {c.args[0] for c in gateway.remove_stream.await_args_list}
+    assert "mic" in removed, "the room mic must stop when the stream is stopped"
+    assert gateway.add_stream.await_count == 0, "nothing should be re-registered while gated"
