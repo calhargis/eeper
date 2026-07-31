@@ -32,6 +32,15 @@
 		}
 	}
 
+	# Access log. Absent until now, which meant a device failing to reach the monitor left
+	# NO evidence anywhere — every diagnosis was inference from the outside. Errors only, so
+	# a healthy stack stays quiet and a real failure is findable.
+	log {
+		output stderr
+		format json
+		level ERROR
+	}
+
 	# Baseline security headers on every response.
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
