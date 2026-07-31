@@ -148,9 +148,17 @@ class CameraMonitor:
                         _log.info("no presence detected — stopped streaming camera %s", camera.id)
                     except GatewayError:
                         _log.warning("could not stop camera %s in gateway", camera.id)
-            # The room mic is left alone on purpose: listening costs almost nothing next to
-            # video, and hearing the room is the one thing a parent still wants when the
-            # picture is off.
+            # The room mic goes down too. It was previously left up on the reasoning that
+            # listening is nearly free next to video — but "stop the stream" that leaves a
+            # live microphone running is not what it says, and an always-on mic in a nursery
+            # is a privacy question, not just a power one. Stopping means stopping.
+            mic = self._settings.mic_stream_name
+            if self._settings.audio_source_url and mic in existing:
+                try:
+                    await self._gateway.remove_stream(mic)
+                    _log.info("no presence detected — stopped the room mic stream")
+                except GatewayError:
+                    _log.warning("could not stop the mic stream in gateway")
             return
 
         mic = self._settings.mic_stream_name

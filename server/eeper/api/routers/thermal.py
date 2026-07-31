@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from eeper.api.config import Settings, get_settings
 from eeper.api.db import get_sessionmaker
 from eeper.api.models import Device, User
+from eeper.api.stream_gating import read_gate
 from eeper.api.tokens import decode_access_token
 
 router = APIRouter(tags=["thermal"])
@@ -52,6 +53,16 @@ async def ws_thermal(websocket: WebSocket, device_id: int) -> None:
         if device is None or device.household_id != user.household_id or device.kind != "thermal":
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
+        # Presence gating covers the thermal feed too. Honest scope: this stops RELAYING
+        # grids to the browser — the node keeps sampling and the api keeps ingesting,
+        # because the broker's ACLs only allow device->server traffic and there is no
+        # channel to tell a node to slow down. So the saving is the socket and the client's
+        # work, not the sensor's. Closing rather than accepting-then-silently-sending-
+        # nothing, so the UI can say why instead of showing a frozen heatmap.
+        if not (await read_gate(session, user.household_id)).should_stream:
+            await websocket.close(code=status.WS_1013_TRY_AGAIN_LATER)
+            return
+
     hub = websocket.app.state.thermal_grid_hub
     await websocket.accept()
     await hub.register(device_id, websocket)
