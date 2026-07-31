@@ -20,6 +20,8 @@
     type User,
   } from '$lib/api';
   import CameraView from '$lib/CameraView.svelte';
+  import InputSettings from '$lib/InputSettings.svelte';
+  import { cameraKey, thermalKey } from '$lib/camera-transform';
   import AudioMonitor from '$lib/AudioMonitor.svelte';
   import ThermalHeatmap from '$lib/ThermalHeatmap.svelte';
   import { camerasSignature, devicesSignature } from '$lib/live-inputs';
@@ -242,6 +244,17 @@
         {/if}
       {/key}
     </div>
+
+    <!-- Settings for the SELECTED input, below the stage. Deliberately not on the picture:
+         the previous in-stage control sat beside fullscreen behind an expand glyph and read
+         as a second fullscreen button. Here it is unmistakably its own thing, and the sheet
+         pushes the page down instead of covering the video, so you can watch each press
+         take effect. Audio has no orientation, so it gets no panel. -->
+    {#if selected?.kind === 'camera'}
+      <InputSettings storageKey={cameraKey(selected.camera.id)} title={selected.camera.name} />
+    {:else if selected?.kind === 'thermal'}
+      <InputSettings storageKey={thermalKey(selected.device.id)} title={selected.device.name} />
+    {/if}
 
     {#if selected}
       <p class="meta">

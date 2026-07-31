@@ -12,7 +12,6 @@
     pickFullscreenStrategy,
     requestNativeFullscreen,
   } from '$lib/fullscreen';
-  import OrientationControls from '$lib/OrientationControls.svelte';
   import {
     cssTransform,
     fitScale,
@@ -210,7 +209,6 @@
   <!-- One bottom bar, inset by the safe area: a corner button lands under the iPhone status
        bar, where the OS wins the tap and fullscreen becomes a one-way trip. -->
   <div class="controls">
-    <OrientationControls storageKey={thermalKey(deviceId)} label="Thermal orientation" />
     <button
       type="button"
       class="ctl fs-btn"

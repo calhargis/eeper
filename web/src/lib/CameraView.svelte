@@ -20,7 +20,6 @@
     pickFullscreenStrategy,
     requestNativeFullscreen,
   } from '$lib/fullscreen';
-  import OrientationControls from '$lib/OrientationControls.svelte';
   import {
     cameraKey,
     cssTransform,
@@ -268,8 +267,6 @@
         {/if}
       {/if}
     </div>
-
-    <OrientationControls storageKey={cameraKey(camera.id)} label="Camera orientation" />
 
     <button
       type="button"
