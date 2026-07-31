@@ -3,6 +3,20 @@
 {
 	# No admin API surface, no ACME/public certs — LAN-only, locally signed.
 	admin off
+	# The local CA's INTERMEDIATE lifetime. Caddy clamps a leaf certificate to its issuing
+	# intermediate's expiry, so raising the leaf to 30 days alone achieves nothing: the
+	# intermediate defaults to 7 days and the leaf silently inherits whatever is left of it.
+	# Measured after setting `lifetime 720h`: the leaf came out at ~40 hours, ending at the
+	# exact second the intermediate expired. 90 days here leaves the 30-day leaf room to be
+	# what it says it is.
+	#
+	# The ROOT is untouched, so devices that already trust the CA stay trusting it — only the
+	# intermediate and leaf rotate.
+	pki {
+		ca local {
+			intermediate_lifetime 2160h
+		}
+	}
 	auto_https disable_redirects
 	# Bind unprivileged ports inside the container (compose maps host 80/443
 	# onto these) so Caddy can run non-root with zero capabilities.
