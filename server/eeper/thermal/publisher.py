@@ -59,6 +59,7 @@ class PublishStats:
     read_failures: int = 0  # sensor.read() returned None
     dropped_invalid: int = 0  # a structurally malformed frame
     rate_skipped: int = 0  # ticks skipped to hold the rate cap
+    idle_skipped: int = 0  # ticks skipped because the node is idling over an empty crib
     fail_streak: int = 0  # consecutive bad reads right now (0 == healthy)
 
 
@@ -88,9 +89,18 @@ class ThermalPublisher:
     gate_params: GateParams = field(default_factory=lambda: DEFAULT_GATE_PARAMS)
     # §4.5: the grid is 2–4 Hz for characterization; the derived features are LOW-rate.
     features_min_interval_s: float = 1.0
+    # Idle mode. With nobody in the crib there is nothing to watch closely, so the node
+    # samples one frame every `idle_interval_s` instead of several a second. 0 disables
+    # it (the default — the heatmap stays live at full rate). The node decides this from
+    # its OWN presence verdict, which is what makes it possible at all: the broker only
+    # lets a device publish, so nothing upstream could tell it to slow down.
+    idle_interval_s: float = 0.0
+    idle_after_s: float = 120.0  # reported absence must last this long before idling
     stats: PublishStats = field(default_factory=PublishStats)
     _last_publish: float = -1e18
     _last_features: float = -1e18
+    _last_read: float = -1e18
+    _absent_since: float | None = None  # when reported presence last became False
     _gate: PresenceGate = field(init=False)
 
     def __post_init__(self) -> None:
@@ -99,13 +109,29 @@ class ThermalPublisher:
         # instead of each having to re-derive its own idea of what a flicker means.
         self._gate = PresenceGate(self.feature_params, self.gate_params)
 
+    def is_idle(self, now: float) -> bool:
+        """Idle once the crib has been reported empty for `idle_after_s`. Anything else —
+        presence, a candidate the gate is still confirming, idle mode disabled — samples at
+        the full rate."""
+        return (
+            self.idle_interval_s > 0
+            and self._absent_since is not None
+            and now - self._absent_since >= self.idle_after_s
+        )
+
     def tick(self) -> bool:
         """Read + maybe publish one frame. Returns True iff a grid was published."""
         now = self.clock()
-        if now - self._last_publish < _MIN_INTERVAL_S:
+        idle = self.is_idle(now)
+        if idle:
+            if now - self._last_read < self.idle_interval_s:
+                self.stats.idle_skipped += 1
+                return False
+        elif now - self._last_publish < _MIN_INTERVAL_S:
             self.stats.rate_skipped += 1
             return False
 
+        self._last_read = now
         temps = self.sensor.read()
         if temps is None:
             self.stats.read_failures += 1
@@ -137,6 +163,7 @@ class ThermalPublisher:
             feats = derive_features(temps, self.feature_params)
             was_present = self._gate.state
             presence = self._gate.update(feats, now)
+            self._track_idle(feats.presence, presence, now, idle)
             if presence != was_present:
                 # Only on a transition, so this stays quiet in steady state while still
                 # giving an operator the two numbers they need to tune the thresholds
@@ -166,3 +193,25 @@ class ThermalPublisher:
             self._last_features = now
             self.stats.features_published += 1
         return True
+
+    def _track_idle(self, raw: bool, reported: bool, now: float, was_idle: bool) -> None:
+        """Advance the idle clock from this frame's verdicts.
+
+        Any RAW candidate wakes the node immediately — not the gated verdict, which needs
+        8 s of frames to confirm and would never get them at one frame every 15 s. Waking
+        on the raw signal is what lets a baby being put down be confirmed at full rate. A
+        candidate that turns out to be a blip simply lets the idle clock run again.
+        """
+        if reported or raw:
+            if was_idle:
+                _log.info("possible presence — sampling at full rate to confirm")
+            self._absent_since = None
+            return
+        if self._absent_since is None:
+            self._absent_since = now
+        if not was_idle and self.is_idle(now):
+            _log.info(
+                "crib empty for %.0fs — idling, one frame every %.0fs",
+                self.idle_after_s,
+                self.idle_interval_s,
+            )

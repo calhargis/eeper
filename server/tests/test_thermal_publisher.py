@@ -143,3 +143,116 @@ def test_shape_is_suppressed_while_the_gate_reports_absent() -> None:
     assert last["presence"] is True
     assert last["warm_region_centroid"] is not None
     assert last["presence_confidence"] > 0.0
+
+
+# ── low-power idle over an empty crib ────────────────────────────────────────
+
+
+class _SwitchableSensor:
+    """An empty crib until `occupied` is flipped, then a warm body."""
+
+    def __init__(self) -> None:
+        self.occupied = False
+        self.reads = 0
+
+    def read(self) -> list[float] | None:
+        self.reads += 1
+        blobs = (WarmBlob(12.0, 16.0, 4.5, 9.0),) if self.occupied else ()
+        return render(Scene(ambient_c=23.5, blobs=blobs), random.Random(self.reads))
+
+
+def _idle_publisher(sensor: _SwitchableSensor, clock: Clock):  # type: ignore[no-untyped-def]
+    sink: list[tuple[str, dict[str, object]]] = []
+    pub = ThermalPublisher(
+        sensor=sensor,
+        publish=lambda m, p: sink.append((m, p)),
+        clock=clock,
+        idle_interval_s=15.0,
+        idle_after_s=120.0,
+    )
+    return pub, sink
+
+
+def _run_for(pub: ThermalPublisher, clock: Clock, seconds: float, step: float = 0.25) -> None:
+    end = clock.t + seconds
+    while clock.t < end:
+        pub.tick()
+        clock.advance(step)
+
+
+def test_an_empty_crib_drops_to_one_frame_every_idle_interval() -> None:
+    sensor, clock = _SwitchableSensor(), Clock()
+    pub, _ = _idle_publisher(sensor, clock)
+    _run_for(pub, clock, 130)  # past idle_after_s
+    assert pub.is_idle(clock.t)
+    before = sensor.reads
+    _run_for(pub, clock, 60)
+    reads = sensor.reads - before
+    assert 3 <= reads <= 5, f"~4 reads a minute at 15 s, not {reads}"
+
+
+def test_idle_never_goes_quiet_long_enough_to_look_stale() -> None:
+    """The server's staleness window is 90 s, and stale fails OPEN — so even idling, the
+    node must keep reporting well inside it, or low-power mode would undo itself."""
+    sensor, clock = _SwitchableSensor(), Clock()
+    pub, sink = _idle_publisher(sensor, clock)
+    _run_for(pub, clock, 400)
+    ts = [p["ts"] for m, p in sink if m == "thermal_features"]
+    gaps = [b - a for a, b in zip(ts, ts[1:], strict=False)]  # type: ignore[operator]
+    assert max(gaps) <= 16, f"features went quiet for {max(gaps)}s"  # type: ignore[type-var]
+
+
+def test_a_baby_put_down_wakes_the_node_and_is_confirmed_at_full_rate() -> None:
+    """The point of waking on the RAW signal: the gate needs ~8 s of continuous frames to
+    confirm presence, which one frame every 15 s could never supply."""
+    sensor, clock = _SwitchableSensor(), Clock()
+    pub, sink = _idle_publisher(sensor, clock)
+    _run_for(pub, clock, 200)
+    assert pub.is_idle(clock.t)
+
+    sensor.occupied = True
+    put_down = clock.t
+    _run_for(pub, clock, 40)
+    present = [p for m, p in sink if m == "thermal_features" and p["presence"]]
+    assert present, "presence must be confirmed after waking"
+    latency = present[0]["ts"] - put_down  # type: ignore[operator]
+    # Worst case: one idle interval to notice + the gate's 8 s sustain + a frame or two.
+    assert latency <= 15 + 8 + 3, f"took {latency}s to confirm a baby"
+    assert not pub.is_idle(clock.t)
+
+
+def test_a_blip_does_not_keep_the_node_awake_forever() -> None:
+    """A false candidate that happens to land on an idle sample wakes the node — it has to,
+    since it cannot tell a blip from a baby without looking closely. But once the crib
+    stays empty it must settle back to idle rather than run at full rate indefinitely.
+
+    (A blip that falls BETWEEN idle samples is never seen at all, which is the point of
+    idling — so this deliberately holds the candidate until a sample catches it.)"""
+    sensor, clock = _SwitchableSensor(), Clock()
+    pub, _ = _idle_publisher(sensor, clock)
+    _run_for(pub, clock, 200)
+    assert pub.is_idle(clock.t)
+
+    sensor.occupied = True
+    for _ in range(int(20 / 0.25)):  # until an idle sample catches it
+        pub.tick()
+        clock.advance(0.25)
+        if not pub.is_idle(clock.t):
+            break
+    assert not pub.is_idle(clock.t), "a sampled candidate must wake the node"
+
+    sensor.occupied = False  # it was a blip
+    _run_for(pub, clock, 130)
+    assert pub.is_idle(clock.t), "it must settle back to idle once the crib stays empty"
+
+
+def test_idle_still_publishes_a_slow_heatmap() -> None:
+    """Without stream gating, someone may be watching the heatmap of an empty crib. It slows
+    rather than freezes."""
+    sensor, clock = _SwitchableSensor(), Clock()
+    pub, sink = _idle_publisher(sensor, clock)
+    _run_for(pub, clock, 130)
+    n = len(sink)
+    _run_for(pub, clock, 60)
+    grids = [m for m, _ in sink[n:] if m == "thermal"]
+    assert 3 <= len(grids) <= 5

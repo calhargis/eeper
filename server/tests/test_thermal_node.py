@@ -157,3 +157,45 @@ def test_mlx_read_repairs_dead_pixels() -> None:
 
     frame = MlxThermalSensor(_OneDead()).read()
     assert frame is not None and -40.0 <= frame[320] <= 300.0
+
+
+# ── presence tuning + low-power idle reach the publisher ─────────────────────
+
+
+def test_documented_presence_tunables_are_actually_read() -> None:
+    """Regression: docs/thermal-node.md documented ENTER_CONTRAST_C, MIN_ON_S and MIN_OFF_S
+    for months while the code never read them — the edit adding them had silently not
+    applied. A setting an operator can set but that does nothing is worse than no setting.
+    This pins both halves: the env is parsed, AND the values reach the running publisher."""
+    cfg = NodeConfig.from_env(
+        {
+            "EEPER_THERMAL_DEVICE_ID": "7",
+            "EEPER_THERMAL_ENTER_CONTRAST_C": "5.5",
+            "EEPER_THERMAL_MIN_ON_S": "3",
+            "EEPER_THERMAL_MIN_OFF_S": "90",
+            "EEPER_THERMAL_IDLE_INTERVAL_S": "15",
+            "EEPER_THERMAL_IDLE_AFTER_S": "60",
+        }
+    )
+    pub = build_publisher(cfg, _SteadySensor(), lambda m, p: None, clock=_Clock())
+    assert pub.feature_params.enter_contrast_c == 5.5
+    assert pub.gate_params.min_on_seconds == 3
+    assert pub.gate_params.min_off_seconds == 90
+    assert pub.idle_interval_s == 15
+    assert pub.idle_after_s == 60
+
+
+def test_idle_is_off_unless_asked_for() -> None:
+    """Idle mode slows the heatmap, so it must be an explicit choice, not a surprise."""
+    cfg = NodeConfig.from_env({"EEPER_THERMAL_DEVICE_ID": "7"})
+    assert cfg.idle_interval_s == 0
+
+
+def test_an_idle_interval_that_would_look_stale_is_capped() -> None:
+    """The server treats a presence input silent for 90 s as stale and FAILS OPEN — it turns
+    the camera back on. An idle interval near that would make low-power mode undo itself, so
+    it is capped well inside the window rather than trusted."""
+    cfg = NodeConfig.from_env(
+        {"EEPER_THERMAL_DEVICE_ID": "7", "EEPER_THERMAL_IDLE_INTERVAL_S": "120"}
+    )
+    assert 0 < cfg.idle_interval_s <= 45

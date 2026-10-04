@@ -124,22 +124,25 @@ class CameraMonitor:
             _log.exception("could not read the streaming gate; keeping cameras live")
             return True
 
-    async def reconcile(self) -> None:
+    async def reconcile(self, streaming: bool | None = None) -> None:
         """Converge go2rtc onto the streams that should exist right now: re-register any that
         went missing (e.g. after a gateway restart), and tear them down when presence gating
         says the crib is empty.
 
         Registration is the ONLY lever here. The api is hardened with no Docker socket, so it
         cannot stop the camera container — removing the stream stops go2rtc pulling RTSP,
-        which lets an on-demand adapter idle its encoder. That is the power saving; the
-        adapter process itself keeps running."""
+        which lets the adapter idle its camera and encoder. That only saves anything if the
+        adapter is ON-DEMAND (adapters/README.md); an always-on adapter keeps capturing to
+        nobody. The adapter process itself keeps running either way."""
         try:
             existing = await self._gateway.stream_names()
         except GatewayError:
             existing = set()
         cameras = await self._enabled_cameras()
 
-        if not await self._should_stream():
+        if streaming is None:
+            streaming = await self._should_stream()
+        if not streaming:
             for camera in cameras:
                 name = stream_name(camera.id)
                 if name in existing:
@@ -177,7 +180,8 @@ class CameraMonitor:
     async def _loop(self) -> None:
         while True:
             try:
-                await self.reconcile()
+                streaming = await self._should_stream()
+                await self.reconcile(streaming)
                 cameras = await self._enabled_cameras()
                 # Drop health for cameras that are gone/disabled so a deleted
                 # camera (or one whose probe raced its delete) can't leave a
@@ -185,6 +189,15 @@ class CameraMonitor:
                 live_ids = {c.id for c in cameras}
                 for stale_id in self._health.keys() - live_ids:
                     self._health.pop(stale_id, None)
+                # While gated, leave the sources alone. Each probe opens an RTSP session to
+                # the camera itself, so probing every few seconds would keep an on-demand
+                # camera permanently awake and defeat the whole point of stopping it. Last
+                # known health is kept rather than flipped to offline — a paused camera is not
+                # a broken one, and the Live view needs it listed to offer "Start anyway". A
+                # camera with NO health yet (first boot into an empty crib) is still probed
+                # once, so it can be listed at all.
+                if not streaming:
+                    cameras = [c for c in cameras if c.id not in self._health]
                 # Probe concurrently: a single hung source must not delay the
                 # health/recovery of every other camera.
                 if cameras:

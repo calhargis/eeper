@@ -259,3 +259,140 @@ async def test_the_mic_stops_with_the_camera(api: Harness) -> None:
     removed = {c.args[0] for c in gateway.remove_stream.await_args_list}
     assert "mic" in removed, "the room mic must stop when the stream is stopped"
     assert gateway.add_stream.await_count == 0, "nothing should be re-registered while gated"
+
+
+# ── low power: nothing keeps working on an empty crib ────────────────────────
+
+
+async def _seed_camera(api: Harness) -> None:
+    from eeper.api.models import Camera
+
+    engine, sm = _sessionmaker(api)
+    try:
+        async with sm() as s:
+            s.add(
+                Camera(
+                    name="Nursery",
+                    source_url="rtsp://cam/cam",
+                    enabled=True,
+                    household_id="default",
+                    has_audio=False,
+                    codec="h264",
+                    width=1920,
+                    height=1080,
+                )
+            )
+            await s.commit()
+    finally:
+        await engine.dispose()
+
+
+async def test_the_camera_monitor_stops_probing_a_gated_camera(api: Harness) -> None:
+    """Each health probe opens an RTSP session to the camera itself. Probing every few
+    seconds would keep an on-demand camera permanently awake — so the stream would be
+    'stopped' while the camera never was. A gated camera keeps its last known health."""
+    from datetime import UTC, datetime
+    from unittest.mock import AsyncMock, patch
+
+    from eeper.api.camera_monitor import CameraHealth, CameraMonitor
+
+    await _sign_in_admin(api)
+    await _seed(api, presence=False, enabled=True)  # working sensor, empty crib
+    await _seed_camera(api)
+
+    engine, sm = _sessionmaker(api)
+    try:
+        gateway = AsyncMock()
+        gateway.stream_names.return_value = set()
+        monitor = CameraMonitor(gateway, sm, api.settings)
+        cam_id = (await monitor._enabled_cameras())[0].id
+        monitor._health[cam_id] = CameraHealth(online=True, last_checked=datetime.now(UTC))
+
+        with patch("eeper.api.camera_monitor.probe_video", new=AsyncMock()) as probe:
+            monitor._settings.health_interval_seconds = 0.01
+            await monitor.start()
+            import asyncio
+
+            await asyncio.sleep(0.2)
+            await monitor.stop()
+    finally:
+        await engine.dispose()
+
+    assert probe.await_count == 0, "a gated camera must not be woken by health probes"
+    assert monitor.get_health(cam_id).online is True, "paused is not broken"  # type: ignore[union-attr]
+
+
+async def test_a_gated_camera_with_no_health_yet_is_probed_once(api: Harness) -> None:
+    """Booting straight into an empty crib: with no health at all the camera could not be
+    listed, and the Live view could not offer 'Start anyway'. It is probed — once."""
+    from unittest.mock import AsyncMock, patch
+
+    from eeper.api.camera_monitor import CameraMonitor
+
+    await _sign_in_admin(api)
+    await _seed(api, presence=False, enabled=True)
+    await _seed_camera(api)
+
+    engine, sm = _sessionmaker(api)
+    try:
+        gateway = AsyncMock()
+        gateway.stream_names.return_value = set()
+        monitor = CameraMonitor(gateway, sm, api.settings)
+        with patch("eeper.api.camera_monitor.probe_video", new=AsyncMock()) as probe:
+            monitor._settings.health_interval_seconds = 0.01
+            await monitor.start()
+            import asyncio
+
+            await asyncio.sleep(0.2)
+            await monitor.stop()
+    finally:
+        await engine.dispose()
+
+    assert probe.await_count == 1, f"probed {probe.await_count} times, expected exactly once"
+
+
+async def test_insight_pauses_analysis_over_an_empty_crib(api: Harness) -> None:
+    """With the crib known empty the monitor has removed the streams insight reads; spawning
+    decoders would only crash-loop against them. Analysis pauses instead."""
+    from eeper.insight.supervisor import InsightSupervisor
+
+    await _sign_in_admin(api)
+    await _seed(api, presence=False, enabled=True)
+    await _seed_camera(api)
+    engine, sm = _sessionmaker(api)
+    try:
+        sup = InsightSupervisor(sm, api.settings)
+        assert await sup._desired_cameras() == {}
+    finally:
+        await engine.dispose()
+
+
+async def test_insight_keeps_analysing_when_a_baby_is_present(api: Harness) -> None:
+    from eeper.insight.supervisor import InsightSupervisor
+
+    await _sign_in_admin(api)
+    await _seed(api, presence=True, enabled=True)
+    await _seed_camera(api)
+    engine, sm = _sessionmaker(api)
+    try:
+        sup = InsightSupervisor(sm, api.settings)
+        assert len(await sup._desired_cameras()) == 1
+    finally:
+        await engine.dispose()
+
+
+async def test_insight_fails_open_when_the_gate_cannot_be_read(api: Harness) -> None:
+    """Missing motion and sound nudges for a baby who IS there is the failure that matters."""
+    from unittest.mock import patch
+
+    from eeper.insight.supervisor import InsightSupervisor
+
+    await _sign_in_admin(api)
+    await _seed_camera(api)
+    engine, sm = _sessionmaker(api)
+    try:
+        sup = InsightSupervisor(sm, api.settings)
+        with patch("eeper.insight.supervisor.read_gate", side_effect=RuntimeError("db gone")):
+            assert len(await sup._desired_cameras()) == 1
+    finally:
+        await engine.dispose()

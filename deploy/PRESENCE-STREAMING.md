@@ -9,13 +9,44 @@ can actually answer the presence question — today that means a
 
 ## What it does and does not do
 
-Removing the camera's stream registration stops go2rtc pulling RTSP from the adapter, which
-lets an on-demand adapter idle its encoder. That is where the saving comes from. It does
-**not** stop the camera container — the api runs with no Docker socket and cannot, by design
-(giving a network-facing service that power would be giving it root on the host).
+Removing the camera's stream registration stops go2rtc pulling RTSP from the adapter. That
+only saves power if the adapter is **on-demand** — capturing and encoding only while something
+reads it. An earlier version of this page claimed it always did; it did not. Until the camera
+adapter gained `sourceOnDemand` and the audio adapter `runOnDemand`, both kept capturing and
+encoding to nobody through every "stopped" period. Both are now on-demand by default (see
+[adapters/README.md](../adapters/README.md)).
 
-The room microphone is deliberately left running. Listening costs almost nothing next to
-video, and hearing the room is the one thing you still want when the picture is off.
+It does **not** stop the containers themselves — the api runs with no Docker socket and cannot,
+by design (giving a network-facing service that power would be giving it root on the host).
+
+The room microphone stops with the camera. Listening costs little, but a live microphone in a
+nursery is a privacy question, not only a power one.
+
+## Low-power mode — what goes quiet over an empty crib
+
+Measured on a Raspberry Pi 4 with every input active, roughly: insight engine 69% of one core,
+thermal node 17%, audio adapter 13%, camera adapter 11%, go2rtc 8%, recorder 5%. With the crib
+known to be empty:
+
+| Component            | Over an empty crib                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| Camera adapter       | idle — sensor and hardware encoder stop 10 s after the last reader leaves              |
+| Audio adapter        | idle — ffmpeg capture stops 10 s after the last listener leaves                        |
+| Insight engine       | paused — no video or audio decoding (it used to crash-loop against the removed stream) |
+| Recorder             | stopped — no segments of an empty crib                                                 |
+| Camera health probes | paused — each probe opens the camera, which would keep it awake                        |
+| Thermal node         | **slows, never stops** — one frame every `EEPER_THERMAL_IDLE_INTERVAL_S` (opt-in)      |
+
+The thermal node is the one input that must keep running: it is how the system notices a baby
+being put down. With idle mode on, it drops to one frame every 15 s once the crib has been empty
+for two minutes, and wakes to full rate on the **first** frame that looks like a body — the
+presence gate needs ~8 s of continuous frames to confirm, which one frame every 15 s could never
+supply. Worst case from a baby being put down to the stream starting is roughly one idle interval
+plus the 8 s confirmation plus a couple of seconds for the camera to start. See
+[docs/thermal-node.md](../docs/thermal-node.md).
+
+The idle interval is capped at 45 s. The server treats a presence input silent for 90 s as stale,
+and **stale fails open** — the camera comes back on — so a slower node would undo the savings.
 
 ## The rule, and why it leans the way it does
 
