@@ -43,6 +43,8 @@ export EEPER_THERMAL_FEATURES_INTERVAL_S=1   # low-rate features cadence
 export EEPER_THERMAL_ENTER_CONTRAST_C=4.0    # °C above room needed to call presence
 export EEPER_THERMAL_MIN_ON_S=8              # sustain before presence is reported
 export EEPER_THERMAL_MIN_OFF_S=45            # sustain before presence is withdrawn
+export EEPER_THERMAL_IDLE_INTERVAL_S=15      # low-power: 1 frame per N s over an empty crib (0 = off)
+export EEPER_THERMAL_IDLE_AFTER_S=120        # ...once the crib has been empty this long
 
 python -m eeper.thermal
 ```
@@ -86,6 +88,21 @@ Tune only if the defaults misread your room. If presence never latches, lower
 `EEPER_THERMAL_ENTER_CONTRAST_C` — a very warm nursery, or a sensor mounted far from the crib,
 shrinks the gap. If an empty crib still reports presence, raise it. Watch the node log: it
 reports the contrast it measured.
+
+## Low-power idle
+
+With `EEPER_THERMAL_IDLE_INTERVAL_S` set, the node drops to one frame every N seconds once the
+crib has been reported empty for `EEPER_THERMAL_IDLE_AFTER_S`, and wakes to full rate on the
+first frame that looks like a body. It wakes on that **raw** candidate rather than on confirmed
+presence because confirmation needs ~8 s of continuous frames — which a node sampling every 15 s
+could never supply. A candidate that turns out to be a blip simply lets it settle back to idle.
+
+The node decides this from its **own** presence verdict. That is what makes it possible at all:
+the broker only lets a device publish, so nothing upstream could tell it to slow down.
+
+Idle is off by default because it slows the heatmap (it keeps updating, once per interval,
+rather than freezing). The interval is capped at 45 s: the server treats a presence input
+silent for 90 s as stale, and a stale input **fails open** — it turns the camera back on.
 
 ## Notes
 

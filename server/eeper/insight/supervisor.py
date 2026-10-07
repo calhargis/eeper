@@ -33,6 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from eeper.api.config import Settings
 from eeper.api.models import Camera
+from eeper.api.stream_gating import read_gate
 from eeper.insight import audio, cry, frontend, sound, video
 from eeper.insight.cry import CryClassifier, CryEpisodeDetector
 from eeper.insight.frame import FRAME_SPEC, FrameRing
@@ -115,6 +116,7 @@ class InsightSupervisor:
         self._cry_classifier: CryClassifier | None = None
         # (camera_id, "video"|"audio") -> monotonic time before which not to respawn.
         self._backoff: dict[tuple[int, str], float] = {}
+        self._was_watched = True
         # The active extractor names per camera, surfaced for the registry/C5 checks.
         self.active_extractors: dict[int, frozenset[str]] = {}
 
@@ -127,10 +129,35 @@ class InsightSupervisor:
         with a mic-only (no camera-native audio) setup."""
         mic = bool(self._settings.audio_source_url)
         async with self._sessionmaker() as session:
+            if not await self._crib_watched(session):
+                return {}
             result = await session.execute(
                 select(Camera.id, Camera.has_audio).where(Camera.enabled)
             )
             return {row[0]: (bool(row[1]) or mic) for row in result.all()}
+
+    async def _crib_watched(self, session: AsyncSession) -> bool:
+        """Whether there is anyone to analyse. With presence gating on and the crib known to
+        be empty, the camera monitor has already removed the go2rtc streams this engine
+        reads — so spawning decoders would only crash-loop against a stream that is not
+        there, respawning ffmpeg every few seconds. Analysis pauses instead, and resumes on
+        the next tick after presence returns.
+
+        Fails OPEN like every other reader of the gate: an unreadable gate keeps analysing.
+        Missing motion and sound nudges for a baby who IS there is the failure that matters;
+        some wasted CPU over an empty crib is not."""
+        try:
+            watched = (await read_gate(session)).should_stream
+        except Exception:  # noqa: BLE001 — never let the gate blind the engine
+            _log.exception("could not read the streaming gate; analysing anyway")
+            watched = True
+        if watched != self._was_watched:
+            _log.info(
+                "crib %s — %s analysis",
+                *(("occupied or unknown", "resuming") if watched else ("empty", "pausing")),
+            )
+            self._was_watched = watched
+        return watched
 
     # ── spawning ──────────────────────────────────────────────────────────────
 

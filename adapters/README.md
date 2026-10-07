@@ -53,6 +53,45 @@ image builds and is CRITICAL-clean).
 | `FPS`             | `15`         | Frame rate (also the IDR period). |
 | `BITRATE`         | `3000000`    | H.264 bitrate (bps).              |
 | `HFLIP` / `VFLIP` | `false`      | Flip the image.                   |
+| `ON_DEMAND`       | `yes`        | Capture only while something reads the stream. |
+| `AF_MODE`         | _(unset)_    | `manual` / `continuous` / `auto` (focus-motor cameras only). |
+| `LENS_POSITION`   | _(unset)_    | Fixed focus in dioptres: `0` = infinity, `0.5` = 2 m, `1` = 1 m. |
+
+### Camera Module 3: set the focus, or every boot is blurry
+
+The Module 3 (`imx708`, including NoIR) has a focus **motor**, and its position is not kept
+across power loss. With no focus settings the lens is left at its power-on rest position —
+near macro — so the picture is unusable after every reboot, while looking fine whenever some
+earlier process happened to leave the lens focused. That intermittency is what makes it hard
+to diagnose.
+
+For a fixed nursery mount, **don't use continuous autofocus**: it hunts in low light, which is
+exactly when a baby monitor matters, and in testing it failed to converge within 3 s even in a
+lit room. Set a fixed, calibrated position instead — deterministic on every boot:
+
+```yaml
+csi-adapter:
+  environment:
+    AF_MODE: manual
+    LENS_POSITION: '0.5'
+```
+
+To calibrate for your mounting, stop the adapter (it holds the camera exclusively) and sweep:
+
+```sh
+for p in 0 0.5 1 1.5 2; do
+  rpicam-still --autofocus-mode manual --lens-position $p -n -t 1500 -o lp_$p.jpg
+done
+```
+
+Pick the sharpest, then prefer a value a little nearer than strict infinity: `0.5` keeps
+everything from roughly 1 m to infinity in acceptable focus, so a nudged camera stays usable.
+Score sharpness with ffmpeg's `edgedetect` rather than by eye, then delete the images — they are
+pictures of the nursery.
+
+> Using the prebuilt `ghcr.io/…/csi` image from before these settings existed? The same thing
+> works through mediamtx's own variables: `MTX_PATHS_CAM_RPICAMERAAFMODE: manual` and
+> `MTX_PATHS_CAM_RPICAMERALENSPOSITION: '0.5'`.
 
 > **Low-power / Pi 3 "lite" preset:** `WIDTH=640 HEIGHT=480 FPS=15 BITRATE=800000`. The CSI
 > encoder is hardware H.264, so a reduced feed costs almost no CPU — ideal for the
@@ -92,6 +131,7 @@ camera-independent "listen to the room".
 | `CHANNELS`   | `1`     | Capture channels (a nursery mic is mono).            |
 | `BITRATE`    | `48000` | Opus bitrate (bps) — ample for voice + ambient.      |
 | `RTSP_PATH`  | `mic`   | Served path (`rtsp://…:8554/<path>`).                |
+| `ON_DEMAND`  | `yes`   | Capture only while something listens; `no` = always on. |
 
 **Device access (production/bench)** — still non-root + read-only + `cap_drop:
 ALL`. ALSA nodes are `root:audio` (mode 0660), so grant just `/dev/snd` and the

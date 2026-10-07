@@ -11,6 +11,11 @@ RATE="${RATE:-48000}"
 CHANNELS="${CHANNELS:-1}"
 BITRATE="${BITRATE:-48000}"
 RTSP_PATH="${RTSP_PATH:-mic}"
+# On-demand: capture and encode only while something is listening. Default on — the insight
+# engine reads the audio continuously whenever the crib is watched, so nothing is lost there;
+# with presence gating an empty crib has no listeners and the capture goes idle instead of
+# running ffmpeg forever. ON_DEMAND=no restores the always-on behaviour.
+ON_DEMAND="${ON_DEMAND:-yes}"
 
 if [ -n "${ALSA_DEVICE:-}" ]; then
   # Production / bench: a real ALSA capture device (a USB mic). Use a `plughw:`
@@ -43,8 +48,21 @@ pprof: no
 playback: no
 paths:
   ${RTSP_PATH}:
-    runOnInit: ffmpeg ${input} -vn -ac ${CHANNELS} -c:a libopus -b:a ${BITRATE} -application audio -f rtsp -rtsp_transport tcp rtsp://localhost:8554/${RTSP_PATH}
+EOF
+
+publish="ffmpeg ${input} -vn -ac ${CHANNELS} -c:a libopus -b:a ${BITRATE} -application audio -f rtsp -rtsp_transport tcp rtsp://localhost:8554/${RTSP_PATH}"
+if [ "${ON_DEMAND}" = "yes" ]; then
+  cat >> /tmp/mediamtx.yml <<EOF
+    runOnDemand: ${publish}
+    runOnDemandRestart: yes
+    runOnDemandStartTimeout: 10s
+    runOnDemandCloseAfter: 10s
+EOF
+else
+  cat >> /tmp/mediamtx.yml <<EOF
+    runOnInit: ${publish}
     runOnInitRestart: yes
 EOF
+fi
 
 exec mediamtx /tmp/mediamtx.yml
